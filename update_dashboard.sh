@@ -1,7 +1,7 @@
 #!/bin/bash
 
-GIT_URL="https://github.com/sqlinkgit/SQLink_RPI0W-Update.git"
-GIT_DIR="/root/SQLink_RPI0W-Update"
+GIT_URL="https://github.com/PrimeNodeSVX/PrimeNode_RPI0W-Update"
+GIT_DIR="/root/PrimeNode_RPI0W-Update"
 WWW_DIR="/var/www/html"
 SVX_CONF="/etc/svxlink/svxlink.conf"
 SOUNDS_DIR="/usr/local/share/svxlink/sounds"
