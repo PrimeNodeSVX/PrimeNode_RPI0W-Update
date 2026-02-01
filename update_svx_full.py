@@ -15,27 +15,10 @@ def load_lines(path):
 def save_lines(path, lines):
     with open(path, 'w', encoding='utf-8') as f: f.writelines(lines)
 
-def remove_key_from_section(lines, section, key):
-    new_lines = []
-    in_section = False
-    section_header = f"[{section}]"
-    
-    for line in lines:
-        stripped = line.strip()
-        if stripped.startswith("[") and stripped.endswith("]"):
-            in_section = (stripped == section_header)
-
-        if in_section and stripped.startswith(f"{key}=") and not stripped.startswith(("#", ";")):
-            continue
-            
-        new_lines.append(line)
-    return new_lines
-
 def update_key_in_lines(lines, section, key, value):
     new_lines = []
     in_section = False
     key_updated = False
-    
     section_header = f"[{section}]"
     
     section_exists = any(line.strip() == section_header for line in lines)
@@ -50,15 +33,11 @@ def update_key_in_lines(lines, section, key, value):
         if in_section and "=" in stripped and not stripped.startswith(("#", ";")):
             parts = stripped.split("=", 1)
             current_key = parts[0].strip()
-            
             if current_key == key:
                 if not key_updated:
                     new_lines.append(f"{key}={value}\n")
                     key_updated = True
-                else:
-                    pass 
                 continue 
-
         new_lines.append(line)
 
     if not key_updated:
@@ -81,7 +60,6 @@ def update_key_in_lines(lines, section, key, value):
              final_lines.append(f"{key}={value}\n")
              added = True
         return final_lines
-
     return new_lines
 
 def main():
@@ -95,7 +73,9 @@ def main():
                 current_radio_data = json.load(rf)
         except: pass
 
-    serial_port = data.get('SerialPort', current_radio_data.get('serial_port', '/dev/ttyS2'))
+    radio_type = data.get('radio_type', current_radio_data.get('type', 'cm108'))
+    serial_port = data.get('serial_port', current_radio_data.get('serial_port', '/dev/ttyS2'))
+    
     gpio_ptt = data.get('GpioPtt', current_radio_data.get('gpio_ptt', '12'))
     gpio_sql = data.get('GpioSql', current_radio_data.get('gpio_sql', '16'))
     
@@ -105,7 +85,6 @@ def main():
     desc = data.get('desc', current_radio_data.get('desc', ''))
 
     lines = load_lines(CONFIG_FILE)
-    lines = remove_key_from_section(lines, "GLOBAL", "DEFAULT_LANG")
 
     modules_str = data.get('Modules')
     if modules_str is not None:
@@ -113,21 +92,18 @@ def main():
         unique_modules = []
         for m in raw_list:
             if not m: continue
-            
             if m in ["Help", "Parrot", "EchoLink"]:
                 mod_name = "Module" + m
             elif m.startswith("Module"):
                 mod_name = m
             else:
                 mod_name = m
-            
             if mod_name not in unique_modules:
                 unique_modules.append(mod_name)
-
+        
         el_pass = data.get('EL_Password', '')
         if not el_pass:
             unique_modules = [m for m in unique_modules if 'EchoLink' not in m]
-            
         data['Modules'] = ",".join(unique_modules)
 
     qth_name = data.get('qth_name')
@@ -139,7 +115,6 @@ def main():
         is_echolink = "1"
 
     location_conf_val = None
-
     if qth_city is not None:
         s_name = qth_name if qth_name else ""
         s_city = qth_city if qth_city else ""
@@ -154,10 +129,9 @@ def main():
             "DefaultTG": data.get('DefaultTG', '0'),
             "Mode": "FM", "Type": "1", 
             "Echolink": is_echolink,
-            "Website": "aa",
-            "LinkedTo": "aa"
+            "Website": "http://primenode.pl",
+            "LinkedTo": "PrimeNode"
         }
-
         try:
             with open(NODE_INFO_FILE, 'w') as nf: json.dump(node_info_data, nf, indent=4)
             os.chmod(NODE_INFO_FILE, 0o644) 
@@ -171,7 +145,6 @@ def main():
 
     main_callsign = data.get('Callsign')
     announce_call = data.get('AnnounceCall', '1')
-    
     reflector_callsign = None
     simplex_callsign = None
     short_ident = None
@@ -225,7 +198,6 @@ def main():
             "LINK_IDLE_TIMEOUT": data.get('EL_IdleTimeout')
         },
         "Rx1": {
-            "DTMF_SERIAL": serial_port,
             "SQL_GPIOD_LINE": gpio_sql
         },
         "Tx1": {
@@ -239,6 +211,7 @@ def main():
                 lines = update_key_in_lines(lines, section, cfg_key, str(json_val))
 
     save_lines(CONFIG_FILE, lines)
+    current_radio_data['type'] = radio_type
     current_radio_data['serial_port'] = serial_port
     current_radio_data['gpio_ptt'] = gpio_ptt
     current_radio_data['gpio_sql'] = gpio_sql

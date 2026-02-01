@@ -3,46 +3,58 @@ $TR = [
     'pl' => [
         'csq' => 'Brak (CSQ)',
         'card_title' => '📝 Wizytówka Dashboardu',
-        'card_desc' => 'Dane wyświetlane na stronie głównej. Nie wpływają na fizyczne strojenie radia (wymagane ręczne ustawienie gałki).',
+        'card_desc' => 'Dane wyświetlane na stronie głównej oraz wysyłane do sieci.',
+        'lbl_type' => 'Typ Radia / Interfejsu',
+        'type_cm108' => 'Analogowe (CM108/GPIO)',
+        'type_sa818' => 'Moduł SA818 (GURURF/ReSpeaker)',
         'lbl_desc' => 'Opis Sprzętu',
         'lbl_rx' => 'RX Freq (MHz)',
         'lbl_tx' => 'TX Freq (MHz)',
-        'lbl_ctcss' => 'CTCSS (Info)',
-        'gpio_title' => '⚙️ Konfiguracja GPIO (Hardware)',
-        'gpio_desc' => 'Zdefiniuj piny Raspberry Pi sterujące radiem. Możesz użyć wykrzyknika (!) dla odwróconej logiki, np. !12.',
-        'lbl_ptt' => 'GPIO PTT (Nadawanie)',
-        'lbl_sql' => 'GPIO SQL (Blokada)',
+        'lbl_ctcss' => 'CTCSS',
+        'lbl_serial' => 'Port Szeregowy (SA818)',
+        'gpio_title' => '⚙️ Konfiguracja GPIO',
+        'gpio_desc' => 'Piny sterujące PTT (nadawanie) i SQL (blokada szumu).',
+        'lbl_ptt' => 'GPIO PTT',
+        'lbl_sql' => 'GPIO SQL',
         'btn_save' => '💾 Zapisz Konfigurację i Restartuj',
-        'warn_title' => '⚠️ Ustawienia Radia Analogowego',
-        'warn_info' => 'Ten panel steruje tylko logiką SvxLink. Częstotliwość i CTCSS musisz ustawić <b>fizycznie na radiu</b>.',
-        'tip_vol' => '🔊 <b>Głośność Radia (RX):</b> Ustaw tak, aby w zakładce Audio wskaźnik był na zielono, ale nie przesterowany.',
-        'tip_mod' => '🎤 <b>Poziom Modulacji (TX):</b> Reguluj suwakiem "Speaker Volume" w zakładce Audio.',
-        'tip_funcs' => '🚫 <b>Funkcje Radia:</b> Wyłącz <i>Battery Save</i>, <i>Roger Beep</i> i <i>VOX</i> w menu radia.'
+        'info_cm108_title' => '⚠️ Tryb Analogowy (CM108)',
+        'info_cm108_text' => 'W tym trybie ustawienia częstotliwości i CTCSS w panelu są <b>tylko informacyjne</b>. Musisz ustawić je fizycznie na radiu (gałką/programatorem).',
+        'info_sa818_title' => '📲 Tryb Modułu SA818',
+        'info_sa818_text' => 'W tym trybie częstotliwość i CTCSS zostaną <b>zaprogramowane w module</b> poprzez port szeregowy przy każdym zapisie.',
+        'tip_vol' => '🔊 <b>Głośność (RX):</b> Ustaw "na słuch" używając Papugi.',
+        'tip_mod' => '🎤 <b>Modulacja (TX):</b> Reguluj suwakiem w zakładce Audio.'
     ],
     'en' => [
         'csq' => 'None (CSQ)',
         'card_title' => '📝 Dashboard Card',
-        'card_desc' => 'Data displayed on the main page. Does not affect physical radio tuning (manual knob setting required).',
+        'card_desc' => 'Data displayed on dashboard and sent to the network.',
+        'lbl_type' => 'Radio / Interface Type',
+        'type_cm108' => 'Analog (CM108/GPIO)',
+        'type_sa818' => 'SA818 Module (GURURF/ReSpeaker)',
         'lbl_desc' => 'Hardware Desc',
         'lbl_rx' => 'RX Freq (MHz)',
         'lbl_tx' => 'TX Freq (MHz)',
-        'lbl_ctcss' => 'CTCSS (Info)',
-        'gpio_title' => '⚙️ GPIO Config (Hardware)',
-        'gpio_desc' => 'Define Raspberry Pi pins controlling the radio. Use exclamation mark (!) for inverted logic, e.g. !12.',
-        'lbl_ptt' => 'GPIO PTT (Transmit)',
-        'lbl_sql' => 'GPIO SQL (Squelch)',
+        'lbl_ctcss' => 'CTCSS',
+        'lbl_serial' => 'Serial Port (SA818)',
+        'gpio_title' => '⚙️ GPIO Config',
+        'gpio_desc' => 'Pins controlling PTT (TX) and SQL (Squelch).',
+        'lbl_ptt' => 'GPIO PTT',
+        'lbl_sql' => 'GPIO SQL',
         'btn_save' => '💾 Save Config & Restart',
-        'warn_title' => '⚠️ Analog Radio Settings',
-        'warn_info' => 'This panel controls only SvxLink logic. Frequency and CTCSS must be set <b>physically on the radio</b>.',
-        'tip_vol' => '🔊 <b>Radio Volume (RX):</b> Set so that the meter in Audio tab is green, but not clipping.',
-        'tip_mod' => '🎤 <b>Modulation Level (TX):</b> Adjust with "Speaker Volume" slider in Audio tab.',
-        'tip_funcs' => '🚫 <b>Radio Functions:</b> Disable <i>Battery Save</i>, <i>Roger Beep</i>, and <i>VOX</i> in radio menu.'
+        'info_cm108_title' => '⚠️ Analog Mode (CM108)',
+        'info_cm108_text' => 'In this mode, Frequency and CTCSS settings are <b>informational only</b>. You must set them physically on the radio.',
+        'info_sa818_title' => '📲 SA818 Module Mode',
+        'info_sa818_text' => 'In this mode, Frequency and CTCSS will be <b>programmed into the module</b> via serial port on save.',
+        'tip_vol' => '🔊 <b>Volume (RX):</b> Set by ear using Parrot.',
+        'tip_mod' => '🎤 <b>Modulation (TX):</b> Adjust slider in Audio tab.'
     ]
 ];
 
 $jsonFile = '/var/www/html/radio_config.json';
 $radio_display = [
-    "rx" => "432.8000", "tx" => "432.8000", "ctcss" => "0000", "desc" => "Brak opisu",
+    "type" => "cm108", 
+    "rx" => "432.8000", "tx" => "432.8000", "ctcss" => "0000", "desc" => "Radio",
+    "serial_port" => "/dev/ttyS2",
     "gpio_ptt" => "12", "gpio_sql" => "16"
 ];
 
@@ -68,15 +80,22 @@ if (file_exists($jsonFile)) {
 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
     <div class="panel-box" style="border-top: 3px solid #2196F3;">
         <h4 class="panel-title blue"><?php echo $TR[$lang]['card_title']; ?></h4>
-        <div style="font-size: 12px; color: #aaa; margin-bottom: 15px; font-style: italic;">
-            <?php echo $TR[$lang]['card_desc']; ?>
-        </div>
         <form method="post">
             <input type="hidden" name="active_tab" class="active-tab-input" value="Radio">
+            
+            <div class="form-group">
+                <label><?php echo $TR[$lang]['lbl_type']; ?></label>
+                <select name="radio_type" id="radio_type_select" onchange="toggleRadioType()">
+                    <option value="cm108" <?php if(!isset($radio_display['type']) || $radio_display['type'] == 'cm108') echo 'selected'; ?>><?php echo $TR[$lang]['type_cm108']; ?></option>
+                    <option value="sa818" <?php if(isset($radio_display['type']) && $radio_display['type'] == 'sa818') echo 'selected'; ?>><?php echo $TR[$lang]['type_sa818']; ?></option>
+                </select>
+            </div>
+
             <div class="form-group">
                 <label><?php echo $TR[$lang]['lbl_desc']; ?></label>
                 <input type="text" name="radio_desc" value="<?php echo htmlspecialchars($radio_display['desc']); ?>" placeholder="np. Motorola GM360">
             </div>
+
             <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
                 <div class="form-group">
                     <label><?php echo $TR[$lang]['lbl_rx']; ?></label>
@@ -98,13 +117,14 @@ if (file_exists($jsonFile)) {
                 </div>
             </div>
             
+            <div class="form-group" id="serial_group" style="display:none; background:#222; padding:10px; border-radius:5px; border:1px dashed #666;">
+                <label style="color:#FF9800;"><?php echo $TR[$lang]['lbl_serial']; ?></label>
+                <input type="text" name="serial_port" value="<?php echo htmlspecialchars($radio_display['serial_port']); ?>" placeholder="/dev/ttyS2">
+            </div>
+            
             <hr style="border:0; border-top:1px solid #444; margin: 20px 0;">
             
             <h4 class="panel-title blue"><?php echo $TR[$lang]['gpio_title']; ?></h4>
-            <div style="font-size: 12px; color: #aaa; margin-bottom: 15px;">
-                <?php echo $TR[$lang]['gpio_desc']; ?>
-            </div>
-
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                 <div class="form-group">
                     <label><?php echo $TR[$lang]['lbl_ptt']; ?></label>
@@ -121,27 +141,52 @@ if (file_exists($jsonFile)) {
     </div>
 
     <div>
-        <div class="panel-box" style="border-left: 5px solid #FF9800; background: #26201b;">
-            <h4 class="panel-title" style="color: #FF9800; border: none;"><?php echo $TR[$lang]['warn_title']; ?></h4>
+        <div id="info_cm108" class="panel-box" style="border-left: 5px solid #FF9800; background: #26201b;">
+            <h4 class="panel-title" style="color: #FF9800; border: none;"><?php echo $TR[$lang]['info_cm108_title']; ?></h4>
             <div style="font-size: 13px; color: #ddd; line-height: 1.6;">
                 <div style="display: flex; align-items: flex-start; gap: 10px; margin-bottom: 15px; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 5px;">
                     <div style="font-size: 24px;">☝️</div>
-                    <div>
-                        <b style="color: #FF9800;">INFO:</b> <?php echo $TR[$lang]['warn_info']; ?>
-                    </div>
+                    <div><?php echo $TR[$lang]['info_cm108_text']; ?></div>
                 </div>
-                <ul style="list-style: none; padding: 0; margin-top: 10px;">
-                    <li style="margin-bottom: 8px;">
-                        <?php echo $TR[$lang]['tip_vol']; ?>
-                    </li>
-                    <li style="margin-bottom: 8px;">
-                        <?php echo $TR[$lang]['tip_mod']; ?>
-                    </li>
-                    <li style="margin-bottom: 8px;">
-                        <?php echo $TR[$lang]['tip_funcs']; ?>
-                    </li>
+                <ul style="list-style: none; padding: 0;">
+                    <li style="margin-bottom: 8px;"><?php echo $TR[$lang]['tip_vol']; ?></li>
+                    <li><?php echo $TR[$lang]['tip_mod']; ?></li>
+                </ul>
+            </div>
+        </div>
+
+        <div id="info_sa818" class="panel-box" style="border-left: 5px solid #4CAF50; background: #1b261b; display:none;">
+            <h4 class="panel-title" style="color: #4CAF50; border: none;"><?php echo $TR[$lang]['info_sa818_title']; ?></h4>
+            <div style="font-size: 13px; color: #ddd; line-height: 1.6;">
+                <div style="display: flex; align-items: flex-start; gap: 10px; margin-bottom: 15px; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 5px;">
+                    <div style="font-size: 24px;">📲</div>
+                    <div><?php echo $TR[$lang]['info_sa818_text']; ?></div>
+                </div>
+                <ul style="list-style: none; padding: 0;">
+                    <li style="margin-bottom: 8px;">Upewnij się, że port szeregowy (np. <code>/dev/ttyS2</code>) jest poprawny.</li>
+                    <li>Moduł zostanie zaprogramowany automatycznie po kliknięciu Zapisz.</li>
                 </ul>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+    function toggleRadioType() {
+        var type = document.getElementById('radio_type_select').value;
+        var serialGroup = document.getElementById('serial_group');
+        var infoCm = document.getElementById('info_cm108');
+        var infoSa = document.getElementById('info_sa818');
+
+        if (type === 'sa818') {
+            serialGroup.style.display = 'block';
+            infoCm.style.display = 'none';
+            infoSa.style.display = 'block';
+        } else {
+            serialGroup.style.display = 'none';
+            infoCm.style.display = 'block';
+            infoSa.style.display = 'none';
+        }
+    }
+    toggleRadioType();
+</script>
