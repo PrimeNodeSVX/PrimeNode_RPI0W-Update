@@ -9,19 +9,15 @@ $TR = [
         'lbl_tx' => 'TX Freq (MHz)',
         'lbl_ctcss' => 'CTCSS (Info)',
         'gpio_title' => '⚙️ Konfiguracja GPIO (Hardware)',
-        'gpio_desc' => 'Zdefiniuj piny Raspberry Pi sterujące radiem. Zmiana wymaga restartu usługi.',
+        'gpio_desc' => 'Zdefiniuj piny Raspberry Pi sterujące radiem. Możesz użyć wykrzyknika (!) dla odwróconej logiki, np. !12.',
         'lbl_ptt' => 'GPIO PTT (Nadawanie)',
         'lbl_sql' => 'GPIO SQL (Blokada)',
-        'def' => 'Domyślnie:',
         'btn_save' => '💾 Zapisz Konfigurację i Restartuj',
         'warn_title' => '⚠️ Ustawienia Radia Analogowego',
         'warn_info' => 'Ten panel steruje tylko logiką SvxLink. Częstotliwość i CTCSS musisz ustawić <b>fizycznie na radiu</b>.',
         'tip_vol' => '🔊 <b>Głośność Radia (RX):</b> Ustaw tak, aby w zakładce Audio wskaźnik był na zielono, ale nie przesterowany.',
         'tip_mod' => '🎤 <b>Poziom Modulacji (TX):</b> Reguluj suwakiem "Speaker Volume" w zakładce Audio.',
-        'tip_funcs' => '🚫 <b>Funkcje Radia:</b> Wyłącz <i>Battery Save</i>, <i>Roger Beep</i> i <i>VOX</i> w menu radia.',
-        'schematic_title' => 'ℹ️ Schemat połączeń (GPIO):',
-        'sch_ptt' => 'Sterowanie 2N7000 Mosfet (Low/High)',
-        'sch_sql' => 'Sygnał COS z radia (3.3V Logic)'
+        'tip_funcs' => '🚫 <b>Funkcje Radia:</b> Wyłącz <i>Battery Save</i>, <i>Roger Beep</i> i <i>VOX</i> w menu radia.'
     ],
     'en' => [
         'csq' => 'None (CSQ)',
@@ -32,19 +28,15 @@ $TR = [
         'lbl_tx' => 'TX Freq (MHz)',
         'lbl_ctcss' => 'CTCSS (Info)',
         'gpio_title' => '⚙️ GPIO Config (Hardware)',
-        'gpio_desc' => 'Define Raspberry Pi pins controlling the radio. Change requires service restart.',
+        'gpio_desc' => 'Define Raspberry Pi pins controlling the radio. Use exclamation mark (!) for inverted logic, e.g. !12.',
         'lbl_ptt' => 'GPIO PTT (Transmit)',
         'lbl_sql' => 'GPIO SQL (Squelch)',
-        'def' => 'Default:',
         'btn_save' => '💾 Save Config & Restart',
         'warn_title' => '⚠️ Analog Radio Settings',
         'warn_info' => 'This panel controls only SvxLink logic. Frequency and CTCSS must be set <b>physically on the radio</b>.',
         'tip_vol' => '🔊 <b>Radio Volume (RX):</b> Set so that the meter in Audio tab is green, but not clipping.',
         'tip_mod' => '🎤 <b>Modulation Level (TX):</b> Adjust with "Speaker Volume" slider in Audio tab.',
-        'tip_funcs' => '🚫 <b>Radio Functions:</b> Disable <i>Battery Save</i>, <i>Roger Beep</i>, and <i>VOX</i> in radio menu.',
-        'schematic_title' => 'ℹ️ Connection Schema (GPIO):',
-        'sch_ptt' => 'Control 2N7000 Mosfet (Low/High)',
-        'sch_sql' => 'COS Signal from radio (3.3V Logic)'
+        'tip_funcs' => '🚫 <b>Radio Functions:</b> Disable <i>Battery Save</i>, <i>Roger Beep</i>, and <i>VOX</i> in radio menu.'
     ]
 ];
 
@@ -116,13 +108,11 @@ if (file_exists($jsonFile)) {
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                 <div class="form-group">
                     <label><?php echo $TR[$lang]['lbl_ptt']; ?></label>
-                    <input type="number" name="gpio_ptt" value="<?php echo htmlspecialchars($radio_display['gpio_ptt']); ?>">
-                    <small style="color:#888; font-size:9px;"><?php echo $TR[$lang]['def']; ?> 12</small>
+                    <input type="text" name="gpio_ptt" value="<?php echo htmlspecialchars($radio_display['gpio_ptt']); ?>">
                 </div>
                 <div class="form-group">
                     <label><?php echo $TR[$lang]['lbl_sql']; ?></label>
-                    <input type="number" name="gpio_sql" value="<?php echo htmlspecialchars($radio_display['gpio_sql']); ?>">
-                    <small style="color:#888; font-size:9px;"><?php echo $TR[$lang]['def']; ?> 16</small>
+                    <input type="text" name="gpio_sql" value="<?php echo htmlspecialchars($radio_display['gpio_sql']); ?>">
                 </div>
             </div>
 
@@ -152,12 +142,6 @@ if (file_exists($jsonFile)) {
                     </li>
                 </ul>
             </div>
-        </div>
-        
-        <div class="panel-box" style="margin-top: 20px; text-align: center; color: #888; font-size: 11px; padding: 10px;">
-            <strong><?php echo $TR[$lang]['schematic_title']; ?></strong><br>
-            <span style="color: #E91E63;">● PTT (TX)</span>: GPIO <?php echo htmlspecialchars($radio_display['gpio_ptt']); ?> ➜ <?php echo $TR[$lang]['sch_ptt']; ?><br>
-            <span style="color: #2196F3;">● SQL (RX)</span>: GPIO <?php echo htmlspecialchars($radio_display['gpio_sql']); ?> ➜ <?php echo $TR[$lang]['sch_sql']; ?><br>
         </div>
     </div>
 </div>

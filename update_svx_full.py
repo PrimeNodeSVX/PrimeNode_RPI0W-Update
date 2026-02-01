@@ -88,46 +88,52 @@ def main():
     if not os.path.exists(INPUT_JSON): sys.exit(1)
     with open(INPUT_JSON, 'r') as f: data = json.load(f)
 
+    current_radio_data = {}
+    if os.path.exists(RADIO_JSON):
+        try:
+            with open(RADIO_JSON, 'r') as rf:
+                current_radio_data = json.load(rf)
+        except: pass
+
+    serial_port = data.get('SerialPort', current_radio_data.get('serial_port', '/dev/ttyS2'))
+    gpio_ptt = data.get('GpioPtt', current_radio_data.get('gpio_ptt', '12'))
+    gpio_sql = data.get('GpioSql', current_radio_data.get('gpio_sql', '16'))
+    
+    rx_freq = data.get('rx', current_radio_data.get('rx', ''))
+    tx_freq = data.get('tx', current_radio_data.get('tx', ''))
+    ctcss = data.get('ctcss', current_radio_data.get('ctcss', '0'))
+    desc = data.get('desc', current_radio_data.get('desc', ''))
+
     lines = load_lines(CONFIG_FILE)
     lines = remove_key_from_section(lines, "GLOBAL", "DEFAULT_LANG")
-
-    serial_port = data.get('SerialPort', '/dev/ttyS2')
-    gpio_ptt = data.get('GpioPtt', '12')
-    gpio_sql = data.get('GpioSql', '16')
 
     modules_str = data.get('Modules')
     if modules_str is not None:
         raw_list = [m.strip() for m in modules_str.split(',')]
-        fixed_list = []
+        unique_modules = []
         for m in raw_list:
+            if not m: continue
+            
+            # Normalize names
             if m in ["Help", "Parrot", "EchoLink"]:
-                fixed_list.append("Module" + m)
-            elif m: 
-                fixed_list.append(m)
+                mod_name = "Module" + m
+            elif m.startswith("Module"):
+                mod_name = m
+            else:
+                mod_name = m
+            
+            if mod_name not in unique_modules:
+                unique_modules.append(mod_name)
 
         el_pass = data.get('EL_Password', '')
         if not el_pass:
-            fixed_list = [m for m in fixed_list if 'EchoLink' not in m]
+            unique_modules = [m for m in unique_modules if 'EchoLink' not in m]
             
-        data['Modules'] = ",".join(fixed_list)
+        data['Modules'] = ",".join(unique_modules)
 
     qth_name = data.get('qth_name')
     qth_city = data.get('qth_city')
     qth_loc = data.get('qth_loc')
-
-    rx_freq = ""
-    tx_freq = ""
-    ctcss = "0"
-    
-    radio_data = {}
-    if os.path.exists(RADIO_JSON):
-        try:
-            with open(RADIO_JSON, 'r') as rf:
-                radio_data = json.load(rf)
-                rx_freq = radio_data.get("rx", "")
-                tx_freq = radio_data.get("tx", "")
-                ctcss = radio_data.get("ctcss", "0")
-        except: pass
     
     is_echolink = "0"
     if data.get('Modules') and ("EchoLink" in data['Modules']):
@@ -234,16 +240,19 @@ def main():
                 lines = update_key_in_lines(lines, section, cfg_key, str(json_val))
 
     save_lines(CONFIG_FILE, lines)
+    current_radio_data['serial_port'] = serial_port
+    current_radio_data['gpio_ptt'] = gpio_ptt
+    current_radio_data['gpio_sql'] = gpio_sql
+    
+    if 'qth_name' in data: current_radio_data['qth_name'] = qth_name if qth_name else ""
+    if 'qth_city' in data: current_radio_data['qth_city'] = qth_city if qth_city else ""
+    if 'qth_loc' in data: current_radio_data['qth_loc'] = qth_loc if qth_loc else ""
+    if rx_freq: current_radio_data['rx'] = rx_freq
+    if tx_freq: current_radio_data['tx'] = tx_freq
+    if ctcss: current_radio_data['ctcss'] = ctcss
+    if desc: current_radio_data['desc'] = desc
 
-    if 'qth_name' in data: radio_data['qth_name'] = qth_name if qth_name else ""
-    if 'qth_city' in data: radio_data['qth_city'] = qth_city if qth_city else ""
-    if 'qth_loc' in data: radio_data['qth_loc'] = qth_loc if qth_loc else ""
-
-    radio_data['serial_port'] = serial_port
-    radio_data['gpio_ptt'] = gpio_ptt
-    radio_data['gpio_sql'] = gpio_sql
-
-    with open(RADIO_JSON, 'w') as f: json.dump(radio_data, f, indent=4)
+    with open(RADIO_JSON, 'w') as f: json.dump(current_radio_data, f, indent=4)
 
     print("SUKCES")
 

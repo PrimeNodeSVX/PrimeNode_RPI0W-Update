@@ -14,7 +14,7 @@
     $TC = [
         'pl' => [
             'header' => 'Konfiguracja SvxLink',
-            'sect_ref' => 'Reflector (PrimeNode)',
+            'sect_ref' => 'Reflector',
             'lbl_node_call' => 'Znak Noda',
             'lbl_pass' => 'Hasło',
             'lbl_host' => 'Host',
@@ -67,7 +67,7 @@
         ],
         'en' => [
             'header' => 'SvxLink Configuration',
-            'sect_ref' => 'Reflector (PrimeNode)',
+            'sect_ref' => 'Reflector',
             'lbl_node_call' => 'Node Callsign',
             'lbl_pass' => 'Password',
             'lbl_host' => 'Host',
