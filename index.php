@@ -276,7 +276,9 @@
             "ctcss" => $_POST['ctcss_val'],
             "desc" => $_POST['radio_desc'],
             "GpioPtt" => $_POST['gpio_ptt'] ?? '12',
-            "GpioSql" => $_POST['gpio_sql'] ?? '16'
+            "GpioSql" => $_POST['gpio_sql'] ?? '16',
+            "radio_type" => $_POST['radio_type'] ?? 'cm108',
+            "serial_port" => $_POST['serial_port'] ?? ''
         ];
         
         file_put_contents('/tmp/svx_new_settings.json', json_encode($updateData));
