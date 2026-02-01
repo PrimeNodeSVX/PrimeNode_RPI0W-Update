@@ -114,7 +114,6 @@ def main():
         for m in raw_list:
             if not m: continue
             
-            # Normalize names
             if m in ["Help", "Parrot", "EchoLink"]:
                 mod_name = "Module" + m
             elif m.startswith("Module"):
@@ -155,8 +154,8 @@ def main():
             "DefaultTG": data.get('DefaultTG', '0'),
             "Mode": "FM", "Type": "1", 
             "Echolink": is_echolink,
-            "Website": "http://sqlink.pl",
-            "LinkedTo": "SQLink"
+            "Website": "aa",
+            "LinkedTo": "aa"
         }
 
         try:

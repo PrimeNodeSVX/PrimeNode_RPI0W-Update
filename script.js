@@ -71,24 +71,33 @@ function openTab(evt, tabName) {
     for(var j=0; j<inputs.length; j++) { inputs[j].value = tabName; }
     localStorage.setItem('activeTab', tabName);
 }
+
 function initModuleToggles() {
     var input = document.getElementById('input-modules');
     if(!input) return;
     var currentModules = input.value.split(',').map(s => s.trim());
+    
     var btnIds = ['ModuleHelp', 'ModuleParrot', 'ModuleEchoLink'];
+    
     btnIds.forEach(function(modName) {
         var btn = document.getElementById('btn-' + modName);
         if(btn) {
-            var searchName = modName;
-            if (modName === 'ModuleParrot') searchName = 'Parrot';
-            if (modName === 'ModuleEchoLink') searchName = 'EchoLink';
-            if (currentModules.includes(searchName)) {
+
+            
+            if (currentModules.includes(modName)) {
                 btn.classList.add('active');
             } else {
-                btn.classList.remove('active');
+
+                var shortName = modName.replace('Module', '');
+                if (currentModules.includes(shortName)) {
+                     btn.classList.add('active');
+                } else {
+                     btn.classList.remove('active');
+                }
             }
         }
     });
+
     var elPassInput = document.getElementById('el-pass');
     if(elPassInput) {
         elPassInput.addEventListener('input', function() {
@@ -101,26 +110,28 @@ function initModuleToggles() {
         });
     }
 }
+
 function toggleModule(modName) {
     var btn = document.getElementById('btn-' + modName);
     var input = document.getElementById('input-modules');
     if(!btn || !input) return;
-    var nameToStore = modName;
-    if (modName === 'ModuleParrot') nameToStore = 'Parrot';
-    if (modName === 'ModuleEchoLink') nameToStore = 'EchoLink';
+    var nameToStore = modName; 
+    
     var isActive = btn.classList.contains('active');
     var currentList = input.value.split(',').map(s => s.trim()).filter(s => s !== "");
+    
     if (isActive) {
         btn.classList.remove('active');
-        currentList = currentList.filter(s => s !== nameToStore);
+        currentList = currentList.filter(s => s !== nameToStore && s !== nameToStore.replace('Module', ''));
     } else {
         btn.classList.add('active');
-        if (!currentList.includes(nameToStore)) {
+        if (!currentList.includes(nameToStore) && !currentList.includes(nameToStore.replace('Module', ''))) {
             currentList.push(nameToStore);
         }
     }
     input.value = currentList.join(',');
 }
+
 function setMapStyle(style) {
     localStorage.setItem('mapStyle', style);
     updateMapButtons(style);
@@ -173,7 +184,7 @@ document.addEventListener("DOMContentLoaded", function() {
     if (storedDtmfTab) { 
         openDtmfSubTab(storedDtmfTab); 
     } else {
-        openDtmfSubTab('PrimeNode');
+        openDtmfSubTab('SQLink');
     }
     if ($(".alert").length > 0) {
         setTimeout(function() {
