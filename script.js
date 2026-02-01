@@ -1,0 +1,463 @@
+$.ajaxSetup({ cache: false });
+
+const currentLang = document.documentElement.lang || 'pl';
+const TRANS = {
+    pl: {
+        el_off: "EchoLink Wył.",
+        el_err: "Błąd Proxy EchoLink",
+        el_on: "EchoLink Online",
+        el_conn: "EchoLink Łączenie...",
+        sys_start: "START SYSTEMU...",
+        ref_on: "ONLINE (Reflector)",
+        ref_conn: "PODŁĄCZONY",
+        ref_off: "OFFLINE (Reflector)",
+        ref_disc: "ROZŁĄCZONY",
+        el_connected: "POŁĄCZONO",
+        el_disconnected: "ROZŁĄCZONO",
+        tx: "NADAWANIE (TX)...",
+        rx_local: "ODBIERANIE (RX - LOCAL)...",
+        standby: "STAN: CZUWANIE (Standby)",
+        no_nodes: "Brak aktywnych węzłów",
+        no_tg: "Brak (Czuwanie)"
+    },
+    en: {
+        el_off: "EchoLink Off",
+        el_err: "EchoLink Proxy Error",
+        el_on: "EchoLink Online",
+        el_conn: "EchoLink Connecting...",
+        sys_start: "SYSTEM START...",
+        ref_on: "ONLINE (Reflector)",
+        ref_conn: "CONNECTED",
+        ref_off: "OFFLINE (Reflector)",
+        ref_disc: "DISCONNECTED",
+        el_connected: "CONNECTED",
+        el_disconnected: "DISCONNECTED",
+        tx: "TRANSMITTING (TX)...",
+        rx_local: "RECEIVING (RX - LOCAL)...",
+        standby: "STATUS: STANDBY",
+        no_nodes: "No active nodes",
+        no_tg: "None (Standby)"
+    }
+};
+const T = TRANS[currentLang];
+
+function selectWifi(ssid) { document.getElementById('wifi-ssid').value = ssid; }
+var dtmfBuffer = ""; 
+var display = document.getElementById("dtmf-screen");
+function typeKey(key) { dtmfBuffer += key; display.innerHTML = dtmfBuffer; }
+function clearKey() { dtmfBuffer = ""; display.innerHTML = "..."; }
+function submitKey() { if(dtmfBuffer.length > 0) { sendAjax(dtmfBuffer); clearKey(); } }
+function submitTG() {
+    if(dtmfBuffer.length > 0) {
+        sendAjax("*91" + dtmfBuffer + "#");
+        clearKey();
+    }
+}
+function connectEchoLink() {
+    var node = document.getElementById('el-node-id').value;
+    if(node.length > 0) { sendAjax(node + "#"); }
+}
+function sendInstant(code) { sendAjax(code); }
+function sendAjax(code) { $.post("index.php", {ajax_dtmf: code}, function(result) { console.log(result); }); }
+function openTab(evt, tabName) {
+    var i, tabcontent, tablinks;
+    tabcontent = document.getElementsByClassName("tab-content");
+    for (i = 0; i < tabcontent.length; i++) { tabcontent[i].style.display = "none"; }
+    tablinks = document.getElementsByClassName("tab-btn");
+    for (i = 0; i < tablinks.length; i++) { tablinks[i].className = tablinks[i].className.replace(" active", ""); }
+    document.getElementById(tabName).style.display = "block";
+    if(evt) { evt.currentTarget.className += " active"; } else { var btn = document.getElementById("btn-" + tabName); if(btn) btn.className += " active"; }
+    var inputs = document.getElementsByClassName("active-tab-input");
+    for(var j=0; j<inputs.length; j++) { inputs[j].value = tabName; }
+    localStorage.setItem('activeTab', tabName);
+}
+function initModuleToggles() {
+    var input = document.getElementById('input-modules');
+    if(!input) return;
+    var currentModules = input.value.split(',').map(s => s.trim());
+    var btnIds = ['ModuleHelp', 'ModuleParrot', 'ModuleEchoLink'];
+    btnIds.forEach(function(modName) {
+        var btn = document.getElementById('btn-' + modName);
+        if(btn) {
+            var searchName = modName;
+            if (modName === 'ModuleParrot') searchName = 'Parrot';
+            if (modName === 'ModuleEchoLink') searchName = 'EchoLink';
+            if (currentModules.includes(searchName)) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        }
+    });
+    var elPassInput = document.getElementById('el-pass');
+    if(elPassInput) {
+        elPassInput.addEventListener('input', function() {
+            if(this.value.length > 0) {
+                var elBtn = document.getElementById('btn-ModuleEchoLink');
+                if(elBtn && !elBtn.classList.contains('active')) {
+                    toggleModule('ModuleEchoLink');
+                }
+            }
+        });
+    }
+}
+function toggleModule(modName) {
+    var btn = document.getElementById('btn-' + modName);
+    var input = document.getElementById('input-modules');
+    if(!btn || !input) return;
+    var nameToStore = modName;
+    if (modName === 'ModuleParrot') nameToStore = 'Parrot';
+    if (modName === 'ModuleEchoLink') nameToStore = 'EchoLink';
+    var isActive = btn.classList.contains('active');
+    var currentList = input.value.split(',').map(s => s.trim()).filter(s => s !== "");
+    if (isActive) {
+        btn.classList.remove('active');
+        currentList = currentList.filter(s => s !== nameToStore);
+    } else {
+        btn.classList.add('active');
+        if (!currentList.includes(nameToStore)) {
+            currentList.push(nameToStore);
+        }
+    }
+    input.value = currentList.join(',');
+}
+function setMapStyle(style) {
+    localStorage.setItem('mapStyle', style);
+    updateMapButtons(style);
+}
+function updateMapButtons(activeStyle) {
+    var styles = ['dark', 'light', 'osm'];
+    styles.forEach(function(s) {
+        var btn = document.getElementById('btn-map-' + s);
+        if(btn) {
+            if(s === activeStyle) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        }
+    });
+}
+function openDtmfSubTab(tabName) {
+    var tabs = document.getElementsByClassName("dtmf-subtab");
+    for (var i = 0; i < tabs.length; i++) {
+        tabs[i].style.display = "none";
+    }
+    var btns = document.getElementsByClassName("dtmf-tab-btn");
+    for (var i = 0; i < btns.length; i++) {
+        btns[i].classList.remove("active");
+    }
+    document.getElementById("DTMF-" + tabName).style.display = "block";
+    document.getElementById("tab-btn-" + tabName).classList.add("active");
+    localStorage.setItem('activeDtmfTab', tabName);
+}
+function dismissAlert(hash) {
+    document.getElementById('sq-alert').style.display = 'none';
+    localStorage.setItem('dismissed_alert', hash);
+}
+function checkAlert() {
+    var alertBox = document.getElementById('sq-alert');
+    if (alertBox) {
+        var hash = alertBox.getAttribute('data-hash');
+        var dismissed = localStorage.getItem('dismissed_alert');
+        if (dismissed === hash) {
+            alertBox.style.display = 'none';
+        }
+    }
+}
+document.addEventListener("DOMContentLoaded", function() {
+    checkAlert();
+    var storedTab = localStorage.getItem('activeTab');
+    if (storedTab) { openTab(null, storedTab); } else { openTab(null, 'Dashboard'); }
+    var storedDtmfTab = localStorage.getItem('activeDtmfTab');
+    if (storedDtmfTab) { 
+        openDtmfSubTab(storedDtmfTab); 
+    } else {
+        openDtmfSubTab('PrimeNode');
+    }
+    if ($(".alert").length > 0) {
+        setTimeout(function() {
+            $(".alert").slideUp(500, function(){ $(this).remove(); });
+        }, 5000);
+    }
+    initModuleToggles();
+    var currentMapStyle = localStorage.getItem('mapStyle') || 'dark';
+    updateMapButtons(currentMapStyle);
+});
+function updateStats() {
+    $.getJSON('index.php?ajax_stats=1', function(stats) {
+        $("#t-temp").text(stats.temp + "°C"); $("#t-temp-bar").css("width", Math.min(stats.temp, 100) + "%").attr("class", "progress-fill " + (stats.temp>70?'p-red':(stats.temp>60?'p-orange':'')));
+        $("#t-ram").text(stats.ram_percent + "%"); $("#t-ram-bar").css("width", stats.ram_percent + "%").attr("class", "progress-fill " + (stats.ram_percent>90?'p-red':(stats.ram_percent>70?'p-orange':'')));
+        $("#t-disk").text(stats.disk_percent + "%"); $("#t-disk-bar").css("width", stats.disk_percent + "%").attr("class", "progress-fill " + (stats.disk_percent>90?'p-red':''));
+        $("#t-hw").text(stats.hw.substring(0, 25) + (stats.hw.length>25?"...":""));
+        $("#t-net-type").text(stats.net_type + (stats.net_type == "WiFi" ? " (" + stats.ssid + ")" : ""));
+        $("#t-ip").text(stats.ip);
+        $("#wifi-tab-status").text(stats.net_type + (stats.net_type == "WiFi" ? ": " + stats.ssid : ""));
+        $("#wifi-tab-ip").text("IP: " + stats.ip);
+        var elDot = $("#el-status-dot");
+        var elText = $("#el-status-text");
+        elDot.removeClass("blink");
+        if (!stats.el_enabled) {
+            elDot.css("background-color", "#777").css("box-shadow", "none");
+            elText.text(T.el_off).css("color", "#777").css("font-weight", "bold");
+        } 
+        else if (stats.el_error) {
+            elDot.css("background-color", "#F44336").css("box-shadow", "0 0 8px #F44336").addClass("blink");
+            elText.text(T.el_err).css("color", "#F44336").css("font-weight", "bold");
+        } 
+        else if (stats.el_online) {
+            elDot.css("background-color", "#4CAF50").css("box-shadow", "0 0 8px #4CAF50").addClass("blink");
+            elText.text(T.el_on).css("color", "#4CAF50").css("font-weight", "bold");
+        }
+        else {
+            elDot.css("background-color", "#FF9800").css("box-shadow", "0 0 8px #FF9800").addClass("blink");
+            elText.text(T.el_conn).css("color", "#FF9800").css("font-weight", "bold");
+        }
+    });
+}
+function loadLogsAndStatus() {
+    $.get('logs.php?t=' + Date.now(), function(data) {
+        var logLines = data.trim().split('\n');
+        var reversedData = logLines.reverse().join('\n');
+        $('#log-content').html(reversedData);
+        let savedTG = localStorage.getItem('currentTG') || "---";
+        let selRegex = /ReflectorLogic: Selecting TG #(\d+)/g;
+        let match;
+        let foundNewChange = false;
+        while ((match = selRegex.exec(data)) !== null) {
+            savedTG = match[1];
+            foundNewChange = true;
+        }
+        if (foundNewChange) {
+            localStorage.setItem('currentTG', savedTG);
+        }
+        $("#tg-active").text(savedTG);
+        let lastConnect = Math.max(
+            data.lastIndexOf("ReflectorLogic: Connection established"),
+            data.lastIndexOf("ReflectorLogic: Connected nodes"),
+            data.lastIndexOf("ReflectorLogic: Talker start")
+        );
+        let lastDisconnect = Math.max(
+            data.lastIndexOf("ReflectorLogic: Disconnected"),
+            data.lastIndexOf("ReflectorLogic: Authentication failed")
+        );
+        let isOnline = false;
+        if (data.length < 50) {
+             $("#main-status-text").text(T.sys_start).removeClass("inactive").addClass("active");
+             $("#main-status-dot").removeClass("red").addClass("orange").addClass("blink");
+        } else {
+             if (lastConnect > lastDisconnect || (lastConnect === -1 && lastDisconnect === -1)) {
+                isOnline = true;
+            } else {
+                isOnline = false;
+            }
+        }
+        if (isOnline) {
+            $("#main-status-text").text(T.ref_on).removeClass("inactive").addClass("active");
+            $("#main-status-dot").removeClass("red").removeClass("orange").addClass("green").addClass("blink");
+            $("#ref-status").html(T.ref_conn).css("color", "#4CAF50");
+        } else if (data.length >= 50) {
+            $("#main-status-text").text(T.ref_off).removeClass("active").addClass("inactive");
+            $("#main-status-dot").removeClass("green").removeClass("orange").addClass("red").removeClass("blink");
+            $("#ref-status").html(T.ref_disc).css("color", "#F44336");
+        }
+        let lastOn = data.lastIndexOf("EchoLink directory status changed to ON");
+        let lastOff = Math.max(data.lastIndexOf("EchoLink directory status changed to ?"), data.lastIndexOf("Disconnected from EchoLink proxy"));
+        if (lastOn > lastOff) { 
+            $("#el-live-status").text(T.el_connected).removeClass("el-disconnected").addClass("el-connected"); 
+        } else if (lastOff > -1) { 
+            $("#el-live-status").text(T.el_disconnected).removeClass("el-connected").addClass("el-disconnected"); 
+        }
+        let isTalking = false;
+        let currentCallsign = "---";
+        let currentTG = "";
+        let statusText = T.standby;
+        let lastStartPos = -1; let lastStopPos = -1;
+        let talkerRegex = /Talker start on TG #(\d+): ([A-Z0-9-\/]+)/g;
+        while ((match = talkerRegex.exec(data)) !== null) { 
+            lastStartPos = match.index; 
+            currentTG = match[1]; 
+            currentCallsign = match[2]; 
+        }
+        let stopRegex = /Talker stop on TG/g; 
+        while ((match = stopRegex.exec(data)) !== null) { 
+            lastStopPos = match.index; 
+        }
+        if (lastStartPos > lastStopPos && lastStartPos !== -1) {
+            isTalking = true;
+            statusText = T.tx; 
+        }
+        let lastTxOn = data.lastIndexOf("Tx1: Turning the transmitter ON");
+        let lastTxOff = data.lastIndexOf("Tx1: Turning the transmitter OFF");
+        if (lastTxOn > lastTxOff && lastTxOn !== -1) {
+            if(!isTalking) {
+                isTalking = true;
+                statusText = T.tx; 
+            }
+        }
+        let lastSqOpen = data.lastIndexOf("Rx1: The squelch is OPEN");
+        let lastSqClose = data.lastIndexOf("Rx1: The squelch is CLOSED");
+        if (lastSqOpen > lastSqClose && lastSqOpen !== -1) {
+            isTalking = true;
+            statusText = T.rx_local;
+            currentCallsign = "LOKALNIE"; 
+        }
+        $(".live-box").removeClass("talking rx-active tx-active");
+        if (isTalking) {
+            $(".live-status").text(statusText);
+            $(".live-callsign").text(currentCallsign);
+            if(currentTG) $(".live-tg").text("TG " + currentTG).css("color", "#FF9800");
+            
+            if (statusText.includes("RX") || statusText.includes("RECEIVING") || statusText.includes("ODBIERANIE")) {
+                $(".live-box").addClass("rx-active");
+                $(".live-status, .live-callsign").css("color", "#4CAF50");
+            } else {
+                $(".live-box").addClass("tx-active");
+                $(".live-status, .live-callsign").css("color", "#FF9800");
+            }
+        } else {
+            $(".live-status").text(T.standby).css("color", "#666");
+            $(".live-callsign").text("---").css("color", "#fff");
+            $(".live-tg").text("");
+        }
+    });
+    $.get('last_heard.php?t=' + Date.now(), function(data) { $('#lh-content').html(data); });
+}
+var cachedNodesData = {};
+function updateNodes() {
+    $.getJSON('nodes.php', function(data) {
+        if (!data || !data.nodes) return;
+        cachedNodesData = data.nodes;
+        var myCall = GLOBAL_CALLSIGN;
+        var nodeKeys = Object.keys(data.nodes).sort();
+        var html = "";
+        if (nodeKeys.length === 0) {
+            html = "<div style='grid-column:1/-1;text-align:center;color:#777;'>" + T.no_nodes + "</div>";
+        } else {
+            nodeKeys.forEach(function(call) {
+                var isMe = (call === myCall);
+                var cssClass = isMe ? "node-item is-me" : "node-item";
+                html += `<div class="${cssClass}" onclick="window.open('https://www.qrz.com/db/${call}', '_blank')" onmouseenter="showTooltip(event, '${call}')" onmouseleave="hideTooltip()" onmousemove="moveTooltip(event)">
+                            <span class="node-icon">📻</span>
+                            <span class="node-name">${call}</span>
+                         </div>`;
+            });
+        }
+        $("#nodes-content").html(html);
+    });
+}
+function showTooltip(e, callsign) {
+    if (!cachedNodesData[callsign]) return;
+    var info = cachedNodesData[callsign];
+    var tooltip = document.getElementById('node-tooltip');
+    $("#nt-callsign").text(callsign);
+    $("#nt-sw").text((info.sw || "") + " " + (info.swVer || ""));
+    var name = "---";
+    if (info.Sysop) {
+         name = info.Sysop;
+    } else if (info.sysop) {
+         name = info.sysop;
+    } else if (info.qth && info.qth.length > 0 && info.qth[0].name) {
+         name = info.qth[0].name;
+    }
+    $("#nt-name").text(name);
+    var activeTg = (info.tg && info.tg !== 0) ? info.tg : T.no_tg;
+    $("#nt-tg").text(activeTg);
+    var locator = "---";
+    if (info.Locator) {
+        locator = info.Locator;
+    } else if (info.qth && info.qth.length > 0 && info.qth[0].pos && info.qth[0].pos.loc) {
+        locator = info.qth[0].pos.loc;
+    }
+    $("#nt-qth").text(locator);
+    var location = "---";
+    if (info.Location) {
+        location = info.Location;
+    } else if (info.nodeLocation) {
+        location = info.nodeLocation;
+    }
+    $("#nt-loc").text(location);
+    var monitored = "---";
+    if (info.monitoredTGs && Array.isArray(info.monitoredTGs) && info.monitoredTGs.length > 0) {
+        monitored = info.monitoredTGs.join(", ");
+    }
+    $("#nt-monitored").text(monitored);
+    $("#nt-ver").text(info.projVer || "---");
+    tooltip.style.display = 'block';
+    moveTooltip(e);
+}
+function moveTooltip(e) {
+    var tooltip = document.getElementById('node-tooltip');
+    if(tooltip.style.display === 'block') {
+        var x = e.clientX + 15;
+        var y = e.clientY + 15;
+        if (x + 240 > window.innerWidth) { x = e.clientX - 240; }
+        if (y + 300 > window.innerHeight) { y = e.clientY - 300; }
+        tooltip.style.left = x + 'px';
+        tooltip.style.top = y + 'px';
+    }
+}
+function hideTooltip() {
+    document.getElementById('node-tooltip').style.display = 'none';
+}
+setInterval(loadLogsAndStatus, 3000);
+setInterval(updateStats, 10000);
+setInterval(updateNodes, 30000);
+loadLogsAndStatus();
+updateStats();
+updateNodes();
+var mapInstance = null;
+function qthToLatLon(qth) {
+    qth = qth.toUpperCase();
+    if (!/^[A-R]{2}[0-9]{2}[A-X]{2}$/.test(qth)) return null;
+    var lon = (qth.charCodeAt(0) - 65) * 20 - 180 + (parseInt(qth.charAt(2)) * 2) + ((qth.charCodeAt(4) - 65) + 0.5) / 12;
+    var lat = (qth.charCodeAt(1) - 65) * 10 - 90 + parseInt(qth.charAt(3)) + ((qth.charCodeAt(5) - 65) + 0.5) / 24;
+    return [lat, lon];
+}
+function openGridMapper() {
+    document.getElementById('map-overlay').style.display = 'flex';
+    var style = localStorage.getItem('mapStyle') || 'dark';
+    var tileUrl = '';
+    var tileOptions = {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap contributors'
+    };
+    if(style === 'light') {
+        tileUrl = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+        tileOptions.subdomains = 'abcd';
+        tileOptions.attribution += ' &copy; CARTO';
+    } else if(style === 'osm') {
+        tileUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+        tileOptions.subdomains = 'abc'; 
+    } else {
+        tileUrl = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+        tileOptions.subdomains = 'abcd';
+        tileOptions.attribution += ' &copy; CARTO';
+    }
+    if (mapInstance) {
+        mapInstance.remove();
+        mapInstance = null;
+    }
+    mapInstance = L.map('map-container').setView([52.0, 19.0], 6);
+    L.tileLayer(tileUrl, tileOptions).addTo(mapInstance);
+    var nodes = cachedNodesData;
+    if (!nodes) return;
+    Object.keys(nodes).forEach(function(callsign) {
+        var n = nodes[callsign];
+        var loc = "";
+        if (n.Locator) loc = n.Locator;
+        else if (n.qth && n.qth.length > 0 && n.qth[0].pos) loc = n.qth[0].pos.loc;
+        if (loc) {
+            var coords = qthToLatLon(loc);
+            if (coords) {
+                var popupContent = "<b>" + callsign + "</b><br>" + loc;
+                if(n.Sysop) popupContent += "<br>" + n.Sysop;
+                L.marker(coords).addTo(mapInstance).bindPopup(popupContent);
+            }
+        }
+    });
+    setTimeout(function(){ mapInstance.invalidateSize(); }, 200);
+}
+function closeGridMapper() {
+    document.getElementById('map-overlay').style.display = 'none';
+}

@@ -1,0 +1,12 @@
+{
+    "rx": "432.8000",
+    "tx": "432.8000",
+    "ctcss": "0770",
+    "desc": "Quansheng",
+    "qth_name": "Jacek",
+    "qth_city": "\u0141\u00f3d\u017a",
+    "qth_loc": "jo91rq",
+    "serial_port": "/dev/ttyS2",
+    "gpio_ptt": "12",
+    "gpio_sql": "16"
+}
