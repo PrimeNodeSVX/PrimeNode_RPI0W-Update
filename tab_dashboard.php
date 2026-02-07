@@ -15,7 +15,11 @@ $TD = [
         'col_time' => 'Godzina',
         'col_tg' => 'TG',
         'col_call' => 'Znak',
-        'loading' => 'Ładowanie...'
+        'loading' => 'Ładowanie...',
+        'cpu' => 'CPU Temp',
+        'ram' => 'RAM',
+        'disk' => 'Dysk',
+        'net' => 'Sieć'
     ],
     'en' => [
         'rx_freq' => 'RX Freq',
@@ -31,7 +35,11 @@ $TD = [
         'col_time' => 'Time',
         'col_tg' => 'TG',
         'col_call' => 'Callsign',
-        'loading' => 'Loading...'
+        'loading' => 'Loading...',
+        'cpu' => 'CPU Temp',
+        'ram' => 'RAM',
+        'disk' => 'Disk',
+        'net' => 'Network'
     ]
 ];
 
@@ -96,29 +104,52 @@ $display_ctcss = isset($CTCSS_MAP_LOCAL[$my_ctcss]) ? $CTCSS_MAP_LOCAL[$my_ctcss
     }
 </style>
 
+<div class="telemetry-row">
+    <div class="t-box">
+        <div class="t-label"><?php echo $TD[$lang]['cpu']; ?></div>
+        <div id="t-temp" class="t-val">---</div>
+        <div class="progress-bg"><div id="t-temp-bar" class="progress-fill" style="width:0%"></div></div>
+    </div>
+    <div class="t-box">
+        <div class="t-label"><?php echo $TD[$lang]['ram']; ?></div>
+        <div id="t-ram" class="t-val">---</div>
+        <div class="progress-bg"><div id="t-ram-bar" class="progress-fill" style="width:0%"></div></div>
+    </div>
+    <div class="t-box">
+        <div class="t-label"><?php echo $TD[$lang]['disk']; ?></div>
+        <div id="t-disk" class="t-val">---</div>
+        <div class="progress-bg"><div id="t-disk-bar" class="progress-fill" style="width:0%"></div></div>
+    </div>
+    <div class="t-box">
+        <div class="t-label"><?php echo $TD[$lang]['net']; ?></div>
+        <div id="t-net-type" class="t-val">---</div>
+        <div id="t-ip" style="font-size:10px; color:#888;">---</div>
+    </div>
+</div>
+
 <div class="dash-grid">
     <div class="dash-tile">
         <div class="dash-icon">📡</div>
         <div class="dash-label"><?php echo $TD[$lang]['rx_freq']; ?></div>
-        <div class="dash-value"><?php echo $radio['rx']; ?></div>
+        <div class="dash-value"><?php echo isset($radio['rx']) ? $radio['rx'] : '---'; ?></div>
     </div>
     
     <div class="dash-tile">
         <div class="dash-icon">📶</div>
         <div class="dash-label"><?php echo $TD[$lang]['tx_freq']; ?></div>
-        <div class="dash-value"><?php echo $radio['tx']; ?></div>
+        <div class="dash-value"><?php echo isset($radio['tx']) ? $radio['tx'] : '---'; ?></div>
     </div>
 
     <div class="dash-tile">
         <div class="dash-icon">🌍</div>
         <div class="dash-label"><?php echo $TD[$lang]['host']; ?></div>
-        <div class="dash-value"><?php echo $vals['Host']; ?></div>
+        <div class="dash-value"><?php echo isset($vals['Host']) ? $vals['Host'] : '---'; ?></div>
     </div>
 
     <div class="dash-tile">
         <div class="dash-icon">🆔</div>
         <div class="dash-label"><?php echo $TD[$lang]['callsign']; ?></div>
-        <div class="dash-value"><?php echo $vals['Callsign']; ?></div>
+        <div class="dash-value"><?php echo isset($vals['Callsign']) ? $vals['Callsign'] : '---'; ?></div>
     </div>
 </div>
 
