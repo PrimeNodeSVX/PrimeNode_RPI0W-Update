@@ -1,6 +1,17 @@
 <?php
     session_start();
 
+    if (isset($_POST['ssh_action'])) {
+        if ($_POST['ssh_action'] == 'start') {
+            shell_exec("sudo systemctl start shellinabox");
+            sleep(1);
+        } elseif ($_POST['ssh_action'] == 'stop') {
+            shell_exec("sudo systemctl stop shellinabox");
+        }
+        header("Location: " . $_SERVER['PHP_SELF']);
+        exit;
+    }
+
     if (isset($_GET['lang'])) {
         $_SESSION['lang'] = $_GET['lang'];
     }
@@ -8,20 +19,20 @@
 
     $TR = [
         'pl' => [
-            'audio_saved' => '✅ Audio ZAPISANE.',
+            'audio_saved' => '✅ Ustawienia Audio ZAPISANE.',
             'saved_restart' => 'Zapisano! Restart...',
             'radio_gpio_saved' => 'Konfiguracja Radio i GPIO Zapisana! Restart...',
             'restart_svc' => 'Restart Usługi...',
             'rebooting' => '🔄 Reboot...',
             'shutting_down' => '🛑 Shutdown...',
-            'proxy_started' => '♻️ Uruchomiono Proxy Hunter (Szukam najlepszego serwera... Czekaj).',
-            'proxy_missing' => 'Brak pliku proxy_hunter.py w /usr/local/bin!',
+            'proxy_started' => '♻️ Uruchomiono Proxy Hunter.',
+            'proxy_missing' => 'Brak pliku proxy_hunter.py!',
             'update_success' => '✅ AKTUALIZACJA ZAKOŃCZONA SUKCESEM!',
             'restarting_soon' => 'System zostanie zrestartowany za',
             'restarting_now' => 'Trwa ponowne uruchamianie...',
             'wait_refresh' => 'Poczekaj chwilę i odśwież stronę.',
             'up_to_date' => '⚠️ SYSTEM JEST JUŻ AKTUALNY',
-            'no_changes' => 'Brak nowych zmian do pobrania. Powrót za chwilę...',
+            'no_changes' => 'Brak nowych zmian.',
             'update_error' => '❌ BŁĄD AKTUALIZACJI!',
             'btn_back' => 'Wróć',
             'wifi_deleted' => 'Usunięto sieć.',
@@ -47,8 +58,7 @@
             'tab_power' => 'Zasilanie',
             'tab_logs' => 'Logi',
             'tab_help' => 'Pomoc',
-            'footer_system' => 'System PrimeNode',
-            'source_code' => 'Kod źródłowy'
+            'tab_ssh' => 'SSH'
         ],
         'en' => [
             'audio_saved' => '✅ Audio SAVED.',
@@ -57,14 +67,14 @@
             'restart_svc' => 'Restarting Service...',
             'rebooting' => '🔄 Rebooting...',
             'shutting_down' => '🛑 Shutting down...',
-            'proxy_started' => '♻️ Proxy Hunter started (Searching for best server... Wait).',
-            'proxy_missing' => 'Missing proxy_hunter.py in /usr/local/bin!',
+            'proxy_started' => '♻️ Proxy Hunter started.',
+            'proxy_missing' => 'Missing proxy_hunter.py!',
             'update_success' => '✅ UPDATE SUCCESSFUL!',
             'restarting_soon' => 'System will reboot in',
             'restarting_now' => 'Rebooting system...',
-            'wait_refresh' => 'Please wait a moment and refresh the page.',
+            'wait_refresh' => 'Please wait a moment and refresh.',
             'up_to_date' => '⚠️ SYSTEM IS UP TO DATE',
-            'no_changes' => 'No new changes to download. Returning...',
+            'no_changes' => 'No new changes.',
             'update_error' => '❌ UPDATE ERROR!',
             'btn_back' => 'Back',
             'wifi_deleted' => 'Network deleted.',
@@ -90,32 +100,25 @@
             'tab_power' => 'Power',
             'tab_logs' => 'Logs',
             'tab_help' => 'Help',
-            'footer_system' => 'PrimeNode System',
-            'source_code' => 'Source Code'
+            'tab_ssh' => 'SSH'
         ]
     ];
 
     $custom_dtmf_file = '/var/www/html/dtmf_custom.json';
-
     if (isset($_POST['add_dtmf_name']) && isset($_POST['add_dtmf_code'])) {
         $name = trim($_POST['add_dtmf_name']);
         $tg = preg_replace('/[^0-9]/', '', $_POST['add_dtmf_code']);
-        
         if (!empty($name) && !empty($tg)) {
             $current_data = [];
             if (file_exists($custom_dtmf_file)) {
                 $json_content = file_get_contents($custom_dtmf_file);
                 $current_data = json_decode($json_content, true) ?? [];
             }
-            
             $current_data[] = ['name' => $name, 'tg' => $tg];
-            
             file_put_contents($custom_dtmf_file, json_encode($current_data));
         }
-        header("Location: " . $_SERVER['PHP_SELF']);
-        exit;
+        header("Location: " . $_SERVER['PHP_SELF']); exit;
     }
-
     if (isset($_POST['del_dtmf_index'])) {
         $idx = (int)$_POST['del_dtmf_index'];
         if (file_exists($custom_dtmf_file)) {
@@ -125,15 +128,144 @@
                 file_put_contents($custom_dtmf_file, json_encode($current_data));
             }
         }
-        header("Location: " . $_SERVER['PHP_SELF']);
-        exit;
+        header("Location: " . $_SERVER['PHP_SELF']); exit;
+    }
+
+    $jsonRadio = '/var/www/html/radio_config.json';
+    $radio_conf = [];
+    if (file_exists($jsonRadio)) {
+        $radio_conf = json_decode(file_get_contents($jsonRadio), true);
+    }
+    
+    $radio_type = isset($radio_conf['type']) ? $radio_conf['type'] : 'cm108';
+    $card_str = isset($radio_conf['audio_dev']) ? $radio_conf['audio_dev'] : '';
+    $CARD_ID = 0; // Domyślnie 0
+    if (preg_match('/plughw:(\d+)/', $card_str, $m)) {
+        $CARD_ID = (int)$m[1];
+    } elseif (is_numeric($card_str)) {
+        $CARD_ID = (int)$card_str;
+    }
+
+
+    $AUDIO_MAP = [
+        'cm108' => [
+            'sliders' => [
+                'Spk_Vol' => ['name' => 'Speaker', 'type' => 'playback'],
+                'Mic_Vol' => ['name' => 'Mic', 'type' => 'capture']
+            ],
+            'switches' => [
+                'Spk_Sw' => ['name' => 'Speaker', 'type' => 'playback'],
+                'Mic_Sw' => ['name' => 'Mic', 'type' => 'capture'],
+                'AGC'    => ['name' => 'Auto Gain Control', 'type' => 'capture']
+            ],
+            'enums' => []
+        ],
+        'sa818' => [
+
+            'sliders' => [
+                'LineOut_Vol' => ['name' => 'Line Out', 'type' => 'playback'],
+                'Mic1_Boost'  => ['name' => 'Mic1 Boost', 'type' => 'playback'],
+                'Mic2_Boost'  => ['name' => 'Mic2 Boost', 'type' => 'playback'],
+                'DAC_Vol'     => ['name' => 'DAC', 'type' => 'playback'],
+                'ADC_Gain'    => ['name' => 'ADC Gain', 'type' => 'capture']
+            ],
+            'switches' => [
+                'LineOut_Sw' => ['name' => 'Line Out', 'type' => 'playback'],
+                'Mic1_Cap'   => ['name' => 'Mic1', 'type' => 'capture'],
+                'Mic2_Cap'   => ['name' => 'Mic2', 'type' => 'capture'],
+                'LineIn_Cap' => ['name' => 'Line In', 'type' => 'capture'],
+                'DAC_Rev'    => ['name' => 'DAC Reverse', 'type' => 'playback']
+            ],
+            'enums' => [
+                'LineOut_Mode' => ['name' => 'Line Out', 'options' => ['Stereo', 'Mono Differential']]
+            ]
+        ]
+    ];
+
+    $current_map = isset($AUDIO_MAP[$radio_type]) ? $AUDIO_MAP[$radio_type] : $AUDIO_MAP['cm108'];
+    $audio_msg = '';
+
+
+    if (isset($_POST['save_audio'])) {
+
+        if (isset($current_map['sliders'])) {
+            foreach ($current_map['sliders'] as $key => $cfg) {
+                if (isset($_POST[$key])) {
+                    $val = (int)$_POST[$key];
+                    $cmd = "sudo /usr/bin/amixer -c $CARD_ID sset '{$cfg['name']}' $val%";
+                    shell_exec($cmd);
+                }
+            }
+        }
+
+        if (isset($current_map['switches'])) {
+            foreach ($current_map['switches'] as $key => $cfg) {
+
+                $state = isset($_POST[$key]) ? 'on' : 'off';
+                if ($key == 'Mic1_Cap' || $key == 'Mic2_Cap' || $key == 'LineIn_Cap') $state = isset($_POST[$key]) ? 'cap' : 'nocap';
+                
+                $cmd = "sudo /usr/bin/amixer -c $CARD_ID sset '{$cfg['name']}' $state";
+                shell_exec($cmd);
+            }
+        }
+
+        if (isset($current_map['enums'])) {
+            foreach ($current_map['enums'] as $key => $cfg) {
+                if (isset($_POST[$key])) {
+                    $val = escapeshellarg($_POST[$key]);
+                    $cmd = "sudo /usr/bin/amixer -c $CARD_ID sset '{$cfg['name']}' $val";
+                    shell_exec($cmd);
+                }
+            }
+        }
+        
+        shell_exec("sudo /usr/sbin/alsactl store $CARD_ID");
+        $audio_msg = '<div class="alert alert-success">'.$TR[$lang]['audio_saved'].'</div>';
+    }
+
+    $audio_vals = [];
+    
+    function get_alsa_percent($card, $name) {
+        $out = shell_exec("amixer -c $card sget '$name' 2>/dev/null");
+        if (preg_match('/\[(\d+)%\]/', $out, $m)) return (int)$m[1];
+        return 0;
+    }
+    
+    function get_alsa_switch($card, $name) {
+        $out = shell_exec("amixer -c $card sget '$name' 2>/dev/null");
+        if (preg_match('/\[on\]/', $out)) return true;
+        return false;
+    }
+
+    function get_alsa_enum($card, $name) {
+        $out = shell_exec("amixer -c $card sget '$name' 2>/dev/null");
+        if (preg_match("/Item0: '([^']+)'/", $out, $m)) return $m[1];
+        return '';
+    }
+
+    if (isset($current_map['sliders'])) {
+        foreach($current_map['sliders'] as $k => $cfg) {
+            $audio_vals[$k] = get_alsa_percent($CARD_ID, $cfg['name']);
+        }
+    }
+
+    if (isset($current_map['switches'])) {
+        foreach($current_map['switches'] as $k => $cfg) {
+            $audio_vals[$k] = get_alsa_switch($CARD_ID, $cfg['name']);
+        }
+    }
+
+    if (isset($current_map['enums'])) {
+        foreach($current_map['enums'] as $k => $cfg) {
+            $audio_vals[$k] = get_alsa_enum($CARD_ID, $cfg['name']);
+        }
     }
 
     if (isset($_GET['ajax_stats'])) {
         header('Content-Type: application/json');
         $stats = [];
         $model = @file_get_contents('/sys/firmware/devicetree/base/model');
-        $stats['hw'] = $model ? str_replace("\0", "", trim($model)) : "Raspberry Pi";
+        $stats['hw'] = $model ? str_replace("\0", "", trim($model)) : "System";
         $temp_raw = @file_get_contents('/sys/class/thermal/thermal_zone0/temp');
         $stats['temp'] = $temp_raw ? round($temp_raw / 1000, 1) : 0;
         $free = shell_exec('free -m');
@@ -174,43 +306,6 @@
         exit;
     }
 
-    $cards = shell_exec("cat /proc/asound/cards");
-    if (preg_match('/(\d+)\s\[(Device|Set|USB)/', $cards, $matches)) {
-        $CARD_ID = (int)$matches[1];
-    } else {
-        $CARD_ID = 0;
-    }
-
-    $MIXER_IDS = ['Mic_Cap_Sw' => 7, 'Mic_Cap_Vol' => 8, 'Auto_Gain_Ctrl' => 9, 'Spk_Play_Sw' => 5, 'Spk_Play_Vol' => 6];
-    $audio = []; $audio_msg = '';
-    
-    function get_alsa_value($card, $numid) {
-        $cmd = "sudo /usr/bin/amixer -c $card cget numid=$numid 2>&1";
-        $output = shell_exec($cmd);
-        if (preg_match('/: values=(\d+)/', $output, $matches)) return (int)$matches[1];
-        if (preg_match('/: values=(on|off)/', $output, $matches)) return $matches[1] === 'on' ? 1 : 0;
-        return 0;
-    }
-
-    if (isset($_POST['save_audio'])) {
-        foreach (['mic_cap_vol' => 'Mic_Cap_Vol', 'spk_play_vol' => 'Spk_Play_Vol'] as $p => $m) {
-            $numid = $MIXER_IDS[$m]; $val = (int)$_POST[$p];
-            if ($numid > 0) shell_exec("sudo /usr/bin/amixer -c $CARD_ID cset numid=$numid $val");
-        }
-        foreach (['Mic_Cap_Sw', 'Auto_Gain_Ctrl', 'Spk_Play_Sw'] as $m) {
-            $numid = $MIXER_IDS[$m]; $state = isset($_POST[$m]) && $_POST[$m] == '1' ? 'on' : 'off';
-            if ($numid > 0) shell_exec("sudo /usr/bin/amixer -c $CARD_ID cset numid=$numid $state");
-        }
-        shell_exec("sudo /usr/sbin/alsactl store $CARD_ID");
-        $audio_msg = '<div class="alert alert-success">'.$TR[$lang]['audio_saved'].'</div>';
-    }
-    
-    if (isset($_POST['fix_audio_btn'])) {
-       $audio_msg = ""; 
-    }
-
-    foreach ($MIXER_IDS as $k => $id) $audio[$k] = ($id > 0) ? get_alsa_value($CARD_ID, $id) : 0;
-
     function parse_svx_conf($file) {
         $ini = []; $curr = "GLOBAL";
         if (!file_exists($file)) return [];
@@ -248,15 +343,14 @@
         'ModTimeout' => $el['TIMEOUT'] ?? '60', 'IdleTimeout' => $el['LINK_IDLE_TIMEOUT'] ?? '300',
     ];
 
-    $jsonFile = '/var/www/html/radio_config.json';
     $radio = [
         "rx" => "432.8000", "tx" => "432.8000", "ctcss" => "0000", "desc" => "Brak opisu",
         "gpio_ptt" => $tx1['PTT_GPIOD_LINE'] ?? '12',
         "gpio_sql" => $rx1['SQL_GPIOD_LINE'] ?? '16'
     ];
     
-    if (file_exists($jsonFile)) { 
-        $loaded = json_decode(file_get_contents($jsonFile), true); 
+    if (file_exists($jsonRadio)) { 
+        $loaded = json_decode(file_get_contents($jsonRadio), true); 
         if ($loaded) $radio = array_merge($radio, $loaded); 
     }
 
@@ -275,10 +369,13 @@
             "tx" => $_POST['tx_freq'],
             "ctcss" => $_POST['ctcss_val'],
             "desc" => $_POST['radio_desc'],
-            "GpioPtt" => $_POST['gpio_ptt'] ?? '12',
-            "GpioSql" => $_POST['gpio_sql'] ?? '16',
+            "audio_dev" => $_POST['audio_dev'],
+            "audio_chan" => $_POST['audio_chan'],
+            "gpio_ptt" => $_POST['gpio_ptt'] ?? '12',
+            "gpio_sql" => $_POST['gpio_sql'] ?? '16',
             "radio_type" => $_POST['radio_type'] ?? 'cm108',
-            "serial_port" => $_POST['serial_port'] ?? ''
+            "serial_port" => $_POST['serial_port'] ?? '',
+            "hid_device" => $_POST['hid_device'] ?? ''
         ];
         
         file_put_contents('/tmp/svx_new_settings.json', json_encode($updateData));
@@ -294,145 +391,13 @@
     
     if (isset($_POST['auto_proxy'])) { 
         if (file_exists('/usr/local/bin/auto_proxy.py')) {
-     shell_exec('sudo /usr/bin/python3 /usr/local/bin/auto_proxy.py > /dev/null 2>&1 &');
+             shell_exec('sudo /usr/bin/python3 /usr/local/bin/auto_proxy.py > /dev/null 2>&1 &');
              echo "<div class='alert alert-warning'>".$TR[$lang]['proxy_started']."</div><meta http-equiv='refresh' content='8'>";
         } else {
              echo "<div class='alert alert-error'>".$TR[$lang]['proxy_missing']."</div>";
         }
     }
     
-    if (isset($_POST['git_update'])) {
-        set_time_limit(300); ignore_user_abort(true);
-        $out = shell_exec("sudo /usr/local/bin/update_dashboard.sh 2>&1");
-        
-        if (strpos($out, 'STATUS: SUCCESS') !== false) {
-            shell_exec('(sleep 5; sudo /usr/sbin/reboot) > /dev/null 2>&1 &');
-            echo "
-            <div class='alert alert-success' style='text-align:left; margin: 20px;'>
-                <strong>".$TR[$lang]['update_success']."</strong><br>
-                ".$TR[$lang]['restarting_soon']." <span id='cnt'>5</span> s...
-                <pre style='font-size:10px; margin-top:5px; background:#111; color:#ccc; padding:5px; border-radius:3px; max-height:300px; overflow:auto;'>$out</pre>
-            </div>
-            <script>
-                if(document.getElementById('loading-overlay')) {
-                    document.getElementById('loading-overlay').style.display = 'none';
-                }
-                var sec = 5;
-                setInterval(function(){
-                    sec--;
-                    var el = document.getElementById('cnt');
-                    if(el) el.innerText = sec;
-                    if(sec <= 0) {
-                         document.body.innerHTML = '<h2 style=\"color:white; text-align:center; margin-top:50px; font-family:sans-serif;\">".$TR[$lang]['restarting_now']."<br><span style=\"font-size:16px; font-weight:normal;\">".$TR[$lang]['wait_refresh']."</span></h2>';
-                         setTimeout(function(){ window.location.href = '/'; }, 15000);
-                    }
-                }, 1000);
-            </script>
-            ";
-        } elseif (strpos($out, 'STATUS: UP_TO_DATE') !== false) {
-             echo "
-             <div class='alert alert-warning' style='text-align:left; margin: 20px;'>
-                <strong>".$TR[$lang]['up_to_date']."</strong><br>
-                ".$TR[$lang]['no_changes']."
-             </div>
-             <script>
-                if(document.getElementById('loading-overlay')) {
-                    document.getElementById('loading-overlay').style.display = 'none';
-                }
-             </script>
-             <meta http-equiv='refresh' content='4;url=/'>";
-        } else {
-            echo "
-            <div class='alert alert-error' style='text-align:left; margin: 20px;'>
-                <strong>".$TR[$lang]['update_error']."</strong><br>
-                <pre style='font-size:10px; margin-top:5px; background:#300; padding:5px; border-radius:3px; max-height:300px; overflow:auto;'>$out</pre>
-                <br><a href='/' class='btn btn-blue' style='display:inline-block; width:auto; padding:5px 10px;'>".$TR[$lang]['btn_back']."</a>
-            </div>
-            <script>
-                if(document.getElementById('loading-overlay')) {
-                    document.getElementById('loading-overlay').style.display = 'none';
-                }
-            </script>";
-        }
-    }
-    
-    $wifi_output = "";
-    $wifi_scan_results = [];
-    
-
-    if (isset($_POST['wifi_scan'])) { 
-        shell_exec('sudo nmcli dev wifi rescan'); 
-
-        $raw = shell_exec('sudo LC_ALL=C.UTF-8 nmcli -t -f SSID,SIGNAL,SECURITY dev wifi list 2>&1'); 
-        
-        $lines = explode("\n", $raw); 
-        foreach($lines as $line) { 
-            if(empty($line)) continue; 
-            $parts = explode(':', $line); 
-            $sec = array_pop($parts); 
-            $sig = array_pop($parts); 
-            $ssid = implode(':', $parts); 
-
-            if(!empty($ssid)) {
-                $wifi_scan_results[$ssid] = ['ssid'=>$ssid, 'signal'=>$sig, 'sec'=>$sec]; 
-            }
-        } 
-        usort($wifi_scan_results, function($a, $b) { return $b['signal'] - $a['signal']; }); 
-    }
-    
-    if (isset($_POST['wifi_connect'])) { 
-        $ssid = escapeshellarg($_POST['ssid']); 
-        $pass = escapeshellarg($_POST['pass']); 
-        $wifi_output = shell_exec("sudo LC_ALL=C.UTF-8 nmcli dev wifi connect $ssid password $pass 2>&1"); 
-    }
-    
-    if (isset($_POST['wifi_delete'])) { 
-        $ssid = escapeshellarg($_POST['ssid']); 
-        $wifi_output = shell_exec("sudo LC_ALL=C.UTF-8 nmcli connection delete $ssid 2>&1"); 
-        echo "<div class='alert alert-warning'>".$TR[$lang]['wifi_deleted']."</div><meta http-equiv='refresh' content='2'>"; 
-    }
-    
-    $saved_wifi_list = [];
-
-    $raw_saved = shell_exec("sudo LC_ALL=C.UTF-8 nmcli -t -f NAME,TYPE connection show | grep ':802-11-wireless' | cut -d: -f1");
-    
-    if ($raw_saved) {
-        $lines = explode("\n", $raw_saved);
-        foreach($lines as $line) {
-            $line = trim($line);
-            if(!empty($line) && $line !== 'Rescue_AP' && $line !== 'preconfigured') {
-                $saved_wifi_list[] = $line;
-            }
-        }
-        sort($saved_wifi_list);
-    }
-
-    $cache_file = '/tmp/primenode_alert_cache.txt';
-    $cache_time = 3600; 
-    $alert_msg = "";
-    
-    if (file_exists($cache_file) && (time() - filemtime($cache_file) < $cache_time)) { 
-        $alert_msg = file_get_contents($cache_file); 
-    } else { 
-        $opts = [
-            "http" => [
-                "method" => "GET",
-                "header" => "User-Agent: PrimeNode-Hotspot\r\n",
-                "timeout" => 5
-            ]
-        ];
-        $ctx = stream_context_create($opts);
-        $remote_msg = @file_get_contents('https://raw.githubusercontent.com/SQLinkgit/SQLink_RPI0W-Update/main/alert.txt', false, $ctx); 
-        
-        if ($remote_msg !== false) { 
-            $alert_msg = $remote_msg; 
-            file_put_contents($cache_file, $alert_msg); 
-        } elseif (file_exists($cache_file)) { 
-            $alert_msg = file_get_contents($cache_file); 
-        } 
-    }
-    
-    $alert_hash = md5($alert_msg);
 ?>
 <!DOCTYPE html>
 <html lang="<?php echo $lang; ?>">
@@ -442,25 +407,6 @@
     <title>Hotspot <?php echo $vals['Callsign']; ?></title>
     <link rel="stylesheet" href="style.css?v=<?php echo time(); ?>">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <style>
-        .btn-loading {
-            position: relative;
-            color: transparent !important;
-            pointer-events: none;
-        }
-        .btn-loading::after {
-            content: "";
-            position: absolute;
-            left: 50%; top: 50%;
-            width: 16px; height: 16px;
-            margin-left: -8px; margin-top: -8px;
-            border: 2px solid #fff;
-            border-radius: 50%;
-            border-top-color: transparent;
-            animation: spin 0.8s linear infinite;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    </style>
 </head>
 <body>
 <div class="container">
@@ -468,13 +414,6 @@
         <a href="?lang=pl" class="<?php echo $lang == 'pl' ? 'active' : ''; ?>"><img src="flags/pl.svg" alt="PL"></a>
         <a href="?lang=en" class="<?php echo $lang == 'en' ? 'active' : ''; ?>"><img src="flags/gb.svg" alt="EN"></a>
     </div>
-
-    <?php if (!empty(trim($alert_msg))): ?>
-    <div id="sq-alert" data-hash="<?php echo $alert_hash; ?>" style="background:#2196F3; color:#fff; padding:12px; font-weight:bold; border-bottom:2px solid #1976D2; font-size:14px; box-shadow: 0 2px 10px rgba(0,0,0,0.3); display:flex; justify-content:space-between; align-items:center;">
-        <span style="flex:1; text-align:center;">📢 INFO: <?php echo htmlspecialchars($alert_msg); ?></span>
-        <button onclick="dismissAlert('<?php echo $alert_hash; ?>')" style="background:none; border:none; color:#fff; font-weight:bold; font-size:16px; cursor:pointer; padding:0 5px; opacity:0.8;">&#10005;</button>
-    </div>
-    <?php endif; ?>
     
     <header>
         <div style="position: relative; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100px; gap: 10px;">
@@ -493,23 +432,6 @@
         </div>
     </header>
 
-    <div class="telemetry-row">
-        <div class="t-box"><div class="t-label"><?php echo $TR[$lang]['cpu_temp']; ?></div><div class="t-val" id="t-temp">...</div><div class="progress-bg"><div class="progress-fill" id="t-temp-bar" style="width: 0%;"></div></div></div>
-        <div class="t-box"><div class="t-label"><?php echo $TR[$lang]['ram_used']; ?></div><div class="t-val" id="t-ram">...</div><div class="progress-bg"><div class="progress-fill" id="t-ram-bar" style="width: 0%;"></div></div></div>
-        <div class="t-box"><div class="t-label"><?php echo $TR[$lang]['disk_used']; ?></div><div class="t-val" id="t-disk">...</div><div class="progress-bg"><div class="progress-fill" id="t-disk-bar" style="width: 0%;"></div></div></div>
-        <div class="t-box"><div class="t-label"><?php echo $TR[$lang]['network']; ?></div><div class="t-val" id="t-net-type">...</div><div style="font-size:9px; color:#aaa;" id="t-ip">...</div></div>
-        <div class="t-box"><div class="t-label"><?php echo $TR[$lang]['hardware']; ?></div><div class="t-val" id="t-hw" style="font-size:10px; margin-top:5px;">...</div></div>
-    </div>
-
-    <div class="info-panel">
-        <div class="info-box"><div class="info-label"><?php echo $TR[$lang]['logics']; ?></div><div class="info-value" style="font-size:11px;"><?php echo str_replace(',', ', ', $glob['LOGICS'] ?? '-'); ?></div></div>
-        <div class="info-box"><div class="info-label"><?php echo $TR[$lang]['modules']; ?></div><div class="info-value" style="font-size:11px;"><?php echo $vals['Modules']; ?></div></div>
-        <div class="info-box"><div class="info-label"><?php echo $TR[$lang]['tg_default']; ?></div><div class="info-value hl"><?php echo $vals['DefaultTG']; ?></div></div>
-        <div class="info-box"><div class="info-label"><?php echo $TR[$lang]['tg_active']; ?></div><div class="info-value hl" id="tg-active">---</div></div>
-        <div class="info-box"><div class="info-label"><?php echo $TR[$lang]['reflector']; ?></div><div class="info-value" id="ref-status">---</div></div>
-        <div class="info-box"><div class="info-label"><?php echo $TR[$lang]['uptime']; ?></div><div class="info-value" style="font-size:11px;"><?php echo shell_exec("uptime -p"); ?></div></div>
-    </div>
-
     <div class="tabs">
         <button id="btn-Dashboard" class="tab-btn active" onclick="openTab(event, 'Dashboard')"><?php echo $TR[$lang]['tab_dashboard']; ?></button>
         <button id="btn-Nodes" class="tab-btn" onclick="openTab(event, 'Nodes')"><?php echo $TR[$lang]['tab_nodes']; ?></button>
@@ -521,6 +443,7 @@
         <button id="btn-Power" class="tab-btn" onclick="openTab(event, 'Power')"><?php echo $TR[$lang]['tab_power']; ?></button>
         <button id="btn-Logs" class="tab-btn" onclick="openTab(event, 'Logs')"><?php echo $TR[$lang]['tab_logs']; ?></button>
         <button id="btn-Help" class="tab-btn" onclick="openTab(event, 'Help')"><?php echo $TR[$lang]['tab_help']; ?></button>
+        <button id="btn-SSH" class="tab-btn" onclick="openTab(event, 'SSH')"><?php echo $TR[$lang]['tab_ssh']; ?></button>
     </div>
 
     <div id="Dashboard" class="tab-content active"><?php include 'tab_dashboard.php'; ?></div>
@@ -533,6 +456,7 @@
     <div id="Nodes" class="tab-content"><?php include 'tab_nodes.php'; ?></div>
     <div id="Help" class="tab-content"><?php include 'help.php'; ?></div>
     <div id="Logs" class="tab-content"><div id="log-content" class="log-box">...</div></div>
+    <div id="SSH" class="tab-content"><?php include 'tab_ssh.php'; ?></div>
 </div>
 
 <div class="main-footer">
@@ -540,10 +464,7 @@
     PrimeNode System • By SQ7UTP<br>
     Copyright © 2025-<?php echo date("Y"); ?>
 </div>
-
-<script> 
-const GLOBAL_CALLSIGN = "<?php echo $vals['Callsign']; ?>"; 
-</script>
+<script> const GLOBAL_CALLSIGN = "<?php echo $vals['Callsign']; ?>"; </script>
 <script src="script.js?v=<?php echo time(); ?>"></script>
 </body>
 </html>
