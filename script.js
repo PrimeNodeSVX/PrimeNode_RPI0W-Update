@@ -82,12 +82,9 @@ function initModuleToggles() {
     btnIds.forEach(function(modName) {
         var btn = document.getElementById('btn-' + modName);
         if(btn) {
-
-            
             if (currentModules.includes(modName)) {
                 btn.classList.add('active');
             } else {
-
                 var shortName = modName.replace('Module', '');
                 if (currentModules.includes(shortName)) {
                      btn.classList.add('active');
@@ -195,6 +192,7 @@ document.addEventListener("DOMContentLoaded", function() {
     var currentMapStyle = localStorage.getItem('mapStyle') || 'dark';
     updateMapButtons(currentMapStyle);
 });
+
 function updateStats() {
     $.getJSON('index.php?ajax_stats=1', function(stats) {
         $("#t-temp").text(stats.temp + "°C"); $("#t-temp-bar").css("width", Math.min(stats.temp, 100) + "%").attr("class", "progress-fill " + (stats.temp>70?'p-red':(stats.temp>60?'p-orange':'')));
@@ -205,9 +203,11 @@ function updateStats() {
         $("#t-ip").text(stats.ip);
         $("#wifi-tab-status").text(stats.net_type + (stats.net_type == "WiFi" ? ": " + stats.ssid : ""));
         $("#wifi-tab-ip").text("IP: " + stats.ip);
+        
         var elDot = $("#el-status-dot");
         var elText = $("#el-status-text");
         elDot.removeClass("blink");
+        
         if (!stats.el_enabled) {
             elDot.css("background-color", "#777").css("box-shadow", "none");
             elText.text(T.el_off).css("color", "#777").css("font-weight", "bold");
@@ -226,11 +226,33 @@ function updateStats() {
         }
     });
 }
-function loadLogsAndStatus() {
+
+function checkLiveStatus() {
+    $.getJSON('status.php', function(data) {
+        $(".live-box").removeClass("rx-active tx-active");
+        
+        if (data.tx) {
+            $(".live-status").text(T.tx).css("color", "#FF9800");
+            $(".live-callsign").text(GLOBAL_CALLSIGN).css("color", "#FF9800");
+            $(".live-box").addClass("tx-active");
+        } else if (data.rx) {
+            $(".live-status").text(T.rx_local).css("color", "#4CAF50");
+            $(".live-callsign").text("LOKALNIE").css("color", "#4CAF50");
+            $(".live-box").addClass("rx-active");
+        } else {
+            $(".live-status").text(T.standby).css("color", "#666");
+            $(".live-callsign").text("---").css("color", "#fff");
+        }
+    }).fail(function() {
+    });
+}
+
+function loadLogsAndTG() {
     $.get('logs.php?t=' + Date.now(), function(data) {
         var logLines = data.trim().split('\n');
         var reversedData = logLines.reverse().join('\n');
         $('#log-content').html(reversedData);
+
         let savedTG = localStorage.getItem('currentTG') || "---";
         let selRegex = /ReflectorLogic: Selecting TG #(\d+)/g;
         let match;
@@ -243,6 +265,8 @@ function loadLogsAndStatus() {
             localStorage.setItem('currentTG', savedTG);
         }
         $("#tg-active").text(savedTG);
+        $(".live-tg").text(savedTG !== "---" ? "TG " + savedTG : "");
+
         let lastConnect = Math.max(
             data.lastIndexOf("ReflectorLogic: Connection established"),
             data.lastIndexOf("ReflectorLogic: Connected nodes"),
@@ -272,68 +296,10 @@ function loadLogsAndStatus() {
             $("#main-status-dot").removeClass("green").removeClass("orange").addClass("red").removeClass("blink");
             $("#ref-status").html(T.ref_disc).css("color", "#F44336");
         }
-        let lastOn = data.lastIndexOf("EchoLink directory status changed to ON");
-        let lastOff = Math.max(data.lastIndexOf("EchoLink directory status changed to ?"), data.lastIndexOf("Disconnected from EchoLink proxy"));
-        if (lastOn > lastOff) { 
-            $("#el-live-status").text(T.el_connected).removeClass("el-disconnected").addClass("el-connected"); 
-        } else if (lastOff > -1) { 
-            $("#el-live-status").text(T.el_disconnected).removeClass("el-connected").addClass("el-disconnected"); 
-        }
-        let isTalking = false;
-        let currentCallsign = "---";
-        let currentTG = "";
-        let statusText = T.standby;
-        let lastStartPos = -1; let lastStopPos = -1;
-        let talkerRegex = /Talker start on TG #(\d+): ([A-Z0-9-\/]+)/g;
-        while ((match = talkerRegex.exec(data)) !== null) { 
-            lastStartPos = match.index; 
-            currentTG = match[1]; 
-            currentCallsign = match[2]; 
-        }
-        let stopRegex = /Talker stop on TG/g; 
-        while ((match = stopRegex.exec(data)) !== null) { 
-            lastStopPos = match.index; 
-        }
-        if (lastStartPos > lastStopPos && lastStartPos !== -1) {
-            isTalking = true;
-            statusText = T.tx; 
-        }
-        let lastTxOn = data.lastIndexOf("Tx1: Turning the transmitter ON");
-        let lastTxOff = data.lastIndexOf("Tx1: Turning the transmitter OFF");
-        if (lastTxOn > lastTxOff && lastTxOn !== -1) {
-            if(!isTalking) {
-                isTalking = true;
-                statusText = T.tx; 
-            }
-        }
-        let lastSqOpen = data.lastIndexOf("Rx1: The squelch is OPEN");
-        let lastSqClose = data.lastIndexOf("Rx1: The squelch is CLOSED");
-        if (lastSqOpen > lastSqClose && lastSqOpen !== -1) {
-            isTalking = true;
-            statusText = T.rx_local;
-            currentCallsign = "LOKALNIE"; 
-        }
-        $(".live-box").removeClass("talking rx-active tx-active");
-        if (isTalking) {
-            $(".live-status").text(statusText);
-            $(".live-callsign").text(currentCallsign);
-            if(currentTG) $(".live-tg").text("TG " + currentTG).css("color", "#FF9800");
-            
-            if (statusText.includes("RX") || statusText.includes("RECEIVING") || statusText.includes("ODBIERANIE")) {
-                $(".live-box").addClass("rx-active");
-                $(".live-status, .live-callsign").css("color", "#4CAF50");
-            } else {
-                $(".live-box").addClass("tx-active");
-                $(".live-status, .live-callsign").css("color", "#FF9800");
-            }
-        } else {
-            $(".live-status").text(T.standby).css("color", "#666");
-            $(".live-callsign").text("---").css("color", "#fff");
-            $(".live-tg").text("");
-        }
     });
     $.get('last_heard.php?t=' + Date.now(), function(data) { $('#lh-content').html(data); });
 }
+
 var cachedNodesData = {};
 function updateNodes() {
     $.getJSON('nodes.php', function(data) {
@@ -411,12 +377,17 @@ function moveTooltip(e) {
 function hideTooltip() {
     document.getElementById('node-tooltip').style.display = 'none';
 }
-setInterval(loadLogsAndStatus, 3000);
+
+setInterval(checkLiveStatus, 500); 
+setInterval(loadLogsAndTG, 3000); 
 setInterval(updateStats, 10000);
 setInterval(updateNodes, 30000);
-loadLogsAndStatus();
+
+checkLiveStatus();
+loadLogsAndTG();
 updateStats();
 updateNodes();
+
 var mapInstance = null;
 function qthToLatLon(qth) {
     qth = qth.toUpperCase();
