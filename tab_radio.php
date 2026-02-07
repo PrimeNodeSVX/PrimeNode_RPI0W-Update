@@ -2,51 +2,73 @@
 $TR = [
     'pl' => [
         'csq' => 'Brak (CSQ)',
-        'card_title' => '📝 Wizytówka Dashboardu',
-        'card_desc' => 'Dane wyświetlane na stronie głównej oraz wysyłane do sieci.',
-        'lbl_type' => 'Typ Radia / Interfejsu',
-        'type_cm108' => 'Analogowe (CM108/GPIO)',
-        'type_sa818' => 'Moduł SA818 (GURURF/ReSpeaker)',
-        'lbl_desc' => 'Opis Sprzętu',
+        'card_title' => '📝 Konfiguracja Sprzętowa (Radio/Audio)',
+        'card_desc' => 'Wybierz typ interfejsu i zdefiniuj parametry.',
+        'lbl_type' => 'Typ Interfejsu',
+        'type_cm108' => 'Własna konstrukcja (GPIO Maliny + Karta USB)',
+        'type_sa818' => 'Gotowy Moduł SHARI / SA818 (Hidraw)',
+        'lbl_desc' => 'Opis Stacji',
         'lbl_rx' => 'RX Freq (MHz)',
         'lbl_tx' => 'TX Freq (MHz)',
         'lbl_ctcss' => 'CTCSS',
-        'lbl_serial' => 'Port Szeregowy (SA818)',
-        'gpio_title' => '⚙️ Konfiguracja GPIO',
-        'gpio_desc' => 'Piny sterujące PTT (nadawanie) i SQL (blokada szumu).',
-        'lbl_ptt' => 'GPIO PTT',
-        'lbl_sql' => 'GPIO SQL',
+        
+        'sect_audio' => '🔊 Ustawienia Audio (ALSA)',
+        'lbl_dev' => 'Urządzenie Audio',
+        'ph_dev' => 'np. alsa:plughw:0',
+        'lbl_chan' => 'Kanał Audio (0/1)',
+        'help_chan' => '0=Lewy/Mono, 1=Prawy',
+        
+        'sect_gpio' => '⚙️ Sterowanie (GPIO / HID)',
+        'lbl_ptt' => 'PTT Pin',
+        'lbl_sql' => 'SQL Pin',
+        'help_gpio' => 'Dla odwróconej logiki dodaj wykrzyknik, np. <b>!12</b>',
+        
+        'sect_shari' => '🎛️ Ustawienia SHARI / SA818',
+        'lbl_serial' => 'Port Szeregowy',
+        'lbl_hid' => 'Urządzenie HID (PTT)',
+        'ph_hid' => 'np. /dev/hidraw0',
+        
         'btn_save' => '💾 Zapisz Konfigurację i Restartuj',
-        'info_cm108_title' => '⚠️ Tryb Analogowy (CM108)',
-        'info_cm108_text' => 'W tym trybie ustawienia częstotliwości i CTCSS w panelu są <b>tylko informacyjne</b>. Musisz ustawić je fizycznie na radiu (gałką/programatorem).',
-        'info_sa818_title' => '📲 Tryb Modułu SA818',
-        'info_sa818_text' => 'W tym trybie częstotliwość i CTCSS zostaną <b>zaprogramowane w module</b> poprzez port szeregowy przy każdym zapisie.',
-        'tip_vol' => '🔊 <b>Głośność (RX):</b> Ustaw "na słuch" używając Papugi.',
-        'tip_mod' => '🎤 <b>Modulacja (TX):</b> Reguluj suwakiem w zakładce Audio.'
+        
+        'info_cm108_title' => 'Tryb Własny (GPIO)',
+        'info_cm108_text' => 'Sterowanie PTT/SQL odbywa się przez piny GPIO Raspberry Pi. Częstotliwość ustawiasz fizycznie na radiu.',
+        'info_sa818_title' => 'Tryb SHARI (SA818)',
+        'info_sa818_text' => 'Sterowanie PTT przez USB (Hidraw). Częstotliwość zostanie zaprogramowana w module przy każdym zapisie.'
     ],
     'en' => [
         'csq' => 'None (CSQ)',
-        'card_title' => '📝 Dashboard Card',
-        'card_desc' => 'Data displayed on dashboard and sent to the network.',
-        'lbl_type' => 'Radio / Interface Type',
-        'type_cm108' => 'Analog (CM108/GPIO)',
-        'type_sa818' => 'SA818 Module (GURURF/ReSpeaker)',
-        'lbl_desc' => 'Hardware Desc',
+        'card_title' => '📝 Hardware Config (Radio/Audio)',
+        'card_desc' => 'Select interface type and define parameters.',
+        'lbl_type' => 'Interface Type',
+        'type_cm108' => 'Custom Build (RPi GPIO + USB Card)',
+        'type_sa818' => 'SHARI Module / SA818 (Hidraw)',
+        'lbl_desc' => 'Station Desc',
         'lbl_rx' => 'RX Freq (MHz)',
         'lbl_tx' => 'TX Freq (MHz)',
         'lbl_ctcss' => 'CTCSS',
-        'lbl_serial' => 'Serial Port (SA818)',
-        'gpio_title' => '⚙️ GPIO Config',
-        'gpio_desc' => 'Pins controlling PTT (TX) and SQL (Squelch).',
-        'lbl_ptt' => 'GPIO PTT',
-        'lbl_sql' => 'GPIO SQL',
+        
+        'sect_audio' => '🔊 Audio Settings (ALSA)',
+        'lbl_dev' => 'Audio Device',
+        'ph_dev' => 'e.g. alsa:plughw:0',
+        'lbl_chan' => 'Audio Channel (0/1)',
+        'help_chan' => '0=Left/Mono, 1=Right',
+        
+        'sect_gpio' => '⚙️ Control (GPIO / HID)',
+        'lbl_ptt' => 'PTT Pin',
+        'lbl_sql' => 'SQL Pin',
+        'help_gpio' => 'For inverted logic add exclamation mark, e.g. <b>!12</b>',
+        
+        'sect_shari' => '🎛️ SHARI / SA818 Settings',
+        'lbl_serial' => 'Serial Port',
+        'lbl_hid' => 'HID Device (PTT)',
+        'ph_hid' => 'e.g. /dev/hidraw0',
+        
         'btn_save' => '💾 Save Config & Restart',
-        'info_cm108_title' => '⚠️ Analog Mode (CM108)',
-        'info_cm108_text' => 'In this mode, Frequency and CTCSS settings are <b>informational only</b>. You must set them physically on the radio.',
-        'info_sa818_title' => '📲 SA818 Module Mode',
-        'info_sa818_text' => 'In this mode, Frequency and CTCSS will be <b>programmed into the module</b> via serial port on save.',
-        'tip_vol' => '🔊 <b>Volume (RX):</b> Set by ear using Parrot.',
-        'tip_mod' => '🎤 <b>Modulation (TX):</b> Adjust slider in Audio tab.'
+        
+        'info_cm108_title' => 'Custom Mode (GPIO)',
+        'info_cm108_text' => 'PTT/SQL controlled via RPi GPIO pins. Set frequency manually on your radio.',
+        'info_sa818_title' => 'SHARI Mode (SA818)',
+        'info_sa818_text' => 'PTT controlled via USB (Hidraw). Frequency will be programmed into the module on save.'
     ]
 ];
 
@@ -54,7 +76,8 @@ $jsonFile = '/var/www/html/radio_config.json';
 $radio_display = [
     "type" => "cm108", 
     "rx" => "432.8000", "tx" => "432.8000", "ctcss" => "0000", "desc" => "Radio",
-    "serial_port" => "/dev/ttyS2",
+    "audio_dev" => "alsa:plughw:0", "audio_chan" => "0",
+    "serial_port" => "/dev/ttyS2", "hid_device" => "/dev/hidraw0",
     "gpio_ptt" => "12", "gpio_sql" => "16"
 ];
 
@@ -86,14 +109,14 @@ if (file_exists($jsonFile)) {
             <div class="form-group">
                 <label><?php echo $TR[$lang]['lbl_type']; ?></label>
                 <select name="radio_type" id="radio_type_select" onchange="toggleRadioType()">
-                    <option value="cm108" <?php if(!isset($radio_display['type']) || $radio_display['type'] == 'cm108') echo 'selected'; ?>><?php echo $TR[$lang]['type_cm108']; ?></option>
-                    <option value="sa818" <?php if(isset($radio_display['type']) && $radio_display['type'] == 'sa818') echo 'selected'; ?>><?php echo $TR[$lang]['type_sa818']; ?></option>
+                    <option value="cm108" <?php if($radio_display['type'] == 'cm108') echo 'selected'; ?>><?php echo $TR[$lang]['type_cm108']; ?></option>
+                    <option value="sa818" <?php if($radio_display['type'] == 'sa818') echo 'selected'; ?>><?php echo $TR[$lang]['type_sa818']; ?></option>
                 </select>
             </div>
 
             <div class="form-group">
                 <label><?php echo $TR[$lang]['lbl_desc']; ?></label>
-                <input type="text" name="radio_desc" value="<?php echo htmlspecialchars($radio_display['desc']); ?>" placeholder="np. Motorola GM360">
+                <input type="text" name="radio_desc" value="<?php echo htmlspecialchars($radio_display['desc']); ?>" placeholder="np. Motorola / SHARI">
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
@@ -109,7 +132,7 @@ if (file_exists($jsonFile)) {
                     <label><?php echo $TR[$lang]['lbl_ctcss']; ?></label>
                     <select name="ctcss_val">
                         <?php foreach($CTCSS_TONES as $code => $label): ?>
-                            <option value="<?php echo $code; ?>" <?php if(isset($radio_display['ctcss']) && $radio_display['ctcss'] == $code) echo 'selected'; ?>>
+                            <option value="<?php echo $code; ?>" <?php if($radio_display['ctcss'] == $code) echo 'selected'; ?>>
                                 <?php echo $label; ?>
                             </option>
                         <?php endforeach; ?>
@@ -117,26 +140,53 @@ if (file_exists($jsonFile)) {
                 </div>
             </div>
             
-            <div class="form-group" id="serial_group" style="display:none; background:#222; padding:10px; border-radius:5px; border:1px dashed #666;">
-                <label style="color:#FF9800;"><?php echo $TR[$lang]['lbl_serial']; ?></label>
-                <input type="text" name="serial_port" value="<?php echo htmlspecialchars($radio_display['serial_port']); ?>" placeholder="/dev/ttyS2">
-            </div>
+            <hr style="border:0; border-top:1px solid #444; margin: 15px 0;">
             
-            <hr style="border:0; border-top:1px solid #444; margin: 20px 0;">
-            
-            <h4 class="panel-title blue"><?php echo $TR[$lang]['gpio_title']; ?></h4>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <div class="form-group">
-                    <label><?php echo $TR[$lang]['lbl_ptt']; ?></label>
-                    <input type="text" name="gpio_ptt" value="<?php echo htmlspecialchars($radio_display['gpio_ptt']); ?>">
+            <h4 class="panel-title green" style="font-size:14px; border:none; margin-bottom:5px;"><?php echo $TR[$lang]['sect_audio']; ?></h4>
+            <div style="display: flex; gap: 10px;">
+                <div class="form-group" style="flex:2;">
+                    <label><?php echo $TR[$lang]['lbl_dev']; ?></label>
+                    <input type="text" name="audio_dev" value="<?php echo htmlspecialchars($radio_display['audio_dev']); ?>" placeholder="<?php echo $TR[$lang]['ph_dev']; ?>">
                 </div>
-                <div class="form-group">
-                    <label><?php echo $TR[$lang]['lbl_sql']; ?></label>
-                    <input type="text" name="gpio_sql" value="<?php echo htmlspecialchars($radio_display['gpio_sql']); ?>">
+                <div class="form-group" style="flex:1;">
+                    <label><?php echo $TR[$lang]['lbl_chan']; ?></label>
+                    <input type="number" name="audio_chan" value="<?php echo htmlspecialchars($radio_display['audio_chan']); ?>" min="0" max="1" placeholder="0">
+                </div>
+            </div>
+            <small style="color:#888; display:block; margin-top:-10px; margin-bottom:15px;"><?php echo $TR[$lang]['help_chan']; ?></small>
+
+            <hr style="border:0; border-top:1px solid #444; margin: 15px 0;">
+
+            <div id="group_gpio">
+                <h4 class="panel-title blue" style="font-size:14px; border:none; margin-bottom:5px;"><?php echo $TR[$lang]['sect_gpio']; ?></h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div class="form-group">
+                        <label><?php echo $TR[$lang]['lbl_ptt']; ?></label>
+                        <input type="text" name="gpio_ptt" value="<?php echo htmlspecialchars($radio_display['gpio_ptt']); ?>" placeholder="12">
+                    </div>
+                    <div class="form-group">
+                        <label><?php echo $TR[$lang]['lbl_sql']; ?></label>
+                        <input type="text" name="gpio_sql" value="<?php echo htmlspecialchars($radio_display['gpio_sql']); ?>" placeholder="!16">
+                    </div>
+                </div>
+                <small style="color:#aaa;"><?php echo $TR[$lang]['help_gpio']; ?></small>
+            </div>
+
+            <div id="group_shari" style="display:none;">
+                <h4 class="panel-title blue" style="font-size:14px; border:none; margin-bottom:5px;"><?php echo $TR[$lang]['sect_shari']; ?></h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div class="form-group">
+                        <label><?php echo $TR[$lang]['lbl_serial']; ?></label>
+                        <input type="text" name="serial_port" value="<?php echo htmlspecialchars($radio_display['serial_port']); ?>" placeholder="/dev/ttyS2">
+                    </div>
+                    <div class="form-group">
+                        <label><?php echo $TR[$lang]['lbl_hid']; ?></label>
+                        <input type="text" name="hid_device" value="<?php echo isset($radio_display['hid_device']) ? htmlspecialchars($radio_display['hid_device']) : '/dev/hidraw0'; ?>" placeholder="/dev/hidraw0">
+                    </div>
                 </div>
             </div>
 
-            <button type="submit" name="save_radio" class="btn btn-blue" style="margin-top:15px;"><?php echo $TR[$lang]['btn_save']; ?></button>
+            <button type="submit" name="save_radio" class="btn btn-blue" style="margin-top:20px;"><?php echo $TR[$lang]['btn_save']; ?></button>
         </form>
     </div>
 
@@ -144,28 +194,14 @@ if (file_exists($jsonFile)) {
         <div id="info_cm108" class="panel-box" style="border-left: 5px solid #FF9800; background: #26201b;">
             <h4 class="panel-title" style="color: #FF9800; border: none;"><?php echo $TR[$lang]['info_cm108_title']; ?></h4>
             <div style="font-size: 13px; color: #ddd; line-height: 1.6;">
-                <div style="display: flex; align-items: flex-start; gap: 10px; margin-bottom: 15px; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 5px;">
-                    <div style="font-size: 24px;">☝️</div>
-                    <div><?php echo $TR[$lang]['info_cm108_text']; ?></div>
-                </div>
-                <ul style="list-style: none; padding: 0;">
-                    <li style="margin-bottom: 8px;"><?php echo $TR[$lang]['tip_vol']; ?></li>
-                    <li><?php echo $TR[$lang]['tip_mod']; ?></li>
-                </ul>
+                <?php echo $TR[$lang]['info_cm108_text']; ?>
             </div>
         </div>
 
         <div id="info_sa818" class="panel-box" style="border-left: 5px solid #4CAF50; background: #1b261b; display:none;">
             <h4 class="panel-title" style="color: #4CAF50; border: none;"><?php echo $TR[$lang]['info_sa818_title']; ?></h4>
             <div style="font-size: 13px; color: #ddd; line-height: 1.6;">
-                <div style="display: flex; align-items: flex-start; gap: 10px; margin-bottom: 15px; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 5px;">
-                    <div style="font-size: 24px;">📲</div>
-                    <div><?php echo $TR[$lang]['info_sa818_text']; ?></div>
-                </div>
-                <ul style="list-style: none; padding: 0;">
-                    <li style="margin-bottom: 8px;">Upewnij się, że port szeregowy (np. <code>/dev/ttyS2</code>) jest poprawny.</li>
-                    <li>Moduł zostanie zaprogramowany automatycznie po kliknięciu Zapisz.</li>
-                </ul>
+                <?php echo $TR[$lang]['info_sa818_text']; ?>
             </div>
         </div>
     </div>
@@ -174,19 +210,23 @@ if (file_exists($jsonFile)) {
 <script>
     function toggleRadioType() {
         var type = document.getElementById('radio_type_select').value;
-        var serialGroup = document.getElementById('serial_group');
+        var groupGpio = document.getElementById('group_gpio');
+        var groupShari = document.getElementById('group_shari');
         var infoCm = document.getElementById('info_cm108');
         var infoSa = document.getElementById('info_sa818');
 
         if (type === 'sa818') {
-            serialGroup.style.display = 'block';
+            groupGpio.style.display = 'none';
+            groupShari.style.display = 'block';
             infoCm.style.display = 'none';
             infoSa.style.display = 'block';
         } else {
-            serialGroup.style.display = 'none';
+            groupGpio.style.display = 'block';
+            groupShari.style.display = 'none';
             infoCm.style.display = 'block';
             infoSa.style.display = 'none';
         }
     }
+
     toggleRadioType();
 </script>
