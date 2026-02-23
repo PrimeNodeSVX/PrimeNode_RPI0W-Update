@@ -1,8 +1,8 @@
 <?php
 $H = [
     'pl' => [
-        'title' => 'Centrum Dowodzenia i Pomocy (PrimeNode System)',
-        'subtitle' => 'System zaprojektowany przez SQ7UTP dla:',
+        'title' => 'Centrum Dowodzenia i Pomocy (SQLink RPi Zero Edition)',
+        'subtitle' => 'System zaprojektowany wyłącznie dla:',
         's1_title' => '1. Twój Kokpit (Dashboard)',
         's1_text' => 'To tutaj sprawdzasz puls swojego urządzenia. Wszystko powinno świecić na zielono!',
         's1_msg' => '📢 Pasek Komunikatów:',
@@ -32,7 +32,7 @@ $H = [
 
         's3_title' => '3. Dwa Światy: Reflektor i EchoLink',
         's3_text' => 'Pamiętaj: Możesz być tylko w jednym miejscu naraz!',
-        's3_a_title' => '🅰️ Świat A: Reflektor (PrimeNode)',
+        's3_a_title' => '🅰️ Świat A: Reflektor (SQLink)',
         's3_a_desc' => 'To jest Twój "dom". Jesteś tu zawsze po uruchomieniu.<br>Rozmawiasz z polskimi stacjami na grupach (np. Ogólnopolska).',
         's3_b_title' => '🅱️ Świat B: EchoLink (Światowy)',
         's3_b_desc' => 'Chcesz pogadać z kimś z USA, Japonii czy innego miasta?',
@@ -61,7 +61,7 @@ $H = [
         's6_title' => '6. Zasilanie i Aktualizacje',
         's6_text' => 'W zakładce <strong>Zasilanie</strong> masz centrum sterowania życiem maliny.',
         's6_reb' => '<strong>🔄 Reboot / Wyłącz:</strong> Bezpieczne zamykanie systemu. Nie wyrywaj wtyczki z prądu, bo karta pamięci tego nie lubi!',
-        's6_upd' => '<strong>☁️ Aktualizuj System:</strong> Kliknij zielony przycisk, żeby pobrać nowości. Hotspot sam połączy się z repozytorium PrimeNode i ściągnie poprawki.',
+        's6_upd' => '<strong>☁️ Aktualizuj System:</strong> Kliknij zielony przycisk, żeby pobrać nowości. Hotspot sam połączy się z GitHubem i ściągnie poprawki.',
         's6_rst' => '<strong>♻️ Restart Usługi SvxLink:</strong> "Lekarstwo na wszystko". Jeśli dashboard się zawiesi albo dźwięk zniknie - kliknij to. Trwa to tylko 5-10 sekund.',
 
         's7_title' => '7. Wskazówki i Nowe Funkcje (Warto wiedzieć)',
@@ -92,8 +92,8 @@ $H = [
         'qa_a4' => '✅ Twoje radio krzyczy do Hotspota za głośno! Ścisz radio (jeśli masz kabel) lub zmniejsz suwak <strong>MIC / ADC Gain</strong> w zakładce Audio.'
     ],
     'en' => [
-        'title' => 'Command & Help Center (PrimeNode System)',
-        'subtitle' => 'System designed by SQ7UTP for:',
+        'title' => 'Command & Help Center (SQLink RPi Zero Edition)',
+        'subtitle' => 'System designed exclusively for:',
         's1_title' => '1. Your Dashboard',
         's1_text' => 'This is where you check the pulse of your device. Everything should be green!',
         's1_msg' => '📢 Message Bar:',
@@ -123,7 +123,7 @@ $H = [
 
         's3_title' => '3. Two Worlds: Reflector & EchoLink',
         's3_text' => 'Remember: You can only be in one place at a time!',
-        's3_a_title' => '🅰️ World A: Reflector (PrimeNode)',
+        's3_a_title' => '🅰️ World A: Reflector (SQLink)',
         's3_a_desc' => 'This is your "home". You are always here after startup.<br>You talk to stations on Talkgroups.',
         's3_b_title' => '🅱️ World B: EchoLink (Global)',
         's3_b_desc' => 'Want to talk to someone from USA, Japan, or another city?',
@@ -152,7 +152,7 @@ $H = [
         's6_title' => '6. Power & Updates',
         's6_text' => 'In the <strong>Power</strong> tab, you control the life of your Pi.',
         's6_reb' => '<strong>🔄 Reboot / Shutdown:</strong> Safe system shutdown. Do not pull the plug, SD card hates it!',
-        's6_upd' => '<strong>☁️ Update System:</strong> Click the green button to get new features. Hotspot pulls fixes from PrimeNode repository.',
+        's6_upd' => '<strong>☁️ Update System:</strong> Click the green button to get new features. Hotspot pulls fixes from GitHub.',
         's6_rst' => '<strong>♻️ Restart SvxLink Service:</strong> "Cure for everything". If dashboard freezes or sound is lost - click this. Takes 5-10 seconds.',
 
         's7_title' => '7. Tips & New Features (Good to know)',
@@ -220,8 +220,8 @@ $H = [
             <?php echo $H[$lang]['s2_step1']; ?><br>
             <?php echo $H[$lang]['s2_step2']; ?><br>
             <?php echo $H[$lang]['s2_step3']; ?><br><br>
-            <?php echo $H[$lang]['s2_ssid']; ?> <span style="color:#FF9800; font-size:1.1em; font-weight:bold;">PrimeNode_WiFi_AP</span><br>
-            <?php echo $H[$lang]['s2_pass']; ?> <code>primenode123</code><br>
+            <?php echo $H[$lang]['s2_ssid']; ?> <span style="color:#FF9800; font-size:1.1em; font-weight:bold;">SQLink_WiFi_AP</span><br>
+            <?php echo $H[$lang]['s2_pass']; ?> <code>sqlink123</code><br>
             <?php echo $H[$lang]['s2_addr']; ?> <a href="http://192.168.4.1" target="_blank" style="color:#FF9800; font-weight:bold;">192.168.4.1</a><br><br>
             <?php echo $H[$lang]['s2_end']; ?>
         </div>

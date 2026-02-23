@@ -2,22 +2,11 @@
 import sys
 import os
 import json
-import configparser
 
 CONFIG_FILE = "/etc/svxlink/svxlink.conf"
 INPUT_JSON = "/tmp/svx_new_settings.json"
 RADIO_JSON = "/var/www/html/radio_config.json"
 NODE_INFO_FILE = "/etc/svxlink/node_info.json"
-
-def read_current_config(path):
-    config = configparser.ConfigParser(interpolation=None, strict=False)
-    config.optionxform = str
-    if os.path.exists(path):
-        try:
-            config.read(path)
-        except:
-            pass
-    return config
 
 def load_lines(path):
     if not os.path.exists(path): return []
@@ -26,35 +15,30 @@ def load_lines(path):
 def save_lines(path, lines):
     with open(path, 'w', encoding='utf-8') as f: f.writelines(lines)
 
-def sanitize_lines(lines):
-    seen_headers = set()
-    clean_lines = []
-    skip_mode = False
-    for line in lines:
-        stripped = line.strip()
-        if stripped.startswith("[") and stripped.endswith("]"):
-            if stripped in seen_headers:
-                skip_mode = True
-            else:
-                seen_headers.add(stripped)
-                skip_mode = False
-                clean_lines.append(line)
-        else:
-            if not skip_mode:
-                clean_lines.append(line)
-    return clean_lines
-
-def update_section_map(lines, section, key_val_map):
+def remove_key_from_section(lines, section, key):
     new_lines = []
     in_section = False
     section_header = f"[{section}]"
-    section_exists = False
     
     for line in lines:
-        if line.strip() == section_header:
-            section_exists = True
-            break
+        stripped = line.strip()
+        if stripped.startswith("[") and stripped.endswith("]"):
+            in_section = (stripped == section_header)
+
+        if in_section and stripped.startswith(f"{key}=") and not stripped.startswith(("#", ";")):
+            continue
             
+        new_lines.append(line)
+    return new_lines
+
+def update_key_in_lines(lines, section, key, value):
+    new_lines = []
+    in_section = False
+    key_updated = False
+    
+    section_header = f"[{section}]"
+    
+    section_exists = any(line.strip() == section_header for line in lines)
     if not section_exists:
         lines.append(f"\n{section_header}\n")
 
@@ -62,239 +46,204 @@ def update_section_map(lines, section, key_val_map):
         stripped = line.strip()
         if stripped.startswith("[") and stripped.endswith("]"):
             in_section = (stripped == section_header)
-            new_lines.append(line)
-            continue
+        
+        if in_section and "=" in stripped and not stripped.startswith(("#", ";")):
+            parts = stripped.split("=", 1)
+            current_key = parts[0].strip()
+            
+            if current_key == key:
+                if not key_updated:
+                    new_lines.append(f"{key}={value}\n")
+                    key_updated = True
+                else:
+                    pass 
+                continue 
 
-        if in_section:
-            if "=" in stripped and not stripped.startswith(("#", ";")):
-                current_key = stripped.split("=", 1)[0].strip()
-                if current_key in key_val_map:
-                    continue 
-            new_lines.append(line)
-        else:
-            new_lines.append(line)
+        new_lines.append(line)
 
-    final_lines = []
-    in_tgt = False
-    inserted = False
-    
-    for line in new_lines:
-        final_lines.append(line)
-        s = line.strip()
-        if s == section_header:
-            in_tgt = True
-            for k, v in key_val_map.items():
-                if v is not None:
-                    final_lines.append(f"{k}={v}\n")
-            inserted = True
-    
-    return final_lines
+    if not key_updated:
+        final_lines = []
+        in_tgt_sec = False
+        added = False
+        for l in new_lines:
+            s = l.strip()
+            if s == section_header:
+                in_tgt_sec = True
+                final_lines.append(l)
+                continue
+            if in_tgt_sec and s.startswith("["):
+                if not added:
+                    final_lines.append(f"{key}={value}\n")
+                    added = True
+                in_tgt_sec = False
+            final_lines.append(l)
+        if in_tgt_sec and not added:
+             final_lines.append(f"{key}={value}\n")
+             added = True
+        return final_lines
+
+    return new_lines
 
 def main():
-
-    new_data = {}
-    if os.path.exists(INPUT_JSON):
-        try:
-            with open(INPUT_JSON, 'r') as f: new_data = json.load(f)
-        except: pass
-
-    current_conf = read_current_config(CONFIG_FILE)
-
-    radio_cfg = {}
-    if os.path.exists(RADIO_JSON):
-        try:
-            with open(RADIO_JSON, 'r') as rf: radio_cfg = json.load(rf)
-        except: pass
-
-    def smart_get(key, section, conf_key, default):
-
-        if key in new_data:
-            return new_data[key]
-
-        if section and conf_key and current_conf.has_section(section):
-            val = current_conf.get(section, conf_key, fallback=None)
-            if val is not None: return val
-            
-        if key in radio_cfg:
-            return radio_cfg[key]
-            
-        return default
-
-    def get_radio_val(key, default):
-        return new_data.get(key, radio_cfg.get(key, default))
-
-    radio_type = get_radio_val('radio_type', 'cm108')
-    serial_port = get_radio_val('serial_port', '/dev/ttyS2')
-    hid_device = get_radio_val('hid_device', '/dev/hidraw0')
-    default_audio = 'alsa:plughw:1' if radio_type == 'sa818' else 'alsa:plughw:0'
-    audio_dev = get_radio_val('audio_dev', default_audio)
-    audio_chan = get_radio_val('audio_chan', '0')
-    gpio_ptt = get_radio_val('gpio_ptt', '12')
-    gpio_sql = get_radio_val('gpio_sql', '16')
-    rx_freq = get_radio_val('rx', '')
-    tx_freq = get_radio_val('tx', '')
-    ctcss = get_radio_val('ctcss', '0')
-    desc = get_radio_val('desc', '')
-    my_call = smart_get('Callsign', 'ReflectorLogic', 'CALLSIGN', '')
-    my_pass = smart_get('Password', 'ReflectorLogic', 'AUTH_KEY', '')
-    my_host = smart_get('Host', 'ReflectorLogic', 'HOSTS', 'sm3.svxlink.org')
-    my_port = smart_get('Port', 'ReflectorLogic', 'HOST_PORT', '5300')
-    def_tg  = smart_get('DefaultTG', 'ReflectorLogic', 'DEFAULT_TG', '0')
-    mon_tgs = smart_get('MonitorTGs', 'ReflectorLogic', 'MONITOR_TGS', '')
-    ann_tg = smart_get('AnnounceTG', 'ReflectorLogic', 'TGREANON_ENABLE', '1')
-    beep   = smart_get('Beep3Tone', 'ReflectorLogic', 'TGSTBEEP_ENABLE', '1')
-    roger  = smart_get('RogerBeep', 'SimplexLogic', 'RGR_SOUND_ALWAYS', '0')
-    lang   = smart_get('DEFAULT_LANG', 'ReflectorLogic', 'DEFAULT_LANG', 'pl_PL')
-    el_call = smart_get('EL_Callsign', 'ModuleEchoLink', 'CALLSIGN', '')
-    el_pass = smart_get('EL_Password', 'ModuleEchoLink', 'PASSWORD', '')
-    el_sys  = smart_get('EL_Sysop', 'ModuleEchoLink', 'SYSOPNAME', '')
-    el_loc  = smart_get('EL_Location', 'ModuleEchoLink', 'LOCATION', '')
-    el_desc = smart_get('EL_Desc', 'ModuleEchoLink', 'DESCRIPTION', '')
-    el_prox = smart_get('EL_ProxyHost', 'ModuleEchoLink', 'PROXY_SERVER', '')
-    qth_city = smart_get('qth_city', None, None, radio_cfg.get('qth_city', ''))
-    qth_loc  = smart_get('qth_loc', None, None, radio_cfg.get('qth_loc', ''))
-    qth_name = smart_get('qth_name', None, None, radio_cfg.get('qth_name', ''))
-    loc_parts = []
-    if qth_city: loc_parts.append(qth_city)
-    if qth_loc: loc_parts.append(qth_loc)
-    if qth_name: loc_parts.append(f"(Op: {qth_name})")
-    location_str = f'"{", ".join(loc_parts)}"'
-
-    node_info = {
-        "Location": qth_city, "Locator": qth_loc, "Sysop": qth_name,
-        "TXFREQ": tx_freq, "RXFREQ": rx_freq, "CTCSS": ctcss,
-        "DefaultTG": def_tg, "Mode": "FM", "Type": "1",
-        "Website": "http://primenode.pl"
-    }
-    try:
-        with open(NODE_INFO_FILE, 'w') as nf: json.dump(node_info, nf, indent=4)
-        os.chmod(NODE_INFO_FILE, 0o644)
-    except: pass
+    if not os.path.exists(INPUT_JSON): sys.exit(1)
+    with open(INPUT_JSON, 'r') as f: data = json.load(f)
 
     lines = load_lines(CONFIG_FILE)
-    lines = sanitize_lines(lines)
+    lines = remove_key_from_section(lines, "GLOBAL", "DEFAULT_LANG")
 
-    ref_map = {
-        "CALLSIGN": my_call, "AUTH_KEY": my_pass,
-        "HOSTS": my_host, "HOST_PORT": my_port,
-        "DEFAULT_TG": def_tg, "MONITOR_TGS": mon_tgs,
-        "TG_SELECT_TIMEOUT": "30", "TMP_MONITOR_TIMEOUT": "3600",
-        "TGSTBEEP_ENABLE": beep, "TGREANON_ENABLE": ann_tg,
-        "REFCON_ENABLE": "1", "LOCATION": location_str,
-        "DEFAULT_LANG": lang, "NODE_INFO_FILE": NODE_INFO_FILE
-    }
-    lines = update_section_map(lines, "ReflectorLogic", ref_map)
-    simp_call = my_call
-    ann_call = smart_get('AnnounceCall', None, None, '1')
-    if ann_call == '0':
-        simp_call = ""
+    serial_port = data.get('SerialPort', '/dev/ttyS2')
+    gpio_ptt = data.get('GpioPtt', '12')
+    gpio_sql = data.get('GpioSql', '16')
 
-    simp_map = {
-        "CALLSIGN": simp_call, "RGR_SOUND_ALWAYS": roger,
-        "DEFAULT_LANG": lang
-    }
-    lines = update_section_map(lines, "SimplexLogic", simp_map)
+    modules_str = data.get('Modules')
+    if modules_str is not None:
+        raw_list = [m.strip() for m in modules_str.split(',')]
+        fixed_list = []
+        for m in raw_list:
+            if m in ["Help", "Parrot", "EchoLink"]:
+                fixed_list.append("Module" + m)
+            elif m: 
+                fixed_list.append(m)
 
-    el_map = {
-        "CALLSIGN": el_call, "PASSWORD": el_pass,
-        "SYSOPNAME": el_sys, "LOCATION": el_loc,
-        "DESCRIPTION": el_desc, "PROXY_SERVER": el_prox
-    }
-    lines = update_section_map(lines, "ModuleEchoLink", el_map)
-
-    rx1_map = {
-        "TYPE": "Local",
-        "AUDIO_DEV": audio_dev,
-        "AUDIO_CHANNEL": audio_chan,
-        "SQL_START_DELAY": "0", "SQL_DELAY": "0", "SQL_HANGTIME": "20",
-        "LIMITER_THRESH": "-6", "PEAK_METER": "1",
-        "DTMF_DEC_TYPE": "INTERNAL", "DTMF_MUTING": "1", "DTMF_HANGTIME": "40",
-        "DTMF_SERIAL": serial_port
-    }
-
-    if radio_type == 'sa818':
-
-        rx1_map["SQL_DET"] = "CTCSS"
-        rx1_map["CTCSS_MODE"] = "2"
-        ctcss_float = "0"
-        if ctcss and ctcss != "0000":
-            try:
-                ctcss_float = str(float(ctcss) / 10.0)
-            except: pass
+        el_pass = data.get('EL_Password', '')
+        if not el_pass:
+            fixed_list = [m for m in fixed_list if 'EchoLink' not in m]
             
-        rx1_map["CTCSS_FQ"] = ctcss_float
-        rx1_map["PREAMP"] = "6"
-        rx1_map["DEEMPHASIS"] = "0"
-        rx1_map["SQL_GPIOD_LINE"] = None
-        rx1_map["SQL_GPIOD_CHIP"] = None
-        rx1_map["SQL_GPIOD_ACTIVE_LOW"] = None
-    else:
+        data['Modules'] = ",".join(fixed_list)
 
-        rx1_map["SQL_DET"] = "GPIOD"
-        rx1_map["SQL_GPIOD_CHIP"] = "gpiochip0"
-        rx1_map["SQL_GPIOD_LINE"] = gpio_sql
-        rx1_map["PREAMP"] = "0"
-        rx1_map["DEEMPHASIS"] = "0"
-        rx1_map["CTCSS_MODE"] = None
-        rx1_map["CTCSS_FQ"] = None
+    qth_name = data.get('qth_name')
+    qth_city = data.get('qth_city')
+    qth_loc = data.get('qth_loc')
 
-    lines = update_section_map(lines, "Rx1", rx1_map)
+    rx_freq = ""
+    tx_freq = ""
+    ctcss = "0"
+    
+    radio_data = {}
+    if os.path.exists(RADIO_JSON):
+        try:
+            with open(RADIO_JSON, 'r') as rf:
+                radio_data = json.load(rf)
+                rx_freq = radio_data.get("rx", "")
+                tx_freq = radio_data.get("tx", "")
+                ctcss = radio_data.get("ctcss", "0")
+        except: pass
+    
+    is_echolink = "0"
+    if data.get('Modules') and ("EchoLink" in data['Modules']):
+        is_echolink = "1"
 
-    tx1_map = {
-        "TYPE": "Local",
-        "AUDIO_DEV": audio_dev,
-        "AUDIO_CHANNEL": audio_chan,
-        "PTT_HANGTIME": "100", "TIMEOUT": "300", "TX_DELAY": "500",
-        "DTMF_TONE_LENGTH": "100", "DTMF_TONE_SPACING": "50", "DTMF_DIGIT_PWR": "-15"
+    location_conf_val = None
+
+    if qth_city is not None:
+        s_name = qth_name if qth_name else ""
+        s_city = qth_city if qth_city else ""
+        s_loc = qth_loc if qth_loc else ""
+
+        node_info_data = {
+            "Location": s_city,
+            "Locator": s_loc,
+            "Sysop": s_name,
+            "LAT": "0.0", "LONG": "0.0",
+            "TXFREQ": tx_freq, "RXFREQ": rx_freq, "CTCSS": ctcss,
+            "DefaultTG": data.get('DefaultTG', '0'),
+            "Mode": "FM", "Type": "1", 
+            "Echolink": is_echolink,
+            "Website": "http://sqlink.pl",
+            "LinkedTo": "SQLink"
+        }
+
+        try:
+            with open(NODE_INFO_FILE, 'w') as nf: json.dump(node_info_data, nf, indent=4)
+            os.chmod(NODE_INFO_FILE, 0o644) 
+        except Exception as e: print(f"Error writing node_info.json: {e}")
+
+        loc_parts = []
+        if s_city: loc_parts.append(s_city)
+        if s_loc: loc_parts.append(s_loc)
+        if s_name: loc_parts.append(f"(Op: {s_name})")
+        location_conf_val = f'"{", ".join(loc_parts)}"'
+
+    main_callsign = data.get('Callsign')
+    announce_call = data.get('AnnounceCall', '1')
+    
+    reflector_callsign = None
+    simplex_callsign = None
+    short_ident = None
+    long_ident = None
+
+    if main_callsign is not None:
+        reflector_callsign = main_callsign
+        if announce_call == "1":
+            simplex_callsign = main_callsign
+            short_ident = "60"
+            long_ident = "60"
+        else:
+            simplex_callsign = ""
+            short_ident = "0"
+            long_ident = "0"
+
+    mapping = {
+        "ReflectorLogic": {
+            "CALLSIGN": reflector_callsign,
+            "AUTH_KEY": data.get('Password'),
+            "HOSTS": data.get('Host'),
+            "HOST_PORT": data.get('Port'),
+            "DEFAULT_TG": data.get('DefaultTG'),
+            "MONITOR_TGS": data.get('MonitorTGs'),
+            "TG_SELECT_TIMEOUT": data.get('TgTimeout'),
+            "TMP_MONITOR_TIMEOUT": data.get('TmpTimeout'),
+            "TGSTBEEP_ENABLE": data.get('Beep3Tone'),
+            "TGREANON_ENABLE": data.get('AnnounceTG'),
+            "REFCON_ENABLE": data.get('RefStatusInfo'),
+            "UDP_HEARTBEAT_INTERVAL": "15",
+            "LOCATION": location_conf_val,
+            "NODE_INFO_FILE": NODE_INFO_FILE,
+            "DEFAULT_LANG": data.get('DEFAULT_LANG')
+        },
+        "SimplexLogic": {
+            "CALLSIGN": simplex_callsign,
+            "RGR_SOUND_ALWAYS": data.get('RogerBeep'),
+            "MODULES": data.get('Modules'),
+            "SHORT_IDENT_INTERVAL": short_ident,
+            "LONG_IDENT_INTERVAL": long_ident,
+            "DEFAULT_LANG": data.get('DEFAULT_LANG')
+        },
+        "ModuleEchoLink": {
+            "CALLSIGN": data.get('EL_Callsign'),
+            "PASSWORD": data.get('EL_Password'),
+            "SYSOPNAME": data.get('EL_Sysop'),
+            "LOCATION": data.get('EL_Location'),
+            "DESCRIPTION": data.get('EL_Desc'),
+            "PROXY_SERVER": data.get('EL_ProxyHost'),
+            "TIMEOUT": data.get('EL_ModTimeout'),
+            "LINK_IDLE_TIMEOUT": data.get('EL_IdleTimeout')
+        },
+        "Rx1": {
+            "DTMF_SERIAL": serial_port,
+            "SQL_GPIOD_LINE": gpio_sql
+        },
+        "Tx1": {
+            "PTT_GPIOD_LINE": gpio_ptt
+        }
     }
 
-    if radio_type == 'sa818':
-
-        tx1_map["PTT_TYPE"] = "Hidraw"
-        tx1_map["HID_DEVICE"] = hid_device
-        tx1_map["HID_PTT_PIN"] = "GPIO3"
-        tx1_map["PREEMPHASIS"] = "0"
-        tx1_map["PTT_GPIOD_LINE"] = None
-        tx1_map["PTT_GPIOD_CHIP"] = None
-        tx1_map["PTT_GPIOD_ACTIVE_LOW"] = None
-    else:
-
-        tx1_map["PTT_TYPE"] = "GPIOD"
-        tx1_map["PTT_GPIOD_CHIP"] = "gpiochip0"
-        tx1_map["PTT_GPIOD_LINE"] = gpio_ptt
-        tx1_map["PREEMPHASIS"] = "1"
-        tx1_map["HID_DEVICE"] = None
-        tx1_map["HID_PTT_PIN"] = None
-
-    lines = update_section_map(lines, "Tx1", tx1_map)
+    for section, keys in mapping.items():
+        for cfg_key, json_val in keys.items():
+            if json_val is not None:
+                lines = update_key_in_lines(lines, section, cfg_key, str(json_val))
 
     save_lines(CONFIG_FILE, lines)
 
-    radio_cfg.update({
-        'type': radio_type,
-        'rx': rx_freq,
-        'tx': tx_freq,
-        'ctcss': ctcss,
-        'desc': desc,
-        'audio_dev': audio_dev,
-        'audio_chan': audio_chan,
-        'serial_port': serial_port,
-        'hid_device': hid_device,
-        'gpio_ptt': gpio_ptt,
-        'gpio_sql': gpio_sql,
-        'qth_name': qth_name,
-        'qth_city': qth_city,
-        'qth_loc': qth_loc
-    })
-    
-    try:
-        with open(RADIO_JSON, 'w') as f: json.dump(radio_cfg, f, indent=4)
-    except: pass
-    
-    if radio_type == 'sa818' and rx_freq and tx_freq:
-        os.system("chmod +x /usr/local/bin/sa818.py")
-        cmd = f"/usr/local/bin/sa818.py --port {serial_port} --rx {rx_freq} --tx {tx_freq} --ctcss {ctcss} --squelch 4"
-        os.system(f"{cmd} > /tmp/sa818_prog.log 2>&1 &")
+    if 'qth_name' in data: radio_data['qth_name'] = qth_name if qth_name else ""
+    if 'qth_city' in data: radio_data['qth_city'] = qth_city if qth_city else ""
+    if 'qth_loc' in data: radio_data['qth_loc'] = qth_loc if qth_loc else ""
+
+    radio_data['serial_port'] = serial_port
+    radio_data['gpio_ptt'] = gpio_ptt
+    radio_data['gpio_sql'] = gpio_sql
+
+    with open(RADIO_JSON, 'w') as f: json.dump(radio_data, f, indent=4)
 
     print("SUKCES")
 
