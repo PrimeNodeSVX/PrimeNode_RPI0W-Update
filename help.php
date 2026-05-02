@@ -57,16 +57,54 @@ $H = [
         'title' => 'PrimeNode Command Center by SQ7UTP',
         'subtitle' => 'Universal system for platforms:',
         'hw_desc' => '<strong style="color: #4CAF50;">Raspberry Pi (Zero W, 2W, 3, 3B, 3B+, 4)</strong>',
-        's1_title' => '1. Dashboard',
-        's1_text' => 'Monitor your device status and live traffic in real-time.',
-        's2_title' => '2. Radio Modes',
-        's2_shari' => '🛰️ <strong>SHARI / SA818:</strong> Fully software-controlled integrated radio module.',
-        's2_cm108' => '📻 <strong>CM108 USB + Radio:</strong> External radio interface via GPIO pins.',
-        's3_title' => '3. Roaming & Networks',
-        's3_switch' => '📞 <strong>Remote Switching:</strong> Dial <span style="color:#FF9800; font-weight:bold;">555 + ID + #</span> on your radio to change servers.',
-        's5_ssh' => '💻 <strong>Web Terminal:</strong> Browser-based console access. Please stop it after use to save system resources.',
-        'qa_q3' => '❓ No WiFi access?',
-        'qa_a3' => '✅ Connect to <strong>PrimeNode_AP</strong> (pass: <code>primenode123</code>) at <code>192.168.4.1</code>.'
+        
+        's1_title' => '1. Your Dashboard',
+        's1_text' => 'This is the heart of your device, where you monitor parameters in real-time and see the current connection status.',
+        's1_msg' => '📢 Message Bar:',
+        's1_msg_d' => 'The blue bar at the very top of the page displays direct messages from the Network Administrator regarding maintenance or updates.',
+        's1_stat' => '🚦 Status Bar:',
+        's1_stat_d' => 'The color below the header indicates the SvxLink health: <span style="color:#4CAF50; font-weight:bold;">GREEN</span> means working properly, while <span style="color:#F44336; font-weight:bold;">RED</span> signals a service error.',
+        's1_mon' => '📺 Live Monitor:',
+        's1_mon_stby' => '⚪ <strong>Standby:</strong> Silence on the air, hotspot is listening.',
+        's1_mon_rx' => '🟢 <span style="color:#4CAF50; font-weight:bold;">RECEIVING (RX):</span> A local station is transmitting to the Hotspot (You are talking).',
+        's1_mon_tx' => '🟠 <span style="color:#FF9800; font-weight:bold;">TRANSMITTING (TX):</span> The hotspot is transmitting a signal from the internet network.',
+        's1_mon_info' => '✨ <strong>Smart Info:</strong> The system automatically identifies the speaker, displaying their Name and City below the callsign.',
+        
+        's2_title' => '2. Radio Modes (Hardware)',
+        's2_text' => 'PrimeNode supports various hardware configurations, which you can select in the <strong>Radio</strong> tab:',
+        's2_shari' => '🛰️ <strong>SHARI / SA818 Module:</strong> Integrated radio solution. You program the frequency, CTCSS codes, and Squelch directly from the web panel. The system will send the data to the module after clicking Save.',
+        's2_cm108' => '📻 <strong>USB Card (CM108) + Radio:</strong> Classic mode for external radios (e.g., Baofeng/Quansheng). Allows the use of custom GPIO pins for PTT and SQL signals.',
+
+        's3_title' => '3. Roaming and Network Management',
+        's3_text' => 'The system allows for instant switching between multiple servers (Reflectors).',
+        's3_mgr' => '🛠️ <strong>Network Manager:</strong> In the <strong>Config</strong> tab, you can define your own list of servers (e.g., FM-Poland, SQLink, local servers), assigning them unique names and login credentials.',
+        's3_switch' => '📞 <strong>Radio Switching (Code 555):</strong> You don\'t need to open the website! Type the code on your radio: <span style="color:#FF9800; font-weight:bold;">555 + network ID + #</span> (e.g., 5551# will switch to server ID 1).',
+        's3_auto' => '♻️ <strong>Automation:</strong> After issuing the command, the system will automatically restart the service and connect to the new reflector, confirming it with a voice announcement.',
+
+        's4_title' => '4. DTMF Tab (Interactive Remote)',
+        's4_text' => 'Total freedom in controlling and personalizing the interface.',
+        's4_move' => '✨ <strong>Drag & Drop:</strong> You can freely change the button layout! Just click and hold a tile with your mouse or finger and drag it to a new location.',
+        's4_tabs' => '📂 <strong>Custom Tabs:</strong> Create your own button groups (e.g., "Favorite TGs", "EchoLink UK").',
+        's4_add' => '🎛️ <strong>Editor:</strong> At the bottom of the DTMF tab, you will find a form that allows you to add a new button (Name + TG Number) to the currently selected list.',
+
+        's5_title' => '5. SSH Terminal and Administration',
+        's5_text' => 'Manage the system directly from your browser.',
+        's5_ssh' => '💻 <strong>Web Terminal:</strong> A modern SSH console available in a separate tab. It allows you to enter system commands without using programs like PuTTY.',
+        's5_ssh_hint' => '💡 <strong>Remember:</strong> Only start the terminal with the "START" button when you need it. After finishing your work, click "STOP" to free up the device\'s RAM.',
+        's5_pwr' => '🔄 <strong>Power:</strong> Use the Reboot/Shutdown options in the panel. Unplugging the power suddenly may corrupt the SD card data.',
+
+        's6_title' => '6. What\'s New & V1.3 Features',
+        's6_pulse' => '🔴 <strong>TX Visualization:</strong> Station tiles in the <em>Nodes</em> tab and dots on the map pulse red when a person is talking.',
+        's6_icons' => '📱 <strong>Device Icons:</strong> You can see who is using a Radio (📻), Phone (📱), or PC (💻).',
+        's6_smart' => '🎛️ <strong>Smart Config:</strong> You no longer need to type TG numbers manually in the configuration. Click the field, and a selection panel will open with your custom groups from the DTMF tab.',
+
+        'qa_title' => 'Quick Help (Q&A)',
+        'qa_q1' => '❓ EchoLink won\'t connect (Status: Disconnected).',
+        'qa_a1' => '✅ If you are using mobile internet (LTE Hotspot), carriers often block ports. Use the <strong>♻️ Auto-Proxy</strong> function in the <strong>Config</strong> tab to bypass these blocks.',
+        'qa_q2' => '❓ I see someone talking on the screen (RX), but I hear nothing on the radio.',
+        'qa_a2' => '✅ You most likely have a different <strong>CTCSS</strong> code set on your radio than on the Hotspot. Check the settings in the Radio tab. It\'s best to set the code to 0 on both devices for testing.',
+        'qa_q3' => '❓ How do I access the panel when I don\'t have my WiFi router nearby?',
+        'qa_a3' => '✅ The PrimeNode system has a rescue mode. Turn it on away from your home network, wait 2 minutes, and it will create a WiFi network called <strong>PrimeNode_AP</strong> (password: <code>primenode123</code>). The page address is then <code>192.168.4.1</code>.'
     ]
 ];
 ?>
