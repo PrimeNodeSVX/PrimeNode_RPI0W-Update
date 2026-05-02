@@ -122,11 +122,28 @@ if ! grep -q "svx_event_logger.sh" /etc/rc.local; then
     sed -i '/exit 0/i /usr/local/bin/svx_event_logger.sh &' /etc/rc.local
 fi
 
+NEED_RELOAD=0
+
 if grep -q "--logfile=/var/log/svxlink" /etc/systemd/system/svxlink.service 2>/dev/null; then
-    echo ">> Naprawiam ścieżkę logów w systemd..."
+    echo ">> Naprawiam główny plik svxlink.service..."
     sed -i 's|--logfile=/var/log/svxlink|--logfile=/dev/shm/svxlink.log|g' /etc/systemd/system/svxlink.service
+    NEED_RELOAD=1
+fi
+
+if [ -f "/etc/systemd/system/svxlink.service.d/override.conf" ]; then
+    if grep -q "--logfile=/var/log/svxlink" /etc/systemd/system/svxlink.service.d/override.conf 2>/dev/null; then
+        echo ">> Naprawiam plik override.conf..."
+        sed -i 's|--logfile=/var/log/svxlink|--logfile=/dev/shm/svxlink.log|g' /etc/systemd/system/svxlink.service.d/override.conf
+        NEED_RELOAD=1
+    fi
+fi
+
+if [ "$NEED_RELOAD" = "1" ]; then
+    echo ">> Zastosowano łatki ścieżki logów. Restart usług..."
     systemctl daemon-reload
+    rm -f /dev/shm/svxlink.log # Usuwamy blokujący plik z prawami roota
     systemctl restart svxlink
+    sleep 2
 fi
 
 pkill -9 -f "svx_event_logger.sh"
