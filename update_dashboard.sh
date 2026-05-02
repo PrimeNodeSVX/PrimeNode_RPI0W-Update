@@ -87,6 +87,7 @@ chmod -R 755 $WWW_DIR
 chmod 666 $WWW_DIR/dtmf_custom.json 2>/dev/null
 chmod 666 $WWW_DIR/radio_config.json 2>/dev/null
 chmod 666 /etc/svxlink/networks.json 2>/dev/null
+
 cat << 'EOF' > /usr/local/bin/svx_event_logger.sh
 #!/bin/bash
 LOG_DEST="/var/www/html/ram/svx_events.log"
@@ -97,7 +98,7 @@ mkdir -p /var/www/html/ram
 touch "$LOG_DEST"
 chmod 666 "$LOG_DEST"
 
-# Śledzimy tylko plik w RAM-dysku zdefiniowany w svxlink.conf[cite: 5]
+# Śledzimy tylko plik w RAM-dysku zdefiniowany w svxlink.conf
 tail -F -n 50 /dev/shm/svxlink.log 2>/dev/null | while read -r line; do
     echo "$line" >> "$LOG_DEST"
     # Utrzymywanie krótkiej historii dla panelu WWW
@@ -119,6 +120,13 @@ chmod +x /usr/local/bin/svx_event_logger.sh
 if ! grep -q "svx_event_logger.sh" /etc/rc.local; then
     sed -i '/exit 0/i mkdir -p /var/www/html/ram && chmod 777 /var/www/html/ram' /etc/rc.local
     sed -i '/exit 0/i /usr/local/bin/svx_event_logger.sh &' /etc/rc.local
+fi
+
+if grep -q "--logfile=/var/log/svxlink" /etc/systemd/system/svxlink.service 2>/dev/null; then
+    echo ">> Naprawiam ścieżkę logów w systemd..."
+    sed -i 's|--logfile=/var/log/svxlink|--logfile=/dev/shm/svxlink.log|g' /etc/systemd/system/svxlink.service
+    systemctl daemon-reload
+    systemctl restart svxlink
 fi
 
 pkill -9 -f "svx_event_logger.sh"
