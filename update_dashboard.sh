@@ -13,6 +13,13 @@ if ! command -v shellinaboxd >/dev/null 2>&1; then
     echo ">> Instalacja ShellInABox..."
     apt update && apt install shellinabox -y
     systemctl stop shellinabox
+    systemctl disable shellinabox
+fi
+
+if ! command -v shellinaboxd >/dev/null 2>&1; then
+    echo ">> Instalacja ShellInABox..."
+    apt update && apt install shellinabox -y
+    systemctl stop shellinabox
 fi
 
 OLD_HASH=""
