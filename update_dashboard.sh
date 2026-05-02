@@ -71,6 +71,9 @@ if compgen -G "$GIT_DIR/*.py" > /dev/null; then
     chmod +x /usr/local/bin/*.py
 fi
 
+echo ">> Synchronizacja konfiguracji radia (Python)..."
+python3 /usr/local/bin/update_svx_full.py
+
 for script in $GIT_DIR/*.sh; do
     if [ -f "$script" ]; then
         filename=$(basename "$script")
@@ -98,10 +101,8 @@ mkdir -p /var/www/html/ram
 touch "$LOG_DEST"
 chmod 666 "$LOG_DEST"
 
-# Śledzimy tylko plik w RAM-dysku zdefiniowany w svxlink.conf
 tail -F -n 50 /dev/shm/svxlink.log 2>/dev/null | while read -r line; do
     echo "$line" >> "$LOG_DEST"
-    # Utrzymywanie krótkiej historii dla panelu WWW
     tail -n 50 "$LOG_DEST" > "$LOG_DEST.tmp" && mv "$LOG_DEST.tmp" "$LOG_DEST"
     chmod 666 "$LOG_DEST"
 
@@ -124,24 +125,20 @@ fi
 
 NEED_RELOAD=0
 
-if grep -q "--logfile=/var/log/svxlink" /etc/systemd/system/svxlink.service 2>/dev/null; then
-    echo ">> Naprawiam główny plik svxlink.service..."
-    sed -i 's|--logfile=/var/log/svxlink|--logfile=/dev/shm/svxlink.log|g' /etc/systemd/system/svxlink.service
-    NEED_RELOAD=1
-fi
-
-if [ -f "/etc/systemd/system/svxlink.service.d/override.conf" ]; then
-    if grep -q "--logfile=/var/log/svxlink" /etc/systemd/system/svxlink.service.d/override.conf 2>/dev/null; then
-        echo ">> Naprawiam plik override.conf..."
-        sed -i 's|--logfile=/var/log/svxlink|--logfile=/dev/shm/svxlink.log|g' /etc/systemd/system/svxlink.service.d/override.conf
-        NEED_RELOAD=1
+for svc_file in /etc/systemd/system/svxlink.service /etc/systemd/system/svxlink.service.d/override.conf; do
+    if [ -f "$svc_file" ]; then
+        if grep -q "\-\-logfile=" "$svc_file" 2>/dev/null; then
+            echo ">> Naprawiam plik systemd: $svc_file"
+            sed -i -E 's|--logfile=[^ ]+|--logfile=/dev/shm/svxlink.log|g' "$svc_file"
+            NEED_RELOAD=1
+        fi
     fi
-fi
+done
 
 if [ "$NEED_RELOAD" = "1" ]; then
     echo ">> Zastosowano łatki ścieżki logów. Restart usług..."
     systemctl daemon-reload
-    rm -f /dev/shm/svxlink.log # Usuwamy blokujący plik z prawami roota
+    rm -f /dev/shm/svxlink.log 
     systemctl restart svxlink
     sleep 2
 fi
