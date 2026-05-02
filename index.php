@@ -1,6 +1,17 @@
 <?php
     session_start();
 
+    if (isset($_POST['ssh_action'])) {
+        if ($_POST['ssh_action'] == 'start') {
+            shell_exec("sudo systemctl start shellinabox");
+            sleep(1);
+        } elseif ($_POST['ssh_action'] == 'stop') {
+            shell_exec("sudo systemctl stop shellinabox");
+        }
+        header("Location: " . $_SERVER['PHP_SELF']);
+        exit;
+    }
+
     if (isset($_GET['lang'])) {
         $_SESSION['lang'] = $_GET['lang'];
     }
@@ -8,6 +19,8 @@
 
     $TR = [
         'pl' => [
+            'sys_start' => 'START SYSTEMU...',
+            'el_init' => 'EchoLink Inicjalizacja...',
             'audio_saved' => '✅ Audio ZAPISANE.',
             'saved_restart' => 'Zapisano! Restart...',
             'radio_gpio_saved' => 'Konfiguracja Radio i GPIO Zapisana! Restart...',
@@ -47,10 +60,12 @@
             'tab_power' => 'Zasilanie',
             'tab_logs' => 'Logi',
             'tab_help' => 'Pomoc',
-            'footer_system' => 'System SQLink',
+            'footer_system' => 'System PrimeNode',
             'source_code' => 'Kod źródłowy'
         ],
         'en' => [
+            'sys_start' => 'SYSTEM START...',
+            'el_init' => 'EchoLink Initializing...',
             'audio_saved' => '✅ Audio SAVED.',
             'saved_restart' => 'Saved! Restarting...',
             'radio_gpio_saved' => 'Radio & GPIO Config Saved! Restarting...',
@@ -90,7 +105,7 @@
             'tab_power' => 'Power',
             'tab_logs' => 'Logs',
             'tab_help' => 'Help',
-            'footer_system' => 'SQLink System',
+            'footer_system' => 'PrimeNode System',
             'source_code' => 'Source Code'
         ]
     ];
@@ -159,8 +174,8 @@
         $ini_chk = parse_svx_conf('/etc/svxlink/svxlink.conf');
         $mods = $ini_chk['SimplexLogic']['MODULES'] ?? '';
         $stats['el_enabled'] = (strpos($mods, 'ModuleEchoLink') !== false || strpos($mods, 'EchoLink') !== false);
-        $stats['el_error'] = file_exists('/var/www/html/el_error.flag');
-        $stats['el_online'] = file_exists('/var/www/html/el_online.flag');
+        $stats['el_error'] = file_exists('/var/www/html/ram/el_error.flag');
+        $stats['el_online'] = file_exists('/var/www/html/ram/el_online.flag');
         echo json_encode($stats);
         exit;
     }
@@ -234,7 +249,7 @@
     $announce_status = (!empty($simplex_call_val) && $simplex_call_val !== '""') ? '1' : '0';
 
     $vals = [
-        'Callsign' => $ref['CALLSIGN'] ?? 'N0CALL', 'Host' => $ref['HOSTS'] ?? '', 'Port' => $ref['HOST_PORT'] ?? '', 'Password' => $ref['AUTH_KEY'] ?? '',
+        'Callsign' => $ref['CALLSIGN'] ?? 'N0CALL', 'Host' => $ref['HOST'] ?? $ref['HOSTS'] ?? '', 'Port' => $ref['PORT'] ?? $ref['HOST_PORT'] ?? '', 'Password' => $ref['AUTH_KEY'] ?? '',
         'DefaultTG' => $ref['DEFAULT_TG'] ?? '0', 'MonitorTGs' => $ref['MONITOR_TGS'] ?? '', 'TgTimeout' => $ref['TG_SELECT_TIMEOUT'] ?? '60',
         'TmpTimeout' => $ref['TMP_MONITOR_TIMEOUT'] ?? '3600', 'Modules' => $simp['MODULES'] ?? 'Help,Parrot,EchoLink',
         'Beep3Tone' => $ref['TGSTBEEP_ENABLE'] ?? '0', 'AnnounceTG' => $ref['TGREANON_ENABLE'] ?? '0', 'RefStatusInfo' => $ref['REFCON_ENABLE'] ?? '0',
@@ -271,12 +286,14 @@
 
     if (isset($_POST['save_radio'])) {
         $updateData = [
+            "radio_type" => $_POST['radio_type'] ?? 'gpio',
             "rx" => $_POST['rx_freq'],
             "tx" => $_POST['tx_freq'],
             "ctcss" => $_POST['ctcss_val'],
             "desc" => $_POST['radio_desc'],
             "GpioPtt" => $_POST['gpio_ptt'] ?? '12',
-            "GpioSql" => $_POST['gpio_sql'] ?? '16'
+            "GpioSql" => $_POST['gpio_sql'] ?? '16',
+            "shari_sql" => $_POST['shari_sql'] ?? '4'
         ];
         
         file_put_contents('/tmp/svx_new_settings.json', json_encode($updateData));
@@ -357,12 +374,9 @@
     $wifi_output = "";
     $wifi_scan_results = [];
     
-
     if (isset($_POST['wifi_scan'])) { 
         shell_exec('sudo nmcli dev wifi rescan'); 
-
         $raw = shell_exec('sudo LC_ALL=C.UTF-8 nmcli -t -f SSID,SIGNAL,SECURITY dev wifi list 2>&1'); 
-        
         $lines = explode("\n", $raw); 
         foreach($lines as $line) { 
             if(empty($line)) continue; 
@@ -370,7 +384,6 @@
             $sec = array_pop($parts); 
             $sig = array_pop($parts); 
             $ssid = implode(':', $parts); 
-
             if(!empty($ssid)) {
                 $wifi_scan_results[$ssid] = ['ssid'=>$ssid, 'signal'=>$sig, 'sec'=>$sec]; 
             }
@@ -391,9 +404,7 @@
     }
     
     $saved_wifi_list = [];
-
     $raw_saved = shell_exec("sudo LC_ALL=C.UTF-8 nmcli -t -f NAME,TYPE connection show | grep ':802-11-wireless' | cut -d: -f1");
-    
     if ($raw_saved) {
         $lines = explode("\n", $raw_saved);
         foreach($lines as $line) {
@@ -405,7 +416,7 @@
         sort($saved_wifi_list);
     }
 
-    $cache_file = '/tmp/sqlink_alert_cache.txt';
+    $cache_file = '/tmp/primenode_alert_cache.txt';
     $cache_time = 3600; 
     $alert_msg = "";
     
@@ -415,12 +426,12 @@
         $opts = [
             "http" => [
                 "method" => "GET",
-                "header" => "User-Agent: SQLink-Hotspot\r\n",
+                "header" => "User-Agent: PrimeNode-Hotspot\r\n",
                 "timeout" => 5
             ]
         ];
         $ctx = stream_context_create($opts);
-        $remote_msg = @file_get_contents('https://raw.githubusercontent.com/SQLinkgit/SQLink_RPI0W-Update/main/alert.txt', false, $ctx); 
+        $remote_msg = @file_get_contents('https://raw.githubusercontent.com/PrimeNodeSVX/PrimeNode_RPI0W-Update/main/alert.txt', false, $ctx); 
         
         if ($remote_msg !== false) { 
             $alert_msg = $remote_msg; 
@@ -437,7 +448,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hotspot <?php echo $vals['Callsign']; ?></title>
+    <title>PrimeNode <?php echo $vals['Callsign']; ?></title>
     <link rel="stylesheet" href="style.css?v=<?php echo time(); ?>">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
@@ -460,34 +471,61 @@
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
+
 <body>
+
+<div id="changelog-overlay" style="display: none;">
+    <div id="changelog-modal" data-version="1.0">
+        <h2 style="margin-top:0; color:#4CAF50; border-bottom: 1px solid #333; padding-bottom: 10px;">🚀 PrimeNode V1.2 - Co nowego?</h2>
+        
+        <div style="text-align: left; font-size: 14px; color: #ccc; line-height: 1.6; max-height: 50vh; overflow-y: auto; padding-right: 10px;">
+            <ul style="padding-left: 20px;">
+                <li>🌟 <b>Płynne animacje:</b> Smartfonowe, płynne przełączanie zakładek.</li>
+                <li>🗺️ <b>Stabilna Mapa (GridMapper):</b> Pełnoekranowa mapa z blokadą uciekania w "szarą pustkę".</li>
+                <li>📡 <b>Wizualizacja Nadawania (TX):</b> Kafelki węzłów i znaczniki na mapie dynamicznie pulsują na czerwono, gdy ktoś nadaje!</li>
+                <li>📱 <b>Inteligentne Ikonki:</b> Automatyczne rozpoznawanie typu węzła (Radio 📻, Aplikacja mobilna 📱, PC 💻).</li>
+                <li>ℹ️ <b>Dane Radiowe:</b> Informacje o częstotliwości (QRG) i CTCSS dodane do wyskakujących wizytówek.</li>
+                <li>⚡ <b>Szybkie Przełączanie (Quick-Dial):</b> Kliknij nadający węzeł w zakładce, aby jednym przyciskiem przejść na jego rozmowę (TG)!</li>
+                <li>🐛 <b>Stabilność API:</b> Zoptymalizowano czas odświeżania i poprawiono odczyt danych z różnych sieci (np. FM Poland vs SQLink).</li>
+            </ul>
+        </div>
+        
+        <button class="btn btn-green" style="margin-top: 20px; width: 100%; font-size: 16px; padding: 12px;" onclick="closeChangelog()">Super, rozumiem!</button>
+    </div>
+</div>
+
+<div id="loading-overlay">
+    <div class="spinner"></div>
+    <div class="loading-text" id="loading-text">Aktualizacja w toku...</div>
+    <div class="loading-subtext">Nie wyłączaj urządzenia i nie odświeżaj strony.</div>
+</div>
+
 <div class="container">
     <div class="lang-switcher">
-        <a href="?lang=pl" class="<?php echo $lang == 'pl' ? 'active' : ''; ?>"><img src="pl.svg" alt="PL"></a>
-        <a href="?lang=en" class="<?php echo $lang == 'en' ? 'active' : ''; ?>"><img src="gb.svg" alt="EN"></a>
+        <a href="?lang=pl" class="<?php echo $lang=='pl'?'active':''; ?>"><img src="flags/pl.svg" alt="PL"></a>
+        <a href="?lang=en" class="<?php echo $lang=='en'?'active':''; ?>"><img src="flags/gb.svg" alt="EN"></a>
     </div>
 
     <?php if (!empty(trim($alert_msg))): ?>
-    <div id="sq-alert" data-hash="<?php echo $alert_hash; ?>" style="background:#2196F3; color:#fff; padding:12px; font-weight:bold; border-bottom:2px solid #1976D2; font-size:14px; box-shadow: 0 2px 10px rgba(0,0,0,0.3); display:flex; justify-content:space-between; align-items:center;">
+    <div id="pn-alert" data-hash="<?php echo $alert_hash; ?>" style="background:#2196F3; color:#fff; padding:12px; font-weight:bold; border-bottom:2px solid #1976D2; font-size:14px; box-shadow: 0 2px 10px rgba(0,0,0,0.3); display:flex; justify-content:space-between; align-items:center;">
+        <button onclick="dismissAlert('<?php echo $alert_hash; ?>')" style="background:none; border:none; color:#fff; font-weight:bold; font-size:16px; cursor:pointer; padding:0 10px; opacity:0.8;">&#10005;</button>
         <span style="flex:1; text-align:center;">📢 INFO: <?php echo htmlspecialchars($alert_msg); ?></span>
-        <button onclick="dismissAlert('<?php echo $alert_hash; ?>')" style="background:none; border:none; color:#fff; font-weight:bold; font-size:16px; cursor:pointer; padding:0 5px; opacity:0.8;">&#10005;</button>
     </div>
     <?php endif; ?>
     
     <header>
-        <div style="position: relative; display: flex; justify-content: center; align-items: center; min-height: 100px;">
-            <img src="sqlink4.png" alt="SQLink" style="position: absolute; left: 15%; top: 50%; transform: translateY(-50%); height: 90px; width: auto; display:none;" class="desktop-only">
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding-top: 10px; padding-bottom: 10px;">
+            <img src="primenode_logo.png" alt="PrimeNode" style="height: 120px; width: auto; margin-bottom: 5px;">
             <h1 style="margin: 0; z-index: 2;">Hotspot <?php echo $vals['Callsign']; ?></h1>
-            <img src="ant3.PNG" alt="Radio" style="position: absolute; right: 15%; top: 50%; transform: translateY(-50%); height: 90px; width: auto; display:none;" class="desktop-only">
         </div>
         <div class="status-bar" style="flex-direction: column; gap: 5px; margin-top:5px;">
             <div style="display:flex; align-items:center; gap:10px;">
                 <span id="main-status-dot" class="status-dot red"></span>
-                <span id="main-status-text" class="status-text inactive">SYSTEM START...</span>
+                <span id="main-status-text" class="status-text inactive"><?php echo $TR[$lang]['sys_start']; ?></span>
             </div>
             <div style="display:flex; align-items:center; gap:10px;">
                 <span id="el-status-dot" class="status-dot" style="background-color: #444;"></span>
-                <span id="el-status-text" class="status-text" style="color: #666; font-size: 0.85em; font-weight:normal;">EchoLink Init...</span>
+                <span id="el-status-text" class="status-text" style="color: #666; font-size: 0.85em; font-weight:normal;"><?php echo $TR[$lang]['el_init']; ?></span>
             </div>
         </div>
     </header>
@@ -519,6 +557,7 @@
         <button id="btn-WiFi" class="tab-btn" onclick="openTab(event, 'WiFi')"><?php echo $TR[$lang]['tab_wifi']; ?></button>
         <button id="btn-Power" class="tab-btn" onclick="openTab(event, 'Power')"><?php echo $TR[$lang]['tab_power']; ?></button>
         <button id="btn-Logs" class="tab-btn" onclick="openTab(event, 'Logs')"><?php echo $TR[$lang]['tab_logs']; ?></button>
+        <button id="btn-SSH" class="tab-btn" onclick="openTab(event, 'SSH')">Terminal</button>
         <button id="btn-Help" class="tab-btn" onclick="openTab(event, 'Help')"><?php echo $TR[$lang]['tab_help']; ?></button>
     </div>
 
@@ -532,21 +571,40 @@
     <div id="Nodes" class="tab-content"><?php include 'tab_nodes.php'; ?></div>
     <div id="Help" class="tab-content"><?php include 'help.php'; ?></div>
     <div id="Logs" class="tab-content"><div id="log-content" class="log-box">...</div></div>
+    <div id="SSH" class="tab-content"><?php include 'tab_ssh.php'; ?></div>
 </div>
 
 <div class="main-footer">
-    SvxLink v1.9.99.36@master Copyright (C) 2003-<?php echo date("Y"); ?> Tobias Blomberg / <span class="callsign-blue">SM0SVX</span><br>
-    Copyright © 2025-<?php echo date("Y"); ?> <span class="callsign-blue">SQLink System</span> • SierraEcho Team Edition<br>
-    <div style="margin-top: 5px; font-size: 9px; opacity: 0.6;">
-        <a href="STRONA GIT" target="_blank" style="color: inherit; text-decoration: none;">Source Code (AGPL v3)</a>
-    </div>
+    <?php 
+    $svx_ver = trim(shell_exec('svxlink --version 2>&1'));
+    if (empty($svx_ver) || strpos($svx_ver, 'command not found') !== false) {
+        $svx_ver = "1.9.99.36@master";
+    }
+    ?>
+    SvxLink v<?php echo htmlspecialchars($svx_ver); ?> Copyright (C) 2003-<?php echo date("Y"); ?> Tobias Blomberg / <span class="callsign-blue">SM0SVX</span><br>
+    PrimeNode System • By SQ7UTP <span style="color: #aaa;">| Version: <strong style="color: #4CAF50;">V1.3</strong></span><br>
+    Copyright © 2025-<?php echo date("Y"); ?>
 </div>
 
-<script> 
+<script>
 const GLOBAL_CALLSIGN = "<?php echo $vals['Callsign']; ?>"; 
-if(window.innerWidth > 768) {
-    document.querySelectorAll('.desktop-only').forEach(el => el.style.display = 'block');
+const GLOBAL_HOST = "<?php echo $vals['Host']; ?>";
+
+function dismissAlert(hash) {
+    var alertBox = document.getElementById('pn-alert');
+    if(alertBox) alertBox.style.display = 'none';
+    localStorage.setItem('dismissed_alert', hash);
 }
+function checkAlert() {
+    var alertBox = document.getElementById('pn-alert');
+    if (alertBox) {
+        var hash = alertBox.getAttribute('data-hash');
+        if (localStorage.getItem('dismissed_alert') === hash) {
+            alertBox.style.display = 'none';
+        }
+    }
+}
+setTimeout(checkAlert, 500);
 </script>
 <script src="script.js?v=<?php echo time(); ?>"></script>
 </body>

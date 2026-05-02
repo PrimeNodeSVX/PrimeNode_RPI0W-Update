@@ -2,11 +2,13 @@
 import sys
 import os
 import json
+import time
 
 CONFIG_FILE = "/etc/svxlink/svxlink.conf"
 INPUT_JSON = "/tmp/svx_new_settings.json"
 RADIO_JSON = "/var/www/html/radio_config.json"
 NODE_INFO_FILE = "/etc/svxlink/node_info.json"
+LOG_FILE_RAM = "/dev/shm/svxlink.log"
 
 def load_lines(path):
     if not os.path.exists(path): return []
@@ -15,217 +17,278 @@ def load_lines(path):
 def save_lines(path, lines):
     with open(path, 'w', encoding='utf-8') as f: f.writelines(lines)
 
-def remove_key_from_section(lines, section, key):
+def sanitize_lines(lines):
+    seen_headers = set()
+    clean_lines = []
+    skip_mode = False
+    for line in lines:
+        stripped = line.strip()
+        if stripped.startswith("[") and stripped.endswith("]"):
+            if stripped in seen_headers:
+                skip_mode = True
+            else:
+                seen_headers.add(stripped)
+                skip_mode = False
+                clean_lines.append(line)
+        else:
+            if not skip_mode:
+                clean_lines.append(line)
+
+    final_lines = []
+    current_section = ""
+    for line in clean_lines:
+        stripped = line.strip()
+        if stripped.startswith("[") and stripped.endswith("]"):
+            current_section = stripped
+            final_lines.append(line)
+            continue
+        if stripped.startswith("HOSTS=") or stripped.startswith("HOST_PORT="):
+            continue
+        if stripped.startswith("HOST=") or stripped.startswith("PORT="):
+            if current_section == "[ReflectorLogic]":
+                final_lines.append(line)
+        else:
+            final_lines.append(line)
+    return final_lines
+
+def remove_garbage(lines, section, garbage_keys):
     new_lines = []
     in_section = False
     section_header = f"[{section}]"
-    
     for line in lines:
         stripped = line.strip()
         if stripped.startswith("[") and stripped.endswith("]"):
             in_section = (stripped == section_header)
-
-        if in_section and stripped.startswith(f"{key}=") and not stripped.startswith(("#", ";")):
+            new_lines.append(line)
             continue
-            
+        if in_section and "=" in stripped:
+            key = stripped.split("=")[0].strip()
+            if key in garbage_keys:
+                continue 
         new_lines.append(line)
     return new_lines
 
 def update_key_in_lines(lines, section, key, value):
     new_lines = []
     in_section = False
-    key_updated = False
-    
+    key_found = False
     section_header = f"[{section}]"
-    
-    section_exists = any(line.strip() == section_header for line in lines)
+    section_exists = False
+    for line in lines:
+        if line.strip() == section_header:
+            section_exists = True
+            break
     if not section_exists:
         lines.append(f"\n{section_header}\n")
-
     for line in lines:
         stripped = line.strip()
         if stripped.startswith("[") and stripped.endswith("]"):
             in_section = (stripped == section_header)
-        
-        if in_section and "=" in stripped and not stripped.startswith(("#", ";")):
-            parts = stripped.split("=", 1)
-            current_key = parts[0].strip()
-            
-            if current_key == key:
-                if not key_updated:
-                    new_lines.append(f"{key}={value}\n")
-                    key_updated = True
-                else:
-                    pass 
-                continue 
-
-        new_lines.append(line)
-
-    if not key_updated:
+            new_lines.append(line)
+            continue
+        if in_section:
+            if stripped.startswith(key + "="):
+                new_lines.append(f"{key}={value}\n")
+                key_found = True
+            else:
+                new_lines.append(line)
+        else:
+            new_lines.append(line)
+    if section_exists and not key_found:
         final_lines = []
-        in_tgt_sec = False
-        added = False
-        for l in new_lines:
-            s = l.strip()
-            if s == section_header:
-                in_tgt_sec = True
-                final_lines.append(l)
-                continue
-            if in_tgt_sec and s.startswith("["):
-                if not added:
-                    final_lines.append(f"{key}={value}\n")
-                    added = True
-                in_tgt_sec = False
-            final_lines.append(l)
-        if in_tgt_sec and not added:
-             final_lines.append(f"{key}={value}\n")
-             added = True
+        for line in new_lines:
+            final_lines.append(line)
+            if line.strip() == section_header:
+                final_lines.append(f"{key}={value}\n")
         return final_lines
-
     return new_lines
 
 def main():
-    if not os.path.exists(INPUT_JSON): sys.exit(1)
-    with open(INPUT_JSON, 'r') as f: data = json.load(f)
+    if not os.path.exists(LOG_FILE_RAM):
+        with open(LOG_FILE_RAM, 'w') as f: pass
+    try:
+        os.chmod(LOG_FILE_RAM, 0o666)
+    except:
+        pass
+
+    data = {}
+    if os.path.exists(INPUT_JSON):
+        with open(INPUT_JSON, 'r') as f: data = json.load(f)
 
     lines = load_lines(CONFIG_FILE)
-    lines = remove_key_from_section(lines, "GLOBAL", "DEFAULT_LANG")
+    lines = sanitize_lines(lines)
+    lines = update_key_in_lines(lines, "GLOBAL", "LOGFILE", LOG_FILE_RAM)
 
-    serial_port = data.get('SerialPort', '/dev/ttyS2')
-    gpio_ptt = data.get('GpioPtt', '12')
-    gpio_sql = data.get('GpioSql', '16')
-
-    modules_str = data.get('Modules')
-    if modules_str is not None:
-        raw_list = [m.strip() for m in modules_str.split(',')]
-        fixed_list = []
-        for m in raw_list:
-            if m in ["Help", "Parrot", "EchoLink"]:
-                fixed_list.append("Module" + m)
-            elif m: 
-                fixed_list.append(m)
-
-        el_pass = data.get('EL_Password', '')
-        if not el_pass:
-            fixed_list = [m for m in fixed_list if 'EchoLink' not in m]
-            
-        data['Modules'] = ",".join(fixed_list)
-
-    qth_name = data.get('qth_name')
-    qth_city = data.get('qth_city')
-    qth_loc = data.get('qth_loc')
-
-    rx_freq = ""
-    tx_freq = ""
-    ctcss = "0"
-    
     radio_data = {}
     if os.path.exists(RADIO_JSON):
         try:
             with open(RADIO_JSON, 'r') as rf:
                 radio_data = json.load(rf)
-                rx_freq = radio_data.get("rx", "")
-                tx_freq = radio_data.get("tx", "")
-                ctcss = radio_data.get("ctcss", "0")
-        except: pass
-    
-    is_echolink = "0"
-    if data.get('Modules') and ("EchoLink" in data['Modules']):
-        is_echolink = "1"
+        except:
+            pass
 
-    location_conf_val = None
-
-    if qth_city is not None:
-        s_name = qth_name if qth_name else ""
-        s_city = qth_city if qth_city else ""
-        s_loc = qth_loc if qth_loc else ""
-
-        node_info_data = {
-            "Location": s_city,
-            "Locator": s_loc,
-            "Sysop": s_name,
-            "LAT": "0.0", "LONG": "0.0",
-            "TXFREQ": tx_freq, "RXFREQ": rx_freq, "CTCSS": ctcss,
-            "DefaultTG": data.get('DefaultTG', '0'),
-            "Mode": "FM", "Type": "1", 
-            "Echolink": is_echolink,
-            "Website": "http://sqlink.pl",
-            "LinkedTo": "SQLink"
-        }
-
+    backup_info = {}
+    if os.path.exists(NODE_INFO_FILE):
         try:
-            with open(NODE_INFO_FILE, 'w') as nf: json.dump(node_info_data, nf, indent=4)
-            os.chmod(NODE_INFO_FILE, 0o644) 
-        except Exception as e: print(f"Error writing node_info.json: {e}")
+            with open(NODE_INFO_FILE, 'r') as nf:
+                backup_info = json.load(nf)
+        except:
+            pass
 
-        loc_parts = []
-        if s_city: loc_parts.append(s_city)
-        if s_loc: loc_parts.append(s_loc)
-        if s_name: loc_parts.append(f"(Op: {s_name})")
-        location_conf_val = f'"{", ".join(loc_parts)}"'
+    def get_val(keys_input, key_radio, key_backup, default=""):
+        val = data.get(keys_input)
+        if val is not None: return val
+        val = radio_data.get(key_radio)
+        if val: return val
+        return backup_info.get(key_backup, default)
+
+    qth_name = get_val('qth_name', 'qth_name', 'Sysop')
+    qth_city = get_val('qth_city', 'qth_city', 'Location')
+    qth_loc  = get_val('qth_loc',  'qth_loc',  'Locator')
+
+    gpio_ptt = data.get('GpioPtt') or radio_data.get('gpio_ptt', '19')
+    gpio_sql = data.get('GpioSql') or radio_data.get('gpio_sql', '!4')
+
+    if "rx" in data: radio_data["rx"] = data["rx"]
+    if "tx" in data: radio_data["tx"] = data["tx"]
+    if "ctcss" in data: radio_data["ctcss"] = data["ctcss"]
+    if "desc" in data: radio_data["desc"] = data["desc"]
+    if "radio_type" in data: radio_data["radio_type"] = data["radio_type"]
+
+    rx_freq = radio_data.get("rx", "")
+    tx_freq = radio_data.get("tx", "")
+    ctcss = radio_data.get("ctcss", "0")
+
+    if ctcss == "0000":
+        ctcss = "0"
+    elif len(ctcss) == 4 and ctcss.isdigit():
+        ctcss = str(float(ctcss) / 10.0)
+
+    modules_str = data.get('Modules')
+    modules_clean = modules_str if modules_str is not None else backup_info.get('Modules', 'ModuleHelp,Parrot,ModuleEchoLink')
+    is_echolink = "1" if "EchoLink" in modules_clean else "0"
+    
+    current_default_tg = data.get('DefaultTG') or backup_info.get('DefaultTG', '0')
+
+    node_info_data = {
+        "Location": qth_city, "Locator": qth_loc, "Sysop": qth_name,
+        "LAT": "0.0", "LONG": "0.0", "TXFREQ": tx_freq, "RXFREQ": rx_freq, "CTCSS": ctcss,
+        "DefaultTG": current_default_tg, "Mode": "FM", "Type": "1",
+        "Echolink": is_echolink, "Website": "https://github.com/ArduUTP", "LinkedTo": "PrimeNode"
+    }
+    try:
+        with open(NODE_INFO_FILE, 'w') as nf:
+            json.dump(node_info_data, nf, indent=4)
+        os.chmod(NODE_INFO_FILE, 0o644)
+    except:
+        pass
+
+    loc_parts = []
+    if qth_city: loc_parts.append(qth_city)
+    if qth_loc: loc_parts.append(qth_loc)
+    if qth_name: loc_parts.append(f"(Op: {qth_name})")
+    location_str = ", ".join(loc_parts)
 
     main_callsign = data.get('Callsign')
     announce_call = data.get('AnnounceCall', '1')
-    
-    reflector_callsign = None
-    simplex_callsign = None
-    short_ident = None
-    long_ident = None
+    reflector_callsign = main_callsign
+    simplex_callsign = main_callsign if announce_call=="1" else ""
 
-    if main_callsign is not None:
-        reflector_callsign = main_callsign
-        if announce_call == "1":
-            simplex_callsign = main_callsign
-            short_ident = "60"
-            long_ident = "60"
-        else:
-            simplex_callsign = ""
-            short_ident = "0"
-            long_ident = "0"
+    ident_int = "60"
+    if not main_callsign:
+        ident_int = "0"
+        simplex_callsign = ""
+
+    hidraw_port = "/dev/hidraw0"
+    if os.path.exists("/sys/class/hidraw"):
+        for dev in os.listdir("/sys/class/hidraw"):
+            with open(f"/sys/class/hidraw/{dev}/device/uevent") as f:
+                content = f.read()
+                if "HID_NAME=C-Media" in content or "0D8C:0012" in content or "0D8C:013A" in content:
+                    hidraw_port = f"/dev/{dev}"
+                    break
+
+    radio_type = radio_data.get("radio_type", "gpio")
+
+    lines = remove_garbage(lines, "Rx1", [
+        "SQL_GPIOD_LINE", "SQL_GPIOD_CHIP", "SQL_GPIOD_OPEN_THRESH", "GPIO_SQL_PIN", 
+        "HID_SQL_PIN", "CTCSS_MODE", "CTCSS_FQ", 
+        "HID_PIN", "HID_DEVICE", "CTCSS_OPEN_THRESH", "CTCSS_CLOSE_THRESH"
+    ])
+    lines = remove_garbage(lines, "Tx1", [
+        "PTT_GPIOD_LINE", "PTT_GPIOD_CHIP", "PTT_PIN", 
+        "HID_PTT_PIN", "HID_DEVICE", "PTT_TYPE"
+    ])
+
+    if radio_type == "shari":
+        rx1_map = {
+            "SQL_DET": "CTCSS",
+            "CTCSS_FQ": ctcss if float(ctcss) > 0 else "100.0",
+            "CTCSS_MODE": "0",
+            "CTCSS_OPEN_THRESH": "12",
+            "CTCSS_CLOSE_THRESH": "5",
+            "DTMF_PTY": "/dev/shm/dtmf_ctrl"
+        }
+        if ctcss == "0" or ctcss == "0000":
+            rx1_map["SQL_DET"] = "HIDRAW"
+            rx1_map["HID_DEVICE"] = hidraw_port
+            rx1_map["HID_SQL_PIN"] = "!VOL_DN"
+
+        tx1_map = {
+            "PTT_TYPE": "Hidraw",
+            "HID_DEVICE": hidraw_port,
+            "HID_PTT_PIN": "GPIO3"
+        }
+
+        try:
+            orig_ctcss = data.get("ctcss") or radio_data.get("ctcss", "0000")
+            shari_sql = data.get("shari_sql") or radio_data.get("shari_sql", "4")
+            cmd = f"sudo /usr/bin/python3 /usr/local/bin/setup_radio.py {rx_freq} {tx_freq} {orig_ctcss} {shari_sql}"
+            print(f"DEBUG: Wywołuję zewnętrzny skrypt -> {cmd}")
+            os.system(cmd)
+        except Exception as e:
+            print(f"DEBUG: Błąd wywołania setup_radio.py: {e}")
+
+    else:
+        rx1_map = {
+            "SQL_DET": "GPIOD",
+            "SQL_GPIOD_CHIP": "gpiochip0",
+            "SQL_GPIOD_LINE": gpio_sql,
+            "SQL_GPIOD_OPEN_THRESH": "10",
+            "DTMF_PTY": "/dev/shm/dtmf_ctrl"
+        }
+        tx1_map = {
+            "PTT_TYPE": "GPIOD",
+            "PTT_GPIOD_CHIP": "gpiochip0",
+            "PTT_GPIOD_LINE": gpio_ptt
+        }
 
     mapping = {
         "ReflectorLogic": {
-            "CALLSIGN": reflector_callsign,
-            "AUTH_KEY": data.get('Password'),
-            "HOSTS": data.get('Host'),
-            "HOST_PORT": data.get('Port'),
-            "DEFAULT_TG": data.get('DefaultTG'),
-            "MONITOR_TGS": data.get('MonitorTGs'),
-            "TG_SELECT_TIMEOUT": data.get('TgTimeout'),
-            "TMP_MONITOR_TIMEOUT": data.get('TmpTimeout'),
-            "TGSTBEEP_ENABLE": data.get('Beep3Tone'),
-            "TGREANON_ENABLE": data.get('AnnounceTG'),
-            "REFCON_ENABLE": data.get('RefStatusInfo'),
-            "UDP_HEARTBEAT_INTERVAL": "15",
-            "LOCATION": location_conf_val,
-            "NODE_INFO_FILE": NODE_INFO_FILE,
-            "DEFAULT_LANG": data.get('DEFAULT_LANG')
+            "CALLSIGN": reflector_callsign, "AUTH_KEY": data.get('Password'),
+            "HOST": data.get('Host'), "PORT": data.get('Port'),
+            "DEFAULT_TG": data.get('DefaultTG'), "MONITOR_TGS": data.get('MonitorTGs'),
+            "TG_SELECT_TIMEOUT": data.get('TgTimeout'), "TMP_MONITOR_TIMEOUT": data.get('TmpTimeout'),
+            "TGSTBEEP_ENABLE": data.get('Beep3Tone'), "TGREANON_ENABLE": data.get('AnnounceTG'),
+            "REFCON_ENABLE": data.get('RefStatusInfo'), "UDP_HEARTBEAT_INTERVAL": "15",
+            "LOCATION": f'"{location_str}"', "NODE_INFO_FILE": NODE_INFO_FILE,
+            "DEFAULT_LANG": data.get('AudioLang')
         },
         "SimplexLogic": {
-            "CALLSIGN": simplex_callsign,
-            "RGR_SOUND_ALWAYS": data.get('RogerBeep'),
-            "MODULES": data.get('Modules'),
-            "SHORT_IDENT_INTERVAL": short_ident,
-            "LONG_IDENT_INTERVAL": long_ident,
-            "DEFAULT_LANG": data.get('DEFAULT_LANG')
+            "CALLSIGN": simplex_callsign, "RGR_SOUND_ALWAYS": data.get('RogerBeep'),
+            "MODULES": modules_clean if data.get('Modules') is not None else None, 
+            "SHORT_IDENT_INTERVAL": ident_int,
+            "LONG_IDENT_INTERVAL": ident_int, "DEFAULT_LANG": data.get('AudioLang'),
+            "DTMF_CTRL_PTY": "/dev/shm/dtmf_ctrl"
         },
         "ModuleEchoLink": {
-            "CALLSIGN": data.get('EL_Callsign'),
-            "PASSWORD": data.get('EL_Password'),
-            "SYSOPNAME": data.get('EL_Sysop'),
-            "LOCATION": data.get('EL_Location'),
-            "DESCRIPTION": data.get('EL_Desc'),
-            "PROXY_SERVER": data.get('EL_ProxyHost'),
-            "TIMEOUT": data.get('EL_ModTimeout'),
-            "LINK_IDLE_TIMEOUT": data.get('EL_IdleTimeout')
+            "CALLSIGN": data.get('EL_Callsign'), "PASSWORD": data.get('EL_Password'),
+            "SYSOPNAME": data.get('EL_Sysop'), "LOCATION": data.get('EL_Location'),
+            "DESCRIPTION": data.get('EL_Desc'), "PROXY_SERVER": data.get('EL_ProxyHost'),
+            "TIMEOUT": data.get('EL_ModTimeout'), "LINK_IDLE_TIMEOUT": data.get('EL_IdleTimeout')
         },
-        "Rx1": {
-            "DTMF_SERIAL": serial_port,
-            "SQL_GPIOD_LINE": gpio_sql
-        },
-        "Tx1": {
-            "PTT_GPIOD_LINE": gpio_ptt
-        }
+        "Rx1": rx1_map,
+        "Tx1": tx1_map
     }
 
     for section, keys in mapping.items():
@@ -233,19 +296,24 @@ def main():
             if json_val is not None:
                 lines = update_key_in_lines(lines, section, cfg_key, str(json_val))
 
+    radio_data['qth_name'] = qth_name
+    radio_data['qth_city'] = qth_city
+    radio_data['qth_loc'] = qth_loc
+    if gpio_ptt: radio_data['gpio_ptt'] = gpio_ptt
+    if gpio_sql: radio_data['gpio_sql'] = gpio_sql
+
+    shari_sql_val = data.get('shari_sql')
+    if shari_sql_val: radio_data['shari_sql'] = shari_sql_val
+
+    node_api_url = data.get('node_api_url')
+    if node_api_url is not None:
+        radio_data['node_api_url'] = node_api_url
+
+    with open(RADIO_JSON, 'w') as f:
+        json.dump(radio_data, f, indent=4)
+
     save_lines(CONFIG_FILE, lines)
-
-    if 'qth_name' in data: radio_data['qth_name'] = qth_name if qth_name else ""
-    if 'qth_city' in data: radio_data['qth_city'] = qth_city if qth_city else ""
-    if 'qth_loc' in data: radio_data['qth_loc'] = qth_loc if qth_loc else ""
-
-    radio_data['serial_port'] = serial_port
-    radio_data['gpio_ptt'] = gpio_ptt
-    radio_data['gpio_sql'] = gpio_sql
-
-    with open(RADIO_JSON, 'w') as f: json.dump(radio_data, f, indent=4)
-
-    print("SUKCES")
+    print("DONE")
 
 if __name__ == "__main__":
     main()

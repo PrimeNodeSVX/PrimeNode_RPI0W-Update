@@ -2,29 +2,60 @@
 $TP = [
     'pl' => [
         'load_title' => 'TRWA AKTUALIZACJA...',
-        'load_desc' => 'Pobieranie plików z GitHub.<br>Proszę nie zamykać okna ani nie odświeżać strony.',
-        'pwr_mng' => 'Zarządzanie Zasilaniem',
-        'btn_svc' => 'Restart Usługi SvxLink',
+        'load_text' => 'Pobieranie plików z GitHub.<br>Proszę nie zamykać okna ani nie odświeżać strony.',
+        'title_pwr' => 'Zarządzanie Zasilaniem',
+        'btn_svx' => 'Restart Usługi SvxLink',
+        'ask_reb' => 'Czy na pewno chcesz zrestartować CAŁY system?',
         'btn_reb' => '🔄 Restart Urządzenia',
-        'conf_reb' => 'Czy na pewno chcesz zrestartować CAŁY system?',
+        'ask_off' => 'Czy na pewno chcesz WYŁĄCZYĆ urządzenie?',
         'btn_off' => '🛑 Wyłącz Urządzenie',
-        'conf_off' => 'Czy na pewno chcesz WYŁĄCZYĆ urządzenie?',
-        'sys_upd' => 'Aktualizacja Systemu',
-        'btn_git' => '☁️ Pobierz Aktualizację Dashboardu (GitHub)'
+        'title_upd' => 'Aktualizacja Systemu',
+        'btn_upd' => '☁️ Pobierz Aktualizację Dashboardu (GitHub)',
+        'update_avail' => '✨ Dostępna nowa aktualizacja! Możesz ją pobrać poniżej.'
     ],
     'en' => [
         'load_title' => 'UPDATING...',
-        'load_desc' => 'Downloading files from GitHub.<br>Please do not close or refresh this page.',
-        'pwr_mng' => 'Power Management',
-        'btn_svc' => 'Restart SvxLink Service',
+        'load_text' => 'Downloading files from GitHub.<br>Please do not close or refresh the page.',
+        'title_pwr' => 'Power Management',
+        'btn_svx' => 'Restart SvxLink Service',
+        'ask_reb' => 'Are you sure you want to reboot the WHOLE system?',
         'btn_reb' => '🔄 Reboot Device',
-        'conf_reb' => 'Are you sure you want to reboot the WHOLE system?',
+        'ask_off' => 'Are you sure you want to SHUT DOWN the device?',
         'btn_off' => '🛑 Shutdown Device',
-        'conf_off' => 'Are you sure you want to POWER OFF the device?',
-        'sys_upd' => 'System Update',
-        'btn_git' => '☁️ Get Dashboard Update (GitHub)'
+        'title_upd' => 'System Update',
+        'btn_upd' => '☁️ Download Dashboard Update (GitHub)',
+        'update_avail' => '✨ New update available! You can download it below.'
     ]
 ];
+
+$update_flag_file = '/var/www/html/ram/update_status.txt';
+$update_available = false;
+
+if (isset($_POST['git_update'])) {
+    @unlink($update_flag_file); 
+}
+
+if (!file_exists($update_flag_file)) {
+    $remote_hash = trim(shell_exec("timeout 4 git ls-remote https://github.com/PrimeNodeSVX/PrimeNode_RPI0W-Update.git HEAD | awk '{print $1}' 2>/dev/null"));
+    $local_hash = trim(shell_exec("git --git-dir=/root/PrimeNode_RPI0W-Update/.git rev-parse HEAD 2>/dev/null"));
+    
+    if (!empty($local_hash) && !empty($remote_hash)) {
+        if ($local_hash !== $remote_hash) {
+            @file_put_contents($update_flag_file, "UPDATE_AVAILABLE");
+        } else {
+            @file_put_contents($update_flag_file, "UP_TO_DATE");
+        }
+        @chmod($update_flag_file, 0666);
+    } else {
+        if (file_exists($update_flag_file)) {
+            @unlink($update_flag_file); 
+        }
+    }
+}
+
+if (trim(@file_get_contents($update_flag_file)) === "UPDATE_AVAILABLE") {
+    $update_available = true;
+}
 ?>
 <style>
     #loading-overlay {
@@ -72,29 +103,48 @@ $TP = [
     }
 </style>
 
-<div id="loading-overlay">
-    <div class="spinner"></div>
-    <div class="loading-text"><?php echo $TP[$lang]['load_title']; ?></div>
-    <div class="loading-subtext"><?php echo $TP[$lang]['load_desc']; ?></div>
-</div>
-
-<h4 class="panel-title"><?php echo $TP[$lang]['pwr_mng']; ?></h4>
+<h4 class="panel-title"><?php echo $TP[$lang]['title_pwr']; ?></h4>
 <form method="post" id="power-form">
     <input type="hidden" name="active_tab" class="active-tab-input" value="Power">
     
-    <button type="submit" name="restart_srv" class="btn btn-blue" style="margin-bottom:15px;"><?php echo $TP[$lang]['btn_svc']; ?></button>
+    <button type="submit" name="restart_srv" class="btn btn-blue" style="margin-bottom:15px;"><?php echo $TP[$lang]['btn_svx']; ?></button>
     
     <div style="height:10px;"></div>
     
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom: 20px;">
-        <button type="submit" name="reboot_device" class="btn btn-orange" onclick="return confirm('<?php echo $TP[$lang]['conf_reb']; ?>')"><?php echo $TP[$lang]['btn_reb']; ?></button>
-        <button type="submit" name="shutdown_device" class="btn btn-red" onclick="return confirm('<?php echo $TP[$lang]['conf_off']; ?>')"><?php echo $TP[$lang]['btn_off']; ?></button>
+        <button type="submit" name="reboot_device" class="btn btn-orange" onclick="return confirm('<?php echo $TP[$lang]['ask_reb']; ?>')"><?php echo $TP[$lang]['btn_reb']; ?></button>
+        <button type="submit" name="shutdown_device" class="btn btn-red" onclick="return confirm('<?php echo $TP[$lang]['ask_off']; ?>')"><?php echo $TP[$lang]['btn_off']; ?></button>
     </div>
 
     <hr style="border: 0; border-top: 1px solid #444; margin: 20px 0;">
-    <h4 class="panel-title" style="color: #FF9800; border: none;"><?php echo $TP[$lang]['sys_upd']; ?></h4>
+    <h4 class="panel-title" style="color: #FF9800; border: none;"><?php echo $TP[$lang]['title_upd']; ?></h4>
     
-    <button type="submit" name="git_update" class="btn btn-green" onclick="showLoader()"><?php echo $TP[$lang]['btn_git']; ?></button>
+    <?php if ($update_available): ?>
+        <style>
+            @keyframes pulse-update {
+                0% { background-color: rgba(76, 175, 80, 0.2); border-color: #4CAF50; color: #4CAF50; box-shadow: 0 0 10px rgba(76, 175, 80, 0.5); transform: scale(1); }
+                50% { background-color: rgba(255, 152, 0, 0.3); border-color: #FF9800; color: #FF9800; box-shadow: 0 0 20px rgba(255, 152, 0, 0.8); transform: scale(1.02); }
+                100% { background-color: rgba(76, 175, 80, 0.2); border-color: #4CAF50; color: #4CAF50; box-shadow: 0 0 10px rgba(76, 175, 80, 0.5); transform: scale(1); }
+            }
+            .persistent-update-box {
+                padding: 15px;
+                margin-bottom: 20px;
+                border-radius: 6px;
+                border: 2px solid;
+                text-align: center;
+                font-weight: bold;
+                font-size: 14px;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                animation: pulse-update 2s infinite ease-in-out;
+            }
+        </style>
+        <div class="persistent-update-box">
+            <?php echo $TP[$lang]['update_avail']; ?>
+        </div>
+    <?php endif; ?>
+    
+    <button type="submit" name="git_update" class="btn btn-green" onclick="showLoader()"><?php echo $TP[$lang]['btn_upd']; ?></button>
 </form>
 
 <script>

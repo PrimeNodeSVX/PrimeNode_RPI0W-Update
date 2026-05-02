@@ -7,6 +7,7 @@ $TN = [
         'city_desc' => 'Miasto / Opis:',
         'monitored' => 'Monitorowane:',
         'ver' => 'Wersja:',
+	'lbl_radio' => 'Radio (QRG):',
         'btn_close_map' => '❌ ZAMKNIJ MAPĘ',
         'header' => 'Aktywne Węzły (Network)',
         'btn_open_map' => '🌍 Grid Mapper Node (Pokaż Mapę)',
@@ -19,6 +20,7 @@ $TN = [
         'city_desc' => 'City / Desc:',
         'monitored' => 'Monitored:',
         'ver' => 'Version:',
+	'lbl_radio' => 'Radio (QRG):',
         'btn_close_map' => '❌ CLOSE MAP',
         'header' => 'Active Nodes (Network)',
         'btn_open_map' => '🌍 Grid Mapper Node (Show Map)',
@@ -65,6 +67,11 @@ $TN = [
             <span class="nt-label"><?php echo $TN[$lang]['ver']; ?></span>
             <span class="nt-val" id="nt-ver">---</span>
         </div>
+	
+	<div class="nt-row" id="row-radio" style="display:none;">
+            <span class="nt-label"><?php echo $TN[$lang]['lbl_radio']; ?></span>
+            <span class="nt-val hl" id="nt-radio">---</span>
+        </div>
         
         <div class="qrz-logo-container">
             <img src="qrz.png" alt="QRZ" class="qrz-img">
@@ -94,3 +101,13 @@ $TN = [
         updateNodes();
     }
 </script>
+
+<div id="node-action-menu" style="display:none; position:fixed; z-index:9999; background:#1e1e1e; border:2px solid #FF9800; border-radius:8px; box-shadow:0 10px 30px rgba(0,0,0,0.9); padding:12px; width:220px; text-align:center;">
+    <div style="font-weight:bold; color:#fff; margin-bottom:10px; border-bottom:1px solid #333; padding-bottom:5px;" id="nam-title">Wybierz akcję</div>
+    
+    <button id="nam-btn-tg" class="btn btn-orange" style="margin-top:0; margin-bottom:8px; padding:10px; font-size:13px;" onclick="">🎙️ Przełącz na TG</button>
+    
+    <button id="nam-btn-qrz" class="btn btn-blue" style="margin-top:0; margin-bottom:8px; padding:10px; font-size:13px;" onclick="">🌐 Profil QRZ.com</button>
+    
+    <button class="btn btn-red" style="background:#444; border-color:#555; margin-top:0; padding:8px; font-size:12px;" onclick="closeNodeActionMenu()">❌ Anuluj</button>
+</div>
