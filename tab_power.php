@@ -36,8 +36,8 @@ if (isset($_POST['git_update'])) {
 }
 
 if (!file_exists($update_flag_file)) {
-    $remote_hash = trim(shell_exec("timeout 4 git ls-remote https://github.com/PrimeNodeSVX/PrimeNode_RPI0W-Update.git HEAD | awk '{print $1}' 2>/dev/null"));
-    $local_hash = trim(shell_exec("git --git-dir=/root/PrimeNode_RPI0W-Update/.git rev-parse HEAD 2>/dev/null"));
+    $remote_hash = trim(shell_exec("timeout 4 git ls-remote https://github.com/PrimeNodeSVX/PrimeNode_RPI0W-Update.git HEAD | awk '{print \$1}' 2>/dev/null"));
+    $local_hash = trim(shell_exec("sudo git --git-dir=/root/PrimeNode_RPI0W-Update/.git rev-parse HEAD 2>/dev/null"));
     
     if (!empty($local_hash) && !empty($remote_hash)) {
         if ($local_hash !== $remote_hash) {
