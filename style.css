@@ -507,3 +507,47 @@ input[type="text"], input[type="password"], input[type="number"], select { width
 .tg-tile-name { font-size: 10px; color: #ccc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tg-cat-title { color: #aaa; font-size: 12px; text-transform: uppercase; margin: 15px 0 8px 0; border-bottom: 1px solid #333; padding-bottom: 3px; font-weight: bold; }
 .tg-manual-add { display: flex; gap: 5px; margin-bottom: 15px; }
+.tg-tooltip-box {
+    position: relative;
+    cursor: pointer;
+}
+
+.tg-tooltip-box .tg-tooltip-text {
+    visibility: hidden;
+    width: max-content;
+    max-width: 220px;
+    background-color: #262626;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 8px 12px;
+    position: absolute;
+    z-index: 100;
+    bottom: 130%;
+    left: 50%;
+    transform: translateX(-50%);
+    opacity: 0;
+    transition: opacity 0.3s ease, bottom 0.3s ease;
+    box-shadow: 0px 5px 15px rgba(0,0,0,0.6);
+    border: 1px solid #4CAF50;
+    font-size: 11px;
+    white-space: normal;
+    line-height: 1.4;
+}
+
+.tg-tooltip-box .tg-tooltip-text::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -6px;
+    border-width: 6px;
+    border-style: solid;
+    border-color: #4CAF50 transparent transparent transparent;
+}
+
+.tg-tooltip-box:hover .tg-tooltip-text {
+    visibility: visible;
+    opacity: 1;
+    bottom: 115%;
+}

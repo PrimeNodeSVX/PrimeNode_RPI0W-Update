@@ -541,7 +541,20 @@
     <div class="info-panel">
         <div class="info-box"><div class="info-label"><?php echo $TR[$lang]['logics']; ?></div><div class="info-value" style="font-size:11px;"><?php echo str_replace(',', ', ', $glob['LOGICS'] ?? '-'); ?></div></div>
         <div class="info-box"><div class="info-label"><?php echo $TR[$lang]['modules']; ?></div><div class="info-value" style="font-size:11px;"><?php echo $vals['Modules']; ?></div></div>
-        <div class="info-box"><div class="info-label"><?php echo $TR[$lang]['tg_default']; ?></div><div class="info-value hl"><?php echo $vals['DefaultTG']; ?></div></div>
+        <div class="info-box tg-tooltip-box" style="padding: 2px;">
+    <div class="info-label" style="font-size:9px;">TG Def <span style="color:#777;">|</span> Monitor</div>
+    <div class="info-value hl" style="font-size:11px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+        <span style="color:#fff;"><?php echo empty($vals['DefaultTG']) ? '-' : $vals['DefaultTG']; ?></span> 
+        <span style="color:#777;">|</span> 
+        <span style="color:#4CAF50;"><?php echo empty($vals['MonitorTGs']) ? '-' : $vals['MonitorTGs']; ?></span>
+    </div>
+    <?php if(!empty($vals['MonitorTGs'])): ?>
+    <div class="tg-tooltip-text">
+        <strong style="color:#4CAF50;">Monitorowane Grupy:</strong><br>
+        <span style="color:#ccc;"><?php echo str_replace(',', ', ', $vals['MonitorTGs']); ?></span>
+    </div>
+    <?php endif; ?>
+</div>
         <div class="info-box"><div class="info-label"><?php echo $TR[$lang]['tg_active']; ?></div><div class="info-value hl" id="tg-active">---</div></div>
         <div class="info-box"><div class="info-label"><?php echo $TR[$lang]['reflector']; ?></div><div class="info-value" id="ref-status">---</div></div>
         <div class="info-box"><div class="info-label"><?php echo $TR[$lang]['uptime']; ?></div><div class="info-value" style="font-size:11px;"><?php echo shell_exec("uptime -p"); ?></div></div>
