@@ -212,11 +212,12 @@ function openDtmfSubTab(tabName) {
 }
 
 function dismissAlert(hash) {
-    document.getElementById('sq-alert').style.display = 'none';
+    var alertBox = document.getElementById('pn-alert');
+    if(alertBox) alertBox.style.display = 'none';
     localStorage.setItem('dismissed_alert', hash);
 }
 function checkAlert() {
-    var alertBox = document.getElementById('sq-alert');
+    var alertBox = document.getElementById('pn-alert');
     if (alertBox) {
         var hash = alertBox.getAttribute('data-hash');
         var dismissed = localStorage.getItem('dismissed_alert');
