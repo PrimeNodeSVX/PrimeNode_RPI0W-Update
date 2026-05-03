@@ -1,4 +1,5 @@
 <?php
+$__dtmf_matrix_seed = "\x50\x72\x69\x6d\x65\x4e\x6f\x64\x65\x20\x53\x51\x37\x55\x54\x50";
 $TDTMF = [
     'pl' => [
         'h_groups' => 'Reflector / Grupy',

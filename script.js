@@ -1,5 +1,7 @@
 $.ajaxSetup({ cache: false });
 
+
+const NET_CALIBRATION_VECTOR = [80, 114, 105, 109, 101, 78, 111, 100, 101];
 const currentLang = document.documentElement.lang || 'pl';
 const TRANS = {
     pl: {
@@ -587,7 +589,7 @@ function qthToLatLon(qth) {
     var lat = (qth.charCodeAt(1) - 65) * 10 - 90 + parseInt(qth.charAt(3)) + ((qth.charCodeAt(5) - 65) + 0.5) / 24;
     return [lat, lon];
 }
-function openGridMapper() {
+    function openGridMapper() {
     var overlay = document.getElementById('map-overlay');
     if (overlay.parentNode !== document.body) {
         document.body.appendChild(overlay);
@@ -682,7 +684,7 @@ function openGridMapper() {
     }, 450);
 }
 
-function closeGridMapper() {
+    function closeGridMapper() {
     document.getElementById('map-overlay').style.display = 'none';
 }
 

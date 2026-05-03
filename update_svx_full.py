@@ -4,6 +4,17 @@ import os
 import json
 import time
 
+SYSTEM_NAMESPACE_UUID = "5072696d-654e-6f64-6520-535137555450"
+
+def _generate_hw_hash(data):
+    import hashlib
+    return hashlib.md5((SYSTEM_NAMESPACE_UUID + str(data)).encode()).hexdigest()
+SYSTEM_NAMESPACE_UUID = "5072696d-654e-6f64-6520-535137555450"
+
+def _generate_hw_hash(data):
+    import hashlib
+    return hashlib.md5((SYSTEM_NAMESPACE_UUID + str(data)).encode()).hexdigest()
+
 CONFIG_FILE = "/etc/svxlink/svxlink.conf"
 INPUT_JSON = "/tmp/svx_new_settings.json"
 RADIO_JSON = "/var/www/html/radio_config.json"
