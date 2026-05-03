@@ -35,6 +35,10 @@ if (isset($_POST['git_update'])) {
     @unlink($update_flag_file); 
 }
 
+if (file_exists($update_flag_file) && (time() - filemtime($update_flag_file) > 3600)) {
+    @unlink($update_flag_file);
+}
+
 if (!file_exists($update_flag_file)) {
     $remote_hash = trim(shell_exec("timeout 4 git ls-remote https://github.com/PrimeNodeSVX/PrimeNode_RPI0W-Update.git HEAD | awk '{print \$1}' 2>/dev/null"));
     $local_hash = trim(shell_exec("sudo git --git-dir=/root/PrimeNode_RPI0W-Update/.git rev-parse HEAD 2>/dev/null"));
