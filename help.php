@@ -45,6 +45,12 @@ $H = [
         's6_icons' => '📱 <strong>Ikony Urządzeń:</strong> Widzisz, kto używa Radia (📻), Telefonu (📱) czy Komputera (💻).',
         's6_smart' => '🎛️ <strong>Smart Config:</strong> W konfiguracji nie musisz wpisywać numerów TG ręcznie. Kliknij w pole, a otworzy się panel wyboru z Twoimi własnymi grupami z zakładki DTMF.',
 
+        's7_title' => '7. Tryb Ratunkowy (Access Point Wi-Fi)',
+        's7_text' => 'Gdy Hotspot nie znajdzie żadnej znanej sieci Wi-Fi (np. w podróży lub po zmianie routera), po około 2 minutach automatycznie stworzy własną sieć ratunkową, abyś nie stracił do niego dostępu.',
+        's7_step1' => '📶 <strong>Nazwa sieci (SSID):</strong> PrimeNode_AP',
+        's7_step2' => '🔑 <strong>Hasło:</strong> <code>primenode123</code>',
+        's7_step3' => '🌍 <strong>Adres panelu:</strong> Połącz się z tą siecią ze swojego telefonu lub komputera i wpisz w przeglądarce adres: <code>192.168.4.1</code>',
+
         'qa_title' => 'Szybka Pomoc (Q&A)',
         'qa_q1' => '❓ EchoLink nie chce się połączyć (Status: Disconnected).',
         'qa_a1' => '✅ Jeśli używasz internetu z telefonu (Hotspot LTE), operatorzy często blokują porty. Użyj funkcji <strong>♻️ Auto-Proxy</strong> w zakładce <strong>Config</strong>, aby ominąć te blokady.',
@@ -97,6 +103,12 @@ $H = [
         's6_pulse' => '🔴 <strong>TX Visualization:</strong> Station tiles in the <em>Nodes</em> tab and dots on the map pulse red when a person is talking.',
         's6_icons' => '📱 <strong>Device Icons:</strong> You can see who is using a Radio (📻), Phone (📱), or PC (💻).',
         's6_smart' => '🎛️ <strong>Smart Config:</strong> You no longer need to type TG numbers manually in the configuration. Click the field, and a selection panel will open with your custom groups from the DTMF tab.',
+
+        's7_title' => '7. Rescue Mode (Wi-Fi Access Point)',
+        's7_text' => 'When the Hotspot cannot find any known Wi-Fi network (e.g., while traveling or after changing your router), it will automatically create its own network after about 2 minutes so you don\'t lose access to it.',
+        's7_step1' => '📶 <strong>Network Name (SSID):</strong> PrimeNode_AP',
+        's7_step2' => '🔑 <strong>Password:</strong> <code>primenode123</code>',
+        's7_step3' => '🌍 <strong>Panel Address:</strong> Connect to this network using your phone or PC and type in your browser: <code>192.168.4.1</code>',
 
         'qa_title' => 'Quick Help (Q&A)',
         'qa_q1' => '❓ EchoLink won\'t connect (Status: Disconnected).',
@@ -184,6 +196,18 @@ $H = [
             <li style="margin-bottom: 12px;"><?php echo $H[$lang]['s6_pulse']; ?></li>
             <li style="margin-bottom: 12px;"><?php echo $H[$lang]['s6_icons']; ?></li>
             <li><?php echo $H[$lang]['s6_smart']; ?></li>
+        </ul>
+    </div>
+</div>
+
+<div class="help-section" style="border-left: 5px solid #F44336; background: rgba(244,67,54,0.05);">
+    <div class="help-title" style="color:#F44336;"><span class="help-icon">🆘</span> <?php echo $H[$lang]['s7_title']; ?></div>
+    <div class="help-text">
+        <p><?php echo $H[$lang]['s7_text']; ?></p>
+        <ul style="list-style-type: none; padding-left: 0;">
+            <li style="margin-bottom: 8px;"><?php echo $H[$lang]['s7_step1']; ?></li>
+            <li style="margin-bottom: 8px;"><?php echo $H[$lang]['s7_step2']; ?></li>
+            <li><?php echo $H[$lang]['s7_step3']; ?></li>
         </ul>
     </div>
 </div>
