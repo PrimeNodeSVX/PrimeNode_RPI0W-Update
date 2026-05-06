@@ -262,6 +262,18 @@ function updateStats() {
         $("#t-ip").text(stats.ip);
         $("#wifi-tab-status").text(stats.net_type + (stats.net_type == "WiFi" ? ": " + stats.ssid : ""));
         $("#wifi-tab-ip").text("IP: " + stats.ip);
+        if (stats.net_active !== undefined && typeof GLOBAL_NET_ID !== 'undefined') {
+            if (stats.net_active.toString() !== GLOBAL_NET_ID.toString()) {
+                console.log("Wykryto zmianę reflektora (np. przez DTMF). Odświeżam UI...");
+                let overlay = document.getElementById('loading-overlay');
+                if (overlay) {
+                    document.getElementById('loading-text').innerText = "Zmiana Reflektora. Odświeżam...";
+                    overlay.style.display = 'flex';
+                }
+                setTimeout(function() { window.location.reload(); }, 1500);
+                return;
+            }
+        }
         var elDot = $("#el-status-dot");
         var elText = $("#el-status-text");
         elDot.removeClass("blink");

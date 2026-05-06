@@ -144,6 +144,22 @@
         exit;
     }
 
+    if (isset($_POST['reorder_dtmf_tab']) && isset($_POST['new_order_json'])) {
+        $tab_idx = (int)$_POST['reorder_dtmf_tab'];
+        $new_order = json_decode($_POST['new_order_json'], true);
+        
+        if (file_exists($custom_dtmf_file) && is_array($new_order)) {
+            $current_data = json_decode(file_get_contents($custom_dtmf_file), true) ?? [];
+            
+            if (isset($current_data[$tab_idx])) {
+                $current_data[$tab_idx]['buttons'] = $new_order;
+                file_put_contents($custom_dtmf_file, json_encode($current_data));
+                echo "SUCCESS";
+            }
+        }
+        exit;
+    }
+
     if (isset($_GET['ajax_stats'])) {
         header('Content-Type: application/json');
         $stats = [];
@@ -176,6 +192,13 @@
         $stats['el_enabled'] = (strpos($mods, 'ModuleEchoLink') !== false || strpos($mods, 'EchoLink') !== false);
         $stats['el_error'] = file_exists('/var/www/html/ram/el_error.flag');
         $stats['el_online'] = file_exists('/var/www/html/ram/el_online.flag');
+        $net_file = '/etc/svxlink/networks.json';
+        if (file_exists($net_file)) {
+            $networks_data = json_decode(@file_get_contents($net_file), true);
+            $stats['net_active'] = $networks_data['active'] ?? 0;
+        } else {
+            $stats['net_active'] = 0;
+        }
         echo json_encode($stats);
         exit;
     }
@@ -293,7 +316,14 @@
             "desc" => $_POST['radio_desc'],
             "GpioPtt" => $_POST['gpio_ptt'] ?? '12',
             "GpioSql" => $_POST['gpio_sql'] ?? '16',
-            "shari_sql" => $_POST['shari_sql'] ?? '4'
+            "shari_sql" => $_POST['shari_sql'] ?? '4',
+            "svx_deemph"  => $_POST['svx_deemph'] ?? '0',
+            "svx_preemph" => $_POST['svx_preemph'] ?? '0',
+            "sa_bw"       => $_POST['sa_bw'] ?? '1',
+            "sa_vol"      => $_POST['sa_vol'] ?? '8',
+            "sa_prede"    => $_POST['sa_prede'] ?? '0',
+            "sa_hpf"      => $_POST['sa_hpf'] ?? '0',
+            "sa_lpf"      => $_POST['sa_lpf'] ?? '0'
         ];
         
         file_put_contents('/tmp/svx_new_settings.json', json_encode($updateData));
@@ -602,6 +632,10 @@
 <script>
 const GLOBAL_CALLSIGN = "<?php echo $vals['Callsign']; ?>"; 
 const GLOBAL_HOST = "<?php echo $vals['Host']; ?>";
+const GLOBAL_NET_ID = "<?php
+    $net_f = '/etc/svxlink/networks.json';
+    echo (file_exists($net_f) ? (json_decode(@file_get_contents($net_f), true)['active'] ?? 0) : 0);
+?>";
 
 function dismissAlert(hash) {
     var alertBox = document.getElementById('pn-alert');

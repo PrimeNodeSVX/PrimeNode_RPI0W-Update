@@ -86,6 +86,30 @@ for script in $GIT_DIR/*.sh; do
     fi
 done
 
+WIFI_FLAG="/etc/.primenode_wifi_v1.flag"
+
+if [ ! -f "$WIFI_FLAG" ]; then
+    echo ">> Wdrażanie nowej, stabilnej konfiguracji Rescue_AP..."
+    nmcli connection delete Rescue_AP 2>/dev/null
+    nmcli connection add type wifi ifname wlan0 con-name Rescue_AP autoconnect no ssid primenode_ap
+    nmcli connection modify Rescue_AP 802-11-wireless.mode ap
+    nmcli connection modify Rescue_AP 802-11-wireless.band bg
+    nmcli connection modify Rescue_AP 802-11-wireless.channel 6
+    nmcli connection modify Rescue_AP ipv4.method shared
+    nmcli connection modify Rescue_AP ipv4.addresses 192.168.4.1/24
+    nmcli connection modify Rescue_AP ipv6.method disabled
+    nmcli connection modify Rescue_AP wifi-sec.key-mgmt wpa-psk
+    nmcli connection modify Rescue_AP wifi-sec.psk "primenode123"
+    nmcli connection modify Rescue_AP 802-11-wireless-security.psk-flags 0
+    nmcli connection modify Rescue_AP 802-11-wireless-security.wps-method 1
+    nmcli connection modify Rescue_AP 802-11-wireless-security.pmf 1
+    systemctl restart NetworkManager
+    touch "$WIFI_FLAG"
+    echo ">> Konfiguracja Rescue_AP zakończona sukcesem."
+else
+    echo ">> Konfiguracja Rescue_AP jest już aktualna (pomijam)."
+fi
+
 usermod -aG sudo www-data
 chown -R www-data:www-data $WWW_DIR
 chmod -R 755 $WWW_DIR

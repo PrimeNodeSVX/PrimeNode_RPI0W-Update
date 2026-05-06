@@ -165,7 +165,13 @@ def main():
     if "ctcss" in data: radio_data["ctcss"] = data["ctcss"]
     if "desc" in data: radio_data["desc"] = data["desc"]
     if "radio_type" in data: radio_data["radio_type"] = data["radio_type"]
-
+    if "svx_deemph" in data: radio_data["svx_deemph"] = data["svx_deemph"]
+    if "svx_preemph" in data: radio_data["svx_preemph"] = data["svx_preemph"]
+    if "sa_bw" in data: radio_data["sa_bw"] = data["sa_bw"]
+    if "sa_vol" in data: radio_data["sa_vol"] = data["sa_vol"]
+    if "sa_prede" in data: radio_data["sa_prede"] = data["sa_prede"]
+    if "sa_hpf" in data: radio_data["sa_hpf"] = data["sa_hpf"]
+    if "sa_lpf" in data: radio_data["sa_lpf"] = data["sa_lpf"]
     rx_freq = radio_data.get("rx", "")
     tx_freq = radio_data.get("tx", "")
     ctcss = radio_data.get("ctcss", "0")
@@ -231,6 +237,9 @@ def main():
         "HID_PTT_PIN", "HID_DEVICE", "PTT_TYPE"
     ])
 
+    svx_deemph = str(data.get("svx_deemph", radio_data.get("svx_deemph", "0")))
+    svx_preemph = str(data.get("svx_preemph", radio_data.get("svx_preemph", "0")))
+
     if radio_type == "shari":
         rx1_map = {
             "SQL_DET": "CTCSS",
@@ -238,7 +247,8 @@ def main():
             "CTCSS_MODE": "0",
             "CTCSS_OPEN_THRESH": "12",
             "CTCSS_CLOSE_THRESH": "5",
-            "DTMF_PTY": "/dev/shm/dtmf_ctrl"
+            "DTMF_PTY": "/dev/shm/dtmf_ctrl",
+            "DEEMPHASIS": svx_deemph
         }
         if ctcss == "0" or ctcss == "0000":
             rx1_map["SQL_DET"] = "HIDRAW"
@@ -248,30 +258,39 @@ def main():
         tx1_map = {
             "PTT_TYPE": "Hidraw",
             "HID_DEVICE": hidraw_port,
-            "HID_PTT_PIN": "GPIO3"
+            "HID_PTT_PIN": "GPIO3",
+            "PREEMPHASIS": svx_preemph
         }
 
         try:
             orig_ctcss = data.get("ctcss") or radio_data.get("ctcss", "0000")
             shari_sql = data.get("shari_sql") or radio_data.get("shari_sql", "4")
-            cmd = f"sudo /usr/bin/python3 /usr/local/bin/setup_radio.py {rx_freq} {tx_freq} {orig_ctcss} {shari_sql}"
-            print(f"DEBUG: Wywołuję zewnętrzny skrypt -> {cmd}")
+            sa_bw = str(data.get("sa_bw", radio_data.get("sa_bw", "1")))
+            sa_vol = str(data.get("sa_vol", radio_data.get("sa_vol", "8")))
+            sa_prede = str(data.get("sa_prede", radio_data.get("sa_prede", "0")))
+            sa_hpf = str(data.get("sa_hpf", radio_data.get("sa_hpf", "0")))
+            sa_lpf = str(data.get("sa_lpf", radio_data.get("sa_lpf", "0")))
+
+            cmd = f"sudo /usr/bin/python3 /usr/local/bin/setup_radio.py {rx_freq} {tx_freq} {orig_ctcss} {shari_sql} {sa_bw} {sa_vol} {sa_prede} {sa_hpf} {sa_lpf}"
             os.system(cmd)
         except Exception as e:
             print(f"DEBUG: Błąd wywołania setup_radio.py: {e}")
 
     else:
+
         rx1_map = {
             "SQL_DET": "GPIOD",
             "SQL_GPIOD_CHIP": "gpiochip0",
             "SQL_GPIOD_LINE": gpio_sql,
             "SQL_GPIOD_OPEN_THRESH": "10",
-            "DTMF_PTY": "/dev/shm/dtmf_ctrl"
+            "DTMF_PTY": "/dev/shm/dtmf_ctrl",
+            "DEEMPHASIS": svx_deemph
         }
         tx1_map = {
             "PTT_TYPE": "GPIOD",
             "PTT_GPIOD_CHIP": "gpiochip0",
-            "PTT_GPIOD_LINE": gpio_ptt
+            "PTT_GPIOD_LINE": gpio_ptt,
+            "PREEMPHASIS": svx_preemph
         }
 
     mapping = {

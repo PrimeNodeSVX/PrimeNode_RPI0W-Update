@@ -134,14 +134,85 @@ if (file_exists($jsonFile)) {
                 <div class="form-group" id="shari-sql-inline" style="display: none;">
                     <label><?php echo $TR[$lang]['lbl_sql_level']; ?></label>
                     <select name="shari_sql">
-                        <option value="0" <?php if(isset($radio_display['shari_sql']) && $radio_display['shari_sql'] == '0') echo 'selected'; ?>><?php echo $TR[$lang]['sql_lvl_0']; ?></option>
-                        <?php for($i=1; $i<=9; $i++): ?>
-                            <option value="<?php echo $i; ?>" <?php if(isset($radio_display['shari_sql']) && $radio_display['shari_sql'] == $i) echo 'selected'; ?>><?php echo $TR[$lang]['sql_lvl_n']; ?><?php echo $i; ?></option>
-                        <?php endfor; ?>
+    <option value="0">Poziom 0 (Otwarty)</option>
+    <?php for($i=1; $i<=8; $i++): ?>
+        <option value="<?php echo $i; ?>" <?php if($radio_display['shari_sql'] == $i) echo 'selected'; ?>>
+            Poziom <?php echo $i; ?>
+        </option>
+    <?php endfor; ?>
+</select>
+                </div>
+            </div>
+<hr style="border:0; border-top:1px solid #444; margin: 20px 0;">
+            <h4 class="panel-title" style="color: #ccc; font-size: 14px;">🎛️ Filtry Audio (SvxLink)</h4>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div class="form-group">
+                    <label>[Rx1] DEEMPHASIS</label>
+                    <select name="svx_deemph">
+                        <option value="0" <?php if(isset($radio_display['svx_deemph']) && $radio_display['svx_deemph'] == '0') echo 'selected'; ?>>0 - Wyłączony</option>
+                        <option value="1" <?php if(isset($radio_display['svx_deemph']) && $radio_display['svx_deemph'] == '1') echo 'selected'; ?>>1 - Włączony</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>[Tx1] PREEMPHASIS</label>
+                    <select name="svx_preemph">
+                        <option value="0" <?php if(isset($radio_display['svx_preemph']) && $radio_display['svx_preemph'] == '0') echo 'selected'; ?>>0 - Wyłączony</option>
+                        <option value="1" <?php if(isset($radio_display['svx_preemph']) && $radio_display['svx_preemph'] == '1') echo 'selected'; ?>>1 - Włączony</option>
                     </select>
                 </div>
             </div>
 
+
+            <div id="shari-filters-block" style="display: none; background: rgba(76, 175, 80, 0.1); padding: 10px; border-radius: 5px; margin-top: 15px;">
+                <h4 class="panel-title" style="color: #4CAF50; font-size: 14px; border:none; margin-bottom: 5px;">📡 Sprzętowe Parametry SA818</h4>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div class="form-group">
+                        <label>Dewiacja (Bandwidth)</label>
+                        <select name="sa_bw">
+                            <option value="1" <?php if(isset($radio_display['sa_bw']) && $radio_display['sa_bw'] == '1') echo 'selected'; ?>>1 - WIDE (Szeroki FM)</option>
+                            <option value="0" <?php if(isset($radio_display['sa_bw']) && $radio_display['sa_bw'] == '0') echo 'selected'; ?>>0 - NARROW (Wąski FM)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Głośność SA818 (Volume)</label>
+                        <select name="sa_vol">
+                            <?php for($i=1; $i<=8; $i++): ?>
+                                <option value="<?php echo $i; ?>" <?php if(isset($radio_display['sa_vol']) && $radio_display['sa_vol'] == $i) echo 'selected'; ?>><?php echo $i; ?></option>
+                            <?php endfor; ?>
+                        </select>
+                    </div>
+                </div>
+
+                <hr style="border:0; border-top:1px dashed #4CAF50; margin: 10px 0;">
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                    <div class="form-group">
+                        <label>Pre/De-Emphasis</label>
+                        <select name="sa_prede">
+                            <option value="0" <?php if(isset($radio_display['sa_prede']) && $radio_display['sa_prede'] == '0') echo 'selected'; ?>>0 - Wył</option>
+                            <option value="1" <?php if(isset($radio_display['sa_prede']) && $radio_display['sa_prede'] == '1') echo 'selected'; ?>>1 - Wł</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>High Pass Filter</label>
+                        <select name="sa_hpf">
+                            <option value="0" <?php if(isset($radio_display['sa_hpf']) && $radio_display['sa_hpf'] == '0') echo 'selected'; ?>>0 - Wył</option>
+                            <option value="1" <?php if(isset($radio_display['sa_hpf']) && $radio_display['sa_hpf'] == '1') echo 'selected'; ?>>1 - Wł</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Low Pass Filter</label>
+                        <select name="sa_lpf">
+                            <option value="0" <?php if(isset($radio_display['sa_lpf']) && $radio_display['sa_lpf'] == '0') echo 'selected'; ?>>0 - Wył</option>
+                            <option value="1" <?php if(isset($radio_display['sa_lpf']) && $radio_display['sa_lpf'] == '1') echo 'selected'; ?>>1 - Wł</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
             <div id="gpio-settings-block">
                 <hr style="border:0; border-top:1px solid #444; margin: 20px 0;">
                 <h4 class="panel-title blue"><?php echo $TR[$lang]['gpio_title']; ?></h4>
@@ -217,6 +288,7 @@ function updateRadioHelp() {
     var cardShari = document.getElementById('help-card-shari');
     var gpioBlock = document.getElementById('gpio-settings-block');
     var shariSqlInline = document.getElementById('shari-sql-inline');
+    var shariFilters = document.getElementById('shari-filters-block');
     var dynamicDesc = document.getElementById('dynamic-card-desc');
     
     if (val === 'shari') {
@@ -224,12 +296,14 @@ function updateRadioHelp() {
         cardShari.style.display = 'block';
         gpioBlock.style.display = 'none';
         shariSqlInline.style.display = 'block';
+        shariFilters.style.display = 'block';
         dynamicDesc.innerHTML = cardDescShari;
     } else {
         cardShari.style.display = 'none';
         cardGpio.style.display = 'block';
         gpioBlock.style.display = 'block';
         shariSqlInline.style.display = 'none';
+        shariFilters.style.display = 'none';
         dynamicDesc.innerHTML = cardDescGpio;
     }
 }
