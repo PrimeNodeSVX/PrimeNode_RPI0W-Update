@@ -343,22 +343,43 @@ def main():
     TARGET_FILE = os.path.join(CORE_DIR, "online.wav")
     DEFAULT_FILE = os.path.join(CORE_DIR, "online_PN.wav")
 
+    forced_net_id = 0
+    if "--netid" in sys.argv:
+        try:
+            idx = sys.argv.index("--netid")
+            forced_net_id = int(sys.argv[idx + 1])
+        except:
+            pass
+
     chosen_audio = data.get('audio_file', '')
+
+    NETWORKS_JSON = "/etc/svxlink/networks.json"
+    if os.path.exists(NETWORKS_JSON):
+        try:
+            with open(NETWORKS_JSON, 'r') as nf:
+                net_data = json.load(nf)
+                active_id = forced_net_id if forced_net_id > 0 else net_data.get('active', 0)
+                
+                if active_id > 0:
+                    for net in net_data.get('list', []):
+                        if int(net.get('id')) == int(active_id):
+                            if net.get('audio'):
+                                chosen_audio = net.get('audio')
+                            break
+        except Exception as e:
+            print(f"DEBUG: Błąd odczytu networks.json: {e}")
 
     try:
         source_path = os.path.join(REF_SOUNDS_DIR, chosen_audio) if chosen_audio else ""
         
-
         if chosen_audio and os.path.exists(source_path):
             shutil.copy2(source_path, TARGET_FILE)
-            print(f"DEBUG: Aktywowano dźwięk sieci: {chosen_audio}")
+            print(f"DEBUG: Podmieniono na audio sieci: {chosen_audio}")
         else:
-
             if os.path.exists(DEFAULT_FILE):
                 shutil.copy2(DEFAULT_FILE, TARGET_FILE)
-                print("DEBUG: Przywrócono domyślny dźwięk (online_PN.wav)")
-            else:
-                print("DEBUG: Błąd! Brak pliku domyślnego online_PN.wav")
+                print("DEBUG: Użyto audio domyślnego (online_PN.wav)")
+        
         if os.path.exists(TARGET_FILE):
             os.chmod(TARGET_FILE, 0o666)
     except Exception as e:

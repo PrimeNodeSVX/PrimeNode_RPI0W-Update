@@ -69,8 +69,15 @@ fi
 [ -f "$GIT_DIR/dtmf_custom.json" ] && [ ! -f "$WWW_DIR/dtmf_custom.json" ] && cp "$GIT_DIR/dtmf_custom.json" "$WWW_DIR/"
 
 if compgen -G "$GIT_DIR/*.py" > /dev/null; then
+    echo ">> Instalacja skryptów Python..."
     cp $GIT_DIR/*.py /usr/local/bin/
     chmod +x /usr/local/bin/*.py
+fi
+
+if [ -f "$GIT_DIR/dtmf_switch.py" ]; then
+    cp "$GIT_DIR/dtmf_switch.py" "/usr/local/bin/dtmf_switch.py"
+    chmod +x "/usr/local/bin/dtmf_switch.py"
+    echo ">> Zaktualizowano skrypt dtmf_switch.py"
 fi
 
 echo ">> Konfiguracja dynamicznych zapowiedzi audio..."
