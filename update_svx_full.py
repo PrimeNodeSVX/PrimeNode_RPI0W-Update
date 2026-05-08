@@ -3,12 +3,8 @@ import sys
 import os
 import json
 import time
+import shutil
 
-SYSTEM_NAMESPACE_UUID = "5072696d-654e-6f64-6520-535137555450"
-
-def _generate_hw_hash(data):
-    import hashlib
-    return hashlib.md5((SYSTEM_NAMESPACE_UUID + str(data)).encode()).hexdigest()
 SYSTEM_NAMESPACE_UUID = "5072696d-654e-6f64-6520-535137555450"
 
 def _generate_hw_hash(data):
@@ -341,6 +337,32 @@ def main():
 
     with open(RADIO_JSON, 'w') as f:
         json.dump(radio_data, f, indent=4)
+
+    REF_SOUNDS_DIR = "/usr/local/share/svxlink/sounds/ref_sounds"
+    CORE_DIR = "/usr/local/share/svxlink/sounds/PL/Core"
+    TARGET_FILE = os.path.join(CORE_DIR, "online.wav")
+    DEFAULT_FILE = os.path.join(CORE_DIR, "online_PN.wav")
+
+    chosen_audio = data.get('audio_file', '')
+
+    try:
+        source_path = os.path.join(REF_SOUNDS_DIR, chosen_audio) if chosen_audio else ""
+        
+
+        if chosen_audio and os.path.exists(source_path):
+            shutil.copy2(source_path, TARGET_FILE)
+            print(f"DEBUG: Aktywowano dźwięk sieci: {chosen_audio}")
+        else:
+
+            if os.path.exists(DEFAULT_FILE):
+                shutil.copy2(DEFAULT_FILE, TARGET_FILE)
+                print("DEBUG: Przywrócono domyślny dźwięk (online_PN.wav)")
+            else:
+                print("DEBUG: Błąd! Brak pliku domyślnego online_PN.wav")
+        if os.path.exists(TARGET_FILE):
+            os.chmod(TARGET_FILE, 0o666)
+    except Exception as e:
+        print(f"DEBUG: Błąd kopiowania audio: {e}")
 
     save_lines(CONFIG_FILE, lines)
     print("DONE")

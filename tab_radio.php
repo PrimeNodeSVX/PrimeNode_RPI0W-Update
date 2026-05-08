@@ -30,7 +30,22 @@ $TR = [
         'warn_info_shari' => 'W trybie SHARI system automatycznie zaprogramuje chip SA818 wartościami wpisanymi po lewej stronie.',
         'shari_t1' => '✅ <b>Pełna kontrola:</b> Po kliknięciu "Zapisz", system połączy się z modułem i ustawi wybraną częstotliwość, kod CTCSS oraz blokadę SQL.',
         'shari_t2' => '🎛️ <b>Poziomy RX i TX:</b> Głośność odbioru oraz modulację nadawania reguluje się <b>wyłącznie</b> w zakładce Audio za pomocą suwaków Mic oraz Speaker.',
-        'shari_t4' => '📻 <b>SQL (Squelch):</b> Blokada szumów realizowana jest sprzętowo przez chip SA818. Wybierz odpowiedni poziom (1-9) z menu konfiguracyjnego.'
+        'shari_t4' => '📻 <b>SQL (Squelch):</b> Blokada szumów realizowana jest sprzętowo przez chip SA818. Wybierz odpowiedni poziom (1-9) z menu konfiguracyjnego.',
+        'audio_filters_title' => '🎛️ Filtry Audio (SvxLink)',
+        'lbl_deemph' => '[Rx1] DEEMPHASIS',
+        'lbl_preemph' => '[Tx1] PREEMPHASIS',
+        'opt_0_off' => '0 - Wyłączony',
+        'opt_1_on' => '1 - Włączony',
+        'sa818_title' => '📡 Sprzętowe Parametry SA818',
+        'lbl_bandwidth' => 'Dewiacja (Bandwidth)',
+        'opt_wide' => '1 - WIDE (Szeroki FM)',
+        'opt_narrow' => '0 - NARROW (Wąski FM)',
+        'lbl_sa_vol' => 'Głośność SA818 (Volume)',
+        'lbl_prede' => 'Pre/De-Emphasis',
+        'opt_off' => '0 - Wył',
+        'opt_on' => '1 - Wł',
+        'lbl_hpf' => 'High Pass Filter',
+        'lbl_lpf' => 'Low Pass Filter'
     ],
     'en' => [
         'csq' => 'None (CSQ)',
@@ -62,7 +77,22 @@ $TR = [
         'warn_info_shari' => 'In SHARI mode, the system will automatically program the SA818 chip with the values from the left.',
         'shari_t1' => '✅ <b>Full control:</b> After clicking "Save", the system will set the chosen frequency, CTCSS, and SQL in the module.',
         'shari_t2' => '🎛️ <b>RX and TX Levels:</b> Adjust receive and transmit audio levels <b>only</b> in the Audio tab using the Mic and Speaker sliders.',
-        'shari_t4' => '📻 <b>SQL (Squelch):</b> Handled by the hardware SA818 chip. Select the desired level (1-9) in the configuration panel.'
+        'shari_t4' => '📻 <b>SQL (Squelch):</b> Handled by the hardware SA818 chip. Select the desired level (1-9) in the configuration panel.',
+        'audio_filters_title' => '🎛️ Audio Filters (SvxLink)',
+        'lbl_deemph' => '[Rx1] DEEMPHASIS',
+        'lbl_preemph' => '[Tx1] PREEMPHASIS',
+        'opt_0_off' => '0 - Disabled',
+        'opt_1_on' => '1 - Enabled',
+        'sa818_title' => '📡 SA818 Hardware Params',
+        'lbl_bandwidth' => 'Bandwidth (Deviation)',
+        'opt_wide' => '1 - WIDE (Wide FM)',
+        'opt_narrow' => '0 - NARROW (Narrow FM)',
+        'lbl_sa_vol' => 'SA818 Volume',
+        'lbl_prede' => 'Pre/De-Emphasis',
+        'opt_off' => '0 - Off',
+        'opt_on' => '1 - On',
+        'lbl_hpf' => 'High Pass Filter',
+        'lbl_lpf' => 'Low Pass Filter'
     ]
 ];
 
@@ -134,49 +164,49 @@ if (file_exists($jsonFile)) {
                 <div class="form-group" id="shari-sql-inline" style="display: none;">
                     <label><?php echo $TR[$lang]['lbl_sql_level']; ?></label>
                     <select name="shari_sql">
-    <option value="0">Poziom 0 (Otwarty)</option>
-    <?php for($i=1; $i<=8; $i++): ?>
-        <option value="<?php echo $i; ?>" <?php if($radio_display['shari_sql'] == $i) echo 'selected'; ?>>
-            Poziom <?php echo $i; ?>
-        </option>
-    <?php endfor; ?>
-</select>
+                        <option value="0"><?php echo $TR[$lang]['sql_lvl_0']; ?></option>
+                        <?php for($i=1; $i<=8; $i++): ?>
+                            <option value="<?php echo $i; ?>" <?php if($radio_display['shari_sql'] == $i) echo 'selected'; ?>>
+                                <?php echo $TR[$lang]['sql_lvl_n'] . $i; ?>
+                            </option>
+                        <?php endfor; ?>
+                    </select>
                 </div>
             </div>
-<hr style="border:0; border-top:1px solid #444; margin: 20px 0;">
-            <h4 class="panel-title" style="color: #ccc; font-size: 14px;">🎛️ Filtry Audio (SvxLink)</h4>
+
+            <hr style="border:0; border-top:1px solid #444; margin: 20px 0;">
+            <h4 class="panel-title" style="color: #ccc; font-size: 14px;"><?php echo $TR[$lang]['audio_filters_title']; ?></h4>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                 <div class="form-group">
-                    <label>[Rx1] DEEMPHASIS</label>
+                    <label><?php echo $TR[$lang]['lbl_deemph']; ?></label>
                     <select name="svx_deemph">
-                        <option value="0" <?php if(isset($radio_display['svx_deemph']) && $radio_display['svx_deemph'] == '0') echo 'selected'; ?>>0 - Wyłączony</option>
-                        <option value="1" <?php if(isset($radio_display['svx_deemph']) && $radio_display['svx_deemph'] == '1') echo 'selected'; ?>>1 - Włączony</option>
+                        <option value="0" <?php if(isset($radio_display['svx_deemph']) && $radio_display['svx_deemph'] == '0') echo 'selected'; ?>><?php echo $TR[$lang]['opt_0_off']; ?></option>
+                        <option value="1" <?php if(isset($radio_display['svx_deemph']) && $radio_display['svx_deemph'] == '1') echo 'selected'; ?>><?php echo $TR[$lang]['opt_1_on']; ?></option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>[Tx1] PREEMPHASIS</label>
+                    <label><?php echo $TR[$lang]['lbl_preemph']; ?></label>
                     <select name="svx_preemph">
-                        <option value="0" <?php if(isset($radio_display['svx_preemph']) && $radio_display['svx_preemph'] == '0') echo 'selected'; ?>>0 - Wyłączony</option>
-                        <option value="1" <?php if(isset($radio_display['svx_preemph']) && $radio_display['svx_preemph'] == '1') echo 'selected'; ?>>1 - Włączony</option>
+                        <option value="0" <?php if(isset($radio_display['svx_preemph']) && $radio_display['svx_preemph'] == '0') echo 'selected'; ?>><?php echo $TR[$lang]['opt_0_off']; ?></option>
+                        <option value="1" <?php if(isset($radio_display['svx_preemph']) && $radio_display['svx_preemph'] == '1') echo 'selected'; ?>><?php echo $TR[$lang]['opt_1_on']; ?></option>
                     </select>
                 </div>
             </div>
 
-
             <div id="shari-filters-block" style="display: none; background: rgba(76, 175, 80, 0.1); padding: 10px; border-radius: 5px; margin-top: 15px;">
-                <h4 class="panel-title" style="color: #4CAF50; font-size: 14px; border:none; margin-bottom: 5px;">📡 Sprzętowe Parametry SA818</h4>
+                <h4 class="panel-title" style="color: #4CAF50; font-size: 14px; border:none; margin-bottom: 5px;"><?php echo $TR[$lang]['sa818_title']; ?></h4>
                 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                     <div class="form-group">
-                        <label>Dewiacja (Bandwidth)</label>
+                        <label><?php echo $TR[$lang]['lbl_bandwidth']; ?></label>
                         <select name="sa_bw">
-                            <option value="1" <?php if(isset($radio_display['sa_bw']) && $radio_display['sa_bw'] == '1') echo 'selected'; ?>>1 - WIDE (Szeroki FM)</option>
-                            <option value="0" <?php if(isset($radio_display['sa_bw']) && $radio_display['sa_bw'] == '0') echo 'selected'; ?>>0 - NARROW (Wąski FM)</option>
+                            <option value="1" <?php if(isset($radio_display['sa_bw']) && $radio_display['sa_bw'] == '1') echo 'selected'; ?>><?php echo $TR[$lang]['opt_wide']; ?></option>
+                            <option value="0" <?php if(isset($radio_display['sa_bw']) && $radio_display['sa_bw'] == '0') echo 'selected'; ?>><?php echo $TR[$lang]['opt_narrow']; ?></option>
                         </select>
                     </div>
                     
                     <div class="form-group">
-                        <label>Głośność SA818 (Volume)</label>
+                        <label><?php echo $TR[$lang]['lbl_sa_vol']; ?></label>
                         <select name="sa_vol">
                             <?php for($i=1; $i<=8; $i++): ?>
                                 <option value="<?php echo $i; ?>" <?php if(isset($radio_display['sa_vol']) && $radio_display['sa_vol'] == $i) echo 'selected'; ?>><?php echo $i; ?></option>
@@ -189,26 +219,26 @@ if (file_exists($jsonFile)) {
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
                     <div class="form-group">
-                        <label>Pre/De-Emphasis</label>
+                        <label><?php echo $TR[$lang]['lbl_prede']; ?></label>
                         <select name="sa_prede">
-                            <option value="0" <?php if(isset($radio_display['sa_prede']) && $radio_display['sa_prede'] == '0') echo 'selected'; ?>>0 - Wył</option>
-                            <option value="1" <?php if(isset($radio_display['sa_prede']) && $radio_display['sa_prede'] == '1') echo 'selected'; ?>>1 - Wł</option>
+                            <option value="0" <?php if(isset($radio_display['sa_prede']) && $radio_display['sa_prede'] == '0') echo 'selected'; ?>><?php echo $TR[$lang]['opt_off']; ?></option>
+                            <option value="1" <?php if(isset($radio_display['sa_prede']) && $radio_display['sa_prede'] == '1') echo 'selected'; ?>><?php echo $TR[$lang]['opt_on']; ?></option>
                         </select>
                     </div>
 
                     <div class="form-group">
-                        <label>High Pass Filter</label>
+                        <label><?php echo $TR[$lang]['lbl_hpf']; ?></label>
                         <select name="sa_hpf">
-                            <option value="0" <?php if(isset($radio_display['sa_hpf']) && $radio_display['sa_hpf'] == '0') echo 'selected'; ?>>0 - Wył</option>
-                            <option value="1" <?php if(isset($radio_display['sa_hpf']) && $radio_display['sa_hpf'] == '1') echo 'selected'; ?>>1 - Wł</option>
+                            <option value="0" <?php if(isset($radio_display['sa_hpf']) && $radio_display['sa_hpf'] == '0') echo 'selected'; ?>><?php echo $TR[$lang]['opt_off']; ?></option>
+                            <option value="1" <?php if(isset($radio_display['sa_hpf']) && $radio_display['sa_hpf'] == '1') echo 'selected'; ?>><?php echo $TR[$lang]['opt_on']; ?></option>
                         </select>
                     </div>
 
                     <div class="form-group">
-                        <label>Low Pass Filter</label>
+                        <label><?php echo $TR[$lang]['lbl_lpf']; ?></label>
                         <select name="sa_lpf">
-                            <option value="0" <?php if(isset($radio_display['sa_lpf']) && $radio_display['sa_lpf'] == '0') echo 'selected'; ?>>0 - Wył</option>
-                            <option value="1" <?php if(isset($radio_display['sa_lpf']) && $radio_display['sa_lpf'] == '1') echo 'selected'; ?>>1 - Wł</option>
+                            <option value="0" <?php if(isset($radio_display['sa_lpf']) && $radio_display['sa_lpf'] == '0') echo 'selected'; ?>><?php echo $TR[$lang]['opt_off']; ?></option>
+                            <option value="1" <?php if(isset($radio_display['sa_lpf']) && $radio_display['sa_lpf'] == '1') echo 'selected'; ?>><?php echo $TR[$lang]['opt_on']; ?></option>
                         </select>
                     </div>
                 </div>

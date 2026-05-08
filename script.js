@@ -24,7 +24,8 @@ const TRANS = {
 	tg_mode_single: "Wybór pojedynczy",
         tg_mode_multi: "Wybór wielokrotny",
         tg_empty_sel: "Brak wyznaczonych TG...",
-        tg_no_data: "Brak danych z zakładki DTMF."
+        tg_no_data: "Brak danych z zakładki DTMF.",
+        nodes_tab: "Nodes"
     },
     en: {
         el_off: "EchoLink Off",
@@ -46,7 +47,8 @@ const TRANS = {
 	tg_mode_single: "Single selection",
         tg_mode_multi: "Multiple selection",
         tg_empty_sel: "No TGs selected...",
-        tg_no_data: "No data from DTMF tab."
+        tg_no_data: "No data from DTMF tab.",
+        nodes_tab: "Nodes"
     }
 };
 const T = TRANS[currentLang];
@@ -341,7 +343,10 @@ function loadLogsAndStatus() {
         if (isOnline) {
             $("#main-status-text").text(T.ref_on).removeClass("inactive").addClass("active");
             $("#main-status-dot").removeClass("red").removeClass("orange").addClass("green").addClass("blink");
-            $("#ref-status").html(T.ref_conn + (typeof GLOBAL_HOST !== 'undefined' && GLOBAL_HOST ? " (" + GLOBAL_HOST + ")" : "")).css("color", "#4CAF50");
+            
+            let netDisp = (typeof GLOBAL_NET_NAME !== 'undefined' && GLOBAL_NET_NAME !== '') ? GLOBAL_NET_NAME : (typeof GLOBAL_HOST !== 'undefined' && GLOBAL_HOST ? GLOBAL_HOST : "");
+            $("#ref-status").html(T.ref_conn + (netDisp ? " (" + netDisp + ")" : "")).css("color", "#4CAF50");
+            
         } else if (data.length >= 50) {
             $("#main-status-text").text(T.ref_off).removeClass("active").addClass("inactive");
             $("#main-status-dot").removeClass("green").removeClass("orange").addClass("red").removeClass("blink");
@@ -456,6 +461,7 @@ function updateNodes() {
         cachedNodesData = data.nodes;
         var myCall = GLOBAL_CALLSIGN;
         var nodeKeys = Object.keys(data.nodes).sort();
+        $("#btn-Nodes").text(T.nodes_tab + " (" + nodeKeys.length + ")");
         var html = "";
         if (nodeKeys.length === 0) {
         html = "<div style='grid-column:1/-1;text-align:center;color:#777;'>" + T.no_nodes + "</div>";

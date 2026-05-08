@@ -1,6 +1,16 @@
 <?php
-$__config_mutex_id = "\x50\x72\x69\x6d\x65\x4e\x6f\x64\x65\x20\x53\x51\x37\x55\x54\x50";
+    $__config_mutex_id = "\x50\x72\x69\x6d\x65\x4e\x6f\x64\x65\x20\x53\x51\x37\x55\x54\x50";
     $net_file = '/etc/svxlink/networks.json';
+    $sound_dir = '/usr/local/share/svxlink/sounds/ref_sounds';
+    $available_sounds = [];
+    if (is_dir($sound_dir)) {
+        $files = glob($sound_dir . '/*.wav');
+        if ($files !== false) {
+            foreach ($files as $file) {
+                $available_sounds[] = basename($file);
+            }
+        }
+    }
 
     function save_networks_json($data, $path) {
         file_put_contents($path, json_encode($data, JSON_PRETTY_PRINT));
@@ -17,7 +27,7 @@ $__config_mutex_id = "\x50\x72\x69\x6d\x65\x4e\x6f\x64\x65\x20\x53\x51\x37\x55\x
     if(!is_array($networks)) $networks = [ "active" => 0, "list" => [] ];
 
     $edit_mode = false;
-    $edit_data = ['id'=>'','name'=>'','host'=>'','port'=>'5300','pass'=>'','api'=>'','tgs'=>'','callsign'=>'','deftg'=>''];
+    $edit_data = ['id'=>'','name'=>'','host'=>'','port'=>'5300','pass'=>'','api'=>'','tgs'=>'','callsign'=>'','deftg'=>'','audio'=>''];
     $active_callsign = isset($vals['Callsign']) ? $vals['Callsign'] : ''; 
     
     if (isset($networks['active']) && $networks['active'] > 0 && isset($networks['list'])) {
@@ -42,7 +52,8 @@ $__config_mutex_id = "\x50\x72\x69\x6d\x65\x4e\x6f\x64\x65\x20\x53\x51\x37\x55\x
             'api' => htmlspecialchars($_POST['n_api']),
             'tgs' => htmlspecialchars($_POST['n_tgs']),
             'callsign' => strtoupper(htmlspecialchars($_POST['n_callsign'])),
-            'deftg' => htmlspecialchars($_POST['n_deftg'])
+            'deftg' => htmlspecialchars($_POST['n_deftg']),
+            'audio' => htmlspecialchars($_POST['n_audio'] ?? '')
         ];
 
         if ($id_to_save != '') {
@@ -75,7 +86,8 @@ $__config_mutex_id = "\x50\x72\x69\x6d\x65\x4e\x6f\x64\x65\x20\x53\x51\x37\x55\x
                 'Password'   => $new_data['pass'],
                 'DefaultTG'  => $new_data['deftg'],
                 'MonitorTGs' => $new_data['tgs'],
-                'node_api_url' => $new_data['api']
+                'node_api_url' => $new_data['api'],
+                'audio_file' => $new_data['audio']
             ];
 
             file_put_contents('/tmp/svx_new_settings.json', json_encode($switch_data));
@@ -108,7 +120,8 @@ $__config_mutex_id = "\x50\x72\x69\x6d\x65\x4e\x6f\x64\x65\x20\x53\x51\x37\x55\x
                 'Password' => '',
                 'MonitorTGs' => '',
                 'node_api_url' => '',
-                'Callsign' => ''
+                'Callsign' => '',
+                'audio_file' => ''
             ];
             file_put_contents('/tmp/svx_new_settings.json', json_encode($disconnect_data));
             shell_exec('sudo /usr/bin/python3 /usr/local/bin/update_svx_full.py 2>&1');
@@ -139,7 +152,8 @@ $__config_mutex_id = "\x50\x72\x69\x6d\x65\x4e\x6f\x64\x65\x20\x53\x51\x37\x55\x
                 'Password'   => $selected_net['pass'],
                 'DefaultTG'  => isset($selected_net['deftg']) ? $selected_net['deftg'] : '0',
                 'MonitorTGs' => isset($selected_net['tgs']) ? $selected_net['tgs'] : '',
-                'node_api_url' => isset($selected_net['api']) ? $selected_net['api'] : ''
+                'node_api_url' => isset($selected_net['api']) ? $selected_net['api'] : '',
+                'audio_file' => $selected_net['audio'] ?? ''
             ];
 
             file_put_contents('/tmp/svx_new_settings.json', json_encode($switch_data));
@@ -158,9 +172,11 @@ $__config_mutex_id = "\x50\x72\x69\x6d\x65\x4e\x6f\x64\x65\x20\x53\x51\x37\x55\x
         foreach ($networks['list'] as $net) {
             if ($net['id'] == $_POST['edit_network']) {
                 $edit_data = $net;
+
                 if(empty($edit_data['callsign'])) $edit_data['callsign'] = $vals['Callsign'] ?? ''; 
                 if(empty($edit_data['deftg'])) $edit_data['deftg'] = $vals['DefaultTG'] ?? '';
                 if(empty($edit_data['tgs'])) $edit_data['tgs'] = $vals['MonitorTGs'] ?? '';
+                if(empty($edit_data['audio'])) $edit_data['audio'] = '';
                 break;
             }
         }
@@ -170,6 +186,7 @@ $__config_mutex_id = "\x50\x72\x69\x6d\x65\x4e\x6f\x64\x65\x20\x53\x51\x37\x55\x
 
     $TC = [
         'pl' => [
+            'opt_default' => 'Domyślny',
             'header' => 'Konfiguracja SvxLink',
             'sect_roam' => 'Menedżer Sieci (Roaming)',
             'th_name' => 'Nazwa',
@@ -188,6 +205,7 @@ $__config_mutex_id = "\x50\x72\x69\x6d\x65\x4e\x6f\x64\x65\x20\x53\x51\x37\x55\x
             'ph_tgs' => 'Monitorowane TG (np. 260)',
             'ph_call' => 'Znak Noda',
             'ph_deftg' => 'Startowe TG',
+            'lbl_audio_sel' => 'Zapowiedź Audio',
             
             'sect_el' => 'EchoLink',
             'lbl_el_call' => 'Znak EchoLink',
@@ -221,14 +239,15 @@ $__config_mutex_id = "\x50\x72\x69\x6d\x65\x4e\x6f\x64\x65\x20\x53\x51\x37\x55\x
             'opt_yes' => 'TAK',
             'opt_no' => 'NIE',
             'btn_save' => 'Zapisz Ustawienia Globalne',
-	    'tg_modal_title' => '🎙️ Wybierz Grupy TG',
+	        'tg_modal_title' => '🎙️ Wybierz Grupy TG',
             'tg_selected' => 'Wybrane:',
             'tg_ph_manual' => 'Wpisz nr TG...',
             'btn_add_tg' => 'DODAJ',
             'btn_confirm' => '✅ ZATWIERDŹ',
-            'btn_cancel' => '❌ ANULUJ'
+            'btn_cancel_modal' => '❌ ANULUJ'
         ],
         'en' => [
+            'opt_default' => 'Default',
             'header' => 'SvxLink Configuration',
             'sect_roam' => 'Network Manager (Roaming)',
             'th_name' => 'Name',
@@ -247,6 +266,7 @@ $__config_mutex_id = "\x50\x72\x69\x6d\x65\x4e\x6f\x64\x65\x20\x53\x51\x37\x55\x
             'ph_tgs' => 'Monitor TGs',
             'ph_call' => 'Node Callsign',
             'ph_deftg' => 'Default TG',
+            'lbl_audio_sel' => 'Voice ID',
 
             'sect_el' => 'EchoLink',
             'lbl_el_call' => 'EchoLink Callsign',
@@ -280,12 +300,12 @@ $__config_mutex_id = "\x50\x72\x69\x6d\x65\x4e\x6f\x64\x65\x20\x53\x51\x37\x55\x
             'opt_yes' => 'YES',
             'opt_no' => 'NO',
             'btn_save' => 'Save Global Settings',
-	    'tg_modal_title' => '🎙️ Select TG Groups',
+	        'tg_modal_title' => '🎙️ Select TG Groups',
             'tg_selected' => 'Selected:',
             'tg_ph_manual' => 'Enter TG no...',
             'btn_add_tg' => 'ADD',
             'btn_confirm' => '✅ CONFIRM',
-            'btn_cancel' => '❌ CANCEL'
+            'btn_cancel_modal' => '❌ CANCEL'
         ]
     ];
 ?>
@@ -356,6 +376,16 @@ $__config_mutex_id = "\x50\x72\x69\x6d\x65\x4e\x6f\x64\x65\x20\x53\x51\x37\x55\x
                 <div style="flex:1; min-width:200px;">
                     <input type="text" name="n_api" placeholder="API URL (http://...)" value="<?php echo $edit_data['api']; ?>">
                 </div>
+                
+                <div style="flex:1; min-width:150px;">
+    <select name="n_audio" style="width:100%; cursor:pointer; color: #ccc; background: transparent; border: 1px solid #444; padding: 8px; border-radius: 4px;">
+        <option value="" style="background: #2a2a2a; color: #ccc;"><?php echo $TC[$lang]['lbl_audio_sel']; ?>: <?php echo $TC[$lang]['opt_default']; ?></option>
+        <?php foreach($available_sounds as $snd): ?>
+            <option value="<?php echo $snd; ?>" style="background: #2a2a2a; color: #ccc;" <?php if($edit_data['audio'] == $snd) echo 'selected'; ?>><?php echo $snd; ?></option>
+        <?php endforeach; ?>
+    </select>
+</div>
+
                 <div style="flex:1; min-width:100px;">
                     <input type="text" id="n_deftg_input" name="n_deftg" placeholder="<?php echo $TC[$lang]['ph_deftg']; ?>" value="<?php echo $edit_data['deftg']; ?>" onclick="openTgSelector('n_deftg_input', 'single')" style="cursor: pointer;" readonly title="Kliknij, aby wybrać z listy">
                 </div>
@@ -452,7 +482,6 @@ $__config_mutex_id = "\x50\x72\x69\x6d\x65\x4e\x6f\x64\x65\x20\x53\x51\x37\x55\x
 </form>
 
 <?php
-
 $tg_list_data = [];
 $custom_dtmf_path = '/var/www/html/dtmf_custom.json';
 if (file_exists($custom_dtmf_path)) {
@@ -478,7 +507,7 @@ if (file_exists($custom_dtmf_path)) {
 
         <div style="display:flex; gap:10px;">
             <button class="btn btn-green" style="margin:0;" onclick="saveTgSelection()"><?php echo $TC[$lang]['btn_confirm']; ?></button>
-            <button class="btn btn-red" style="margin:0;" onclick="closeTgSelector()"><?php echo $TC[$lang]['btn_cancel']; ?></button>
+            <button class="btn btn-red" style="margin:0;" onclick="closeTgSelector()"><?php echo $TC[$lang]['btn_cancel_modal']; ?></button>
         </div>
     </div>
 </div>

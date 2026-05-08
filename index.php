@@ -637,6 +637,20 @@ const GLOBAL_NET_ID = "<?php
     echo (file_exists($net_f) ? (json_decode(@file_get_contents($net_f), true)['active'] ?? 0) : 0);
 ?>";
 
+const GLOBAL_NET_NAME = "<?php
+    $net_name = '';
+    if (file_exists($net_f)) {
+        $ndata = json_decode(@file_get_contents($net_f), true);
+        $act = $ndata['active'] ?? 0;
+        if ($act > 0 && !empty($ndata['list'])) {
+            foreach ($ndata['list'] as $nn) {
+                if ($nn['id'] == $act) { $net_name = $nn['name']; break; }
+            }
+        }
+    }
+    echo addslashes($net_name);
+?>";
+
 function dismissAlert(hash) {
     var alertBox = document.getElementById('pn-alert');
     if(alertBox) alertBox.style.display = 'none';

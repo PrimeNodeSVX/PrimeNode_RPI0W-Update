@@ -9,7 +9,7 @@ $TN = [
         'ver' => 'Wersja:',
 	'lbl_radio' => 'Radio (QRG):',
         'btn_close_map' => '❌ ZAMKNIJ MAPĘ',
-        'header' => 'Aktywne Węzły (Network)',
+        'header' => 'Aktywne Węzły',
         'btn_open_map' => '🌍 Grid Mapper Node (Pokaż Mapę)',
         'loading' => 'Ładowanie listy węzłów...'
     ],
@@ -22,7 +22,7 @@ $TN = [
         'ver' => 'Version:',
 	'lbl_radio' => 'Radio (QRG):',
         'btn_close_map' => '❌ CLOSE MAP',
-        'header' => 'Active Nodes (Network)',
+        'header' => 'Active Nodes',
         'btn_open_map' => '🌍 Grid Mapper Node (Show Map)',
         'loading' => 'Loading node list...'
     ]
