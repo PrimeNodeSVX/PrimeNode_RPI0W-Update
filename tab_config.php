@@ -87,7 +87,8 @@
                 'DefaultTG'  => $new_data['deftg'],
                 'MonitorTGs' => $new_data['tgs'],
                 'node_api_url' => $new_data['api'],
-                'audio_file' => $new_data['audio']
+                'audio_file' => $new_data['audio'],
+                'AnnounceCall' => $vals['AnnounceCall']
             ];
 
             file_put_contents('/tmp/svx_new_settings.json', json_encode($switch_data));
@@ -153,7 +154,8 @@
                 'DefaultTG'  => isset($selected_net['deftg']) ? $selected_net['deftg'] : '0',
                 'MonitorTGs' => isset($selected_net['tgs']) ? $selected_net['tgs'] : '',
                 'node_api_url' => isset($selected_net['api']) ? $selected_net['api'] : '',
-                'audio_file' => $selected_net['audio'] ?? ''
+                'audio_file' => $selected_net['audio'] ?? '',
+                'AnnounceCall' => $vals['AnnounceCall']
             ];
 
             file_put_contents('/tmp/svx_new_settings.json', json_encode($switch_data));

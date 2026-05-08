@@ -5,6 +5,7 @@ $TP = [
         'load_text' => 'Pobieranie plików z GitHub.<br>Proszę nie zamykać okna ani nie odświeżać strony.',
         'title_pwr' => 'Zarządzanie Zasilaniem',
         'btn_svx' => 'Restart Usługi SvxLink',
+        'btn_stop_svx' => '🛑 Zatrzymaj SvxLink',
         'ask_reb' => 'Czy na pewno chcesz zrestartować CAŁY system?',
         'btn_reb' => '🔄 Restart Urządzenia',
         'ask_off' => 'Czy na pewno chcesz WYŁĄCZYĆ urządzenie?',
@@ -18,6 +19,7 @@ $TP = [
         'load_text' => 'Downloading files from GitHub.<br>Please do not close or refresh the page.',
         'title_pwr' => 'Power Management',
         'btn_svx' => 'Restart SvxLink Service',
+        'btn_stop_svx' => '🛑 Stop SvxLink Service',
         'ask_reb' => 'Are you sure you want to reboot the WHOLE system?',
         'btn_reb' => '🔄 Reboot Device',
         'ask_off' => 'Are you sure you want to SHUT DOWN the device?',
@@ -111,12 +113,13 @@ if (trim(@file_get_contents($update_flag_file)) === "UPDATE_AVAILABLE") {
 <form method="post" id="power-form">
     <input type="hidden" name="active_tab" class="active-tab-input" value="Power">
     
-    <button type="submit" name="restart_srv" class="btn btn-blue" style="margin-bottom:15px;"><?php echo $TP[$lang]['btn_svx']; ?></button>
-    
-    <div style="height:10px;"></div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom: 20px;">
+        <button type="submit" name="restart_srv" class="btn btn-blue"><?php echo $TP[$lang]['btn_svx']; ?></button>
+        <button type="submit" name="stop_srv" class="btn btn-orange" onclick="return confirm('Na pewno chcesz ZATRZYMAĆ usługę SvxLink?')"><?php echo $TP[$lang]['btn_stop_svx']; ?></button>
+    </div>
     
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom: 20px;">
-        <button type="submit" name="reboot_device" class="btn btn-orange" onclick="return confirm('<?php echo $TP[$lang]['ask_reb']; ?>')"><?php echo $TP[$lang]['btn_reb']; ?></button>
+        <button type="submit" name="reboot_device" class="btn btn-red" style="opacity: 0.9;" onclick="return confirm('<?php echo $TP[$lang]['ask_reb']; ?>')"><?php echo $TP[$lang]['btn_reb']; ?></button>
         <button type="submit" name="shutdown_device" class="btn btn-red" onclick="return confirm('<?php echo $TP[$lang]['ask_off']; ?>')"><?php echo $TP[$lang]['btn_off']; ?></button>
     </div>
 
