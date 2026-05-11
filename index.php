@@ -521,12 +521,13 @@
             <ul style="padding-left: 20px;">
                 <li>🌍 <b>System raportowania APRS:</b> Wprowadzono pełną obsługę wysyłania ramek APRS z pozycją i statusem Twojego węzła bezpośrednio z panelu.</li>
                 <li>💾 <b>Moduł Kopia Zapasowa (Backup):</b> Nowe, bezpieczne narzędzie do łatwego eksportowania i przywracania całej konfiguracji jednym kliknięciem.</li>
-                <li>📻 <b>Zaawansowane ustawienia Radia:</b> W zakładce Radio pojawiły się nowe opcje strojenia dźwięku. Możesz teraz zarządzać filtrami audio SvxLink (Pre/De-emphasis) oraz, w przypadku korzystania z modułu SHARI, bezpośrednio konfigurować filtry sprzętowe układu SA818 (Bandwidth, LPF, HPF)!</li>
-                <li>🐛 <b>Optymalizacja i poprawki:</b> Wyeliminowano drobne błędy i udoskonalono kod, znacznie zwiększając stabilność całego systemu.</li>
+                <li>🛑 <b>Zatrzymywanie SvxLink:</b> W zakładce Zasilanie dodano przycisk umożliwiający całkowite zatrzymanie usługi SvxLink bez konieczności wyłączania całego urządzenia.</li>
+                <li>📻 <b>Zaawansowane ustawienia Radia:</b> Nowe opcje strojenia dźwięku – zarządzaj filtrami audio SvxLink (Pre/De-emphasis) oraz sprzętowymi parametrami układu SA818 (Bandwidth, LPF, HPF).</li>
                 <li>📊 <b>Licznik Węzłów:</b> W zakładce logów dodano wygodny licznik pokazujący sumaryczną ilość aktualnie podłączonych stacji.</li>
                 <li>🏷️ <b>Nazwa Reflektora:</b> Główny panel obok statusu "PODŁĄCZONY" wyświetla teraz przyjazną nazwę Twojej sieci, zdefiniowaną w konfiguracji.</li>
                 <li>🔊 <b>Nowe komunikaty TG:</b> Baza wzbogaciła się o nowe, uniwersalne pliki audio do recytowania grup rozmownych (TG).</li>
                 <li>🎙️ <b>Zapowiedzi sieci (Audio Roaming):</b> Wdrożono inteligentny mechanizm odtwarzający nazwę sieci podczas przełączania (z poziomu panelu WWW oraz przez komendy DTMF).</li>
+                <li>🐛 <b>Optymalizacja i poprawki:</b> Wyeliminowano drobne błędy i udoskonalono kod, znacznie zwiększając stabilność całego systemu.</li>
             </ul>
             
             <div style="background: #2a2a2a; border-left: 3px solid #FF9800; padding: 12px; margin-top: 15px; font-size: 12px; border-radius: 4px; color: #eee;">
