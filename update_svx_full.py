@@ -17,6 +17,25 @@ RADIO_JSON = "/var/www/html/radio_config.json"
 NODE_INFO_FILE = "/etc/svxlink/node_info.json"
 LOG_FILE_RAM = "/dev/shm/svxlink.log"
 
+def format_coords(val, is_lat=True):
+    if not val: return None
+    try:
+        if any(c in str(val).upper() for c in ['N', 'S', 'E', 'W']):
+            return str(val).strip()
+        decimal = float(val)
+        degrees = int(abs(decimal))
+        minutes_float = (abs(decimal) - degrees) * 60
+        minutes = int(minutes_float)
+        seconds = int(round((minutes_float - minutes) * 60))
+        if is_lat:
+            direction = 'N' if decimal >= 0 else 'S'
+            return f"{degrees:02d}.{minutes:02d}.{seconds:02d}{direction}"
+        else:
+            direction = 'E' if decimal >= 0 else 'W'
+            return f"{degrees:03d}.{minutes:02d}.{seconds:02d}{direction}"
+    except:
+        return val
+
 def load_lines(path):
     if not os.path.exists(path): return []
     with open(path, 'r', encoding='utf-8', errors='ignore') as f: return f.readlines()
@@ -270,10 +289,9 @@ def main():
             cmd = f"sudo /usr/bin/python3 /usr/local/bin/setup_radio.py {rx_freq} {tx_freq} {orig_ctcss} {shari_sql} {sa_bw} {sa_vol} {sa_prede} {sa_hpf} {sa_lpf}"
             os.system(cmd)
         except Exception as e:
-            print(f"DEBUG: Błąd wywołania setup_radio.py: {e}")
+            pass
 
     else:
-
         rx1_map = {
             "SQL_DET": "GPIOD",
             "SQL_GPIOD_CHIP": "gpiochip0",
@@ -289,6 +307,35 @@ def main():
             "PREEMPHASIS": svx_preemph
         }
 
+    lat_val = data.get('AprsLat')
+    lon_val = data.get('AprsLon')
+    lat_fixed = format_coords(lat_val, True) if lat_val else None
+    lon_fixed = format_coords(lon_val, False) if lon_val else None
+    aprs_ssid = data.get('AprsSsid')
+    if aprs_ssid and str(aprs_ssid).strip() != "":
+        aprs_callsign = f"{main_callsign}-{str(aprs_ssid).strip()}"
+    else:
+        aprs_callsign = main_callsign
+
+    aprs_icon_raw = data.get('AprsIcon')
+    if aprs_icon_raw:
+        if aprs_icon_raw.startswith('\\'):
+            aprs_icon_raw = '1' + aprs_icon_raw[1:]
+    else:
+        aprs_icon_raw = None
+
+    user_comment = data.get('AprsComment')
+    if user_comment is not None:
+        user_comment = user_comment.replace(' - PrimeNode SVXLink System', '').strip()
+        full_aprs_comment = f'"{user_comment} - PrimeNode SVXLink System"'
+    else:
+        full_aprs_comment = None
+
+    height_val = data.get('AprsHeight')
+    height_fixed = f"{height_val}m" if height_val else None
+
+    lines = remove_garbage(lines, "LocationInfo", ["SYMBOL_TABLE", "SYMBOL_CODE"])
+
     mapping = {
         "ReflectorLogic": {
             "CALLSIGN": reflector_callsign, "AUTH_KEY": data.get('Password'),
@@ -297,7 +344,7 @@ def main():
             "TG_SELECT_TIMEOUT": data.get('TgTimeout'), "TMP_MONITOR_TIMEOUT": data.get('TmpTimeout'),
             "TGSTBEEP_ENABLE": data.get('Beep3Tone'), "TGREANON_ENABLE": data.get('AnnounceTG'),
             "REFCON_ENABLE": data.get('RefStatusInfo'), "UDP_HEARTBEAT_INTERVAL": "15",
-            "LOCATION": f'"{location_str}"', "NODE_INFO_FILE": NODE_INFO_FILE,
+            "LOCATION": f'"{location_str}"' if location_str else None, "NODE_INFO_FILE": NODE_INFO_FILE,
             "DEFAULT_LANG": data.get('AudioLang')
         },
         "SimplexLogic": {
@@ -313,6 +360,22 @@ def main():
             "DESCRIPTION": data.get('EL_Desc'), "PROXY_SERVER": data.get('EL_ProxyHost'),
             "TIMEOUT": data.get('EL_ModTimeout'), "LINK_IDLE_TIMEOUT": data.get('EL_IdleTimeout')
         },
+        "LocationInfo": {
+            "APRS_SERVER_LIST": "poland.aprs2.net:14580" if "AprsEnable" in data else None,
+            "BEACON_INTERVAL": data.get('AprsInterval'),
+            "PASSCODE": data.get('AprsPasscode'),
+            "LAT_POSITION": lat_fixed,
+            "LON_POSITION": lon_fixed,
+            "CALLSIGN": aprs_callsign if "AprsEnable" in data else None,
+            "COMMENT": full_aprs_comment,
+            "SYMBOL": f'"{aprs_icon_raw}"' if aprs_icon_raw else None,
+            "FREQUENCY": tx_freq if "AprsEnable" in data else None,
+            "TX_POWER": data.get('AprsPower'),
+            "ANTENNA_HEIGHT": height_fixed,
+            "ANTENNA_GAIN": data.get('AprsGain'),
+            "ANTENNA_DIR": "-1" if "AprsEnable" in data else None,
+            "TONE": (ctcss if ctcss != "0" else "") if "AprsEnable" in data else None
+        },
         "Rx1": rx1_map,
         "Tx1": tx1_map
     }
@@ -321,6 +384,12 @@ def main():
         for cfg_key, json_val in keys.items():
             if json_val is not None:
                 lines = update_key_in_lines(lines, section, cfg_key, str(json_val))
+
+    aprs_enable = data.get('AprsEnable')
+    if aprs_enable == '1':
+        lines = update_key_in_lines(lines, "GLOBAL", "LOCATION_INFO", "LocationInfo")
+    elif aprs_enable == '0':
+        lines = remove_garbage(lines, "GLOBAL", ["LOCATION_INFO"])
 
     radio_data['qth_name'] = qth_name
     radio_data['qth_city'] = qth_city
@@ -367,23 +436,21 @@ def main():
                                 chosen_audio = net.get('audio')
                             break
         except Exception as e:
-            print(f"DEBUG: Błąd odczytu networks.json: {e}")
+            pass
 
     try:
         source_path = os.path.join(REF_SOUNDS_DIR, chosen_audio) if chosen_audio else ""
         
         if chosen_audio and os.path.exists(source_path):
             shutil.copy2(source_path, TARGET_FILE)
-            print(f"DEBUG: Podmieniono na audio sieci: {chosen_audio}")
         else:
             if os.path.exists(DEFAULT_FILE):
                 shutil.copy2(DEFAULT_FILE, TARGET_FILE)
-                print("DEBUG: Użyto audio domyślnego (online_PN.wav)")
         
         if os.path.exists(TARGET_FILE):
             os.chmod(TARGET_FILE, 0o666)
     except Exception as e:
-        print(f"DEBUG: Błąd kopiowania audio: {e}")
+        pass
 
     save_lines(CONFIG_FILE, lines)
     print("DONE")

@@ -439,16 +439,22 @@ function loadLogsAndStatus() {
                 $(".live-box").addClass("rx-active");
                 $(".live-status, .live-callsign").css("color", "#4CAF50");
                 $(".live-info").css("color", "#81C784");
+                $("#smart-eq").css("display", "flex").removeClass("eq-tx").addClass("eq-rx");
             } else {
+
                 $(".live-box").addClass("tx-active");
                 $(".live-status, .live-callsign").css("color", "#FF9800");
                 $(".live-info").css("color", "#FFCC80");
+                $("#smart-eq").css("display", "flex").removeClass("eq-rx").addClass("eq-tx");
             }
         } else {
+
             $(".live-status").text(T.standby).css("color", "#666");
             $(".live-callsign").text("---").css("color", "#fff");
             $(".live-info").text("");
             $(".live-tg").text("");
+
+            $("#smart-eq").hide();
         }
     });
     $.get('last_heard.php?t=' + Date.now(), function(data) { $('#lh-content').html(data); });

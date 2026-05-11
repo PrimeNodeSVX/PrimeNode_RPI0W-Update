@@ -12,14 +12,150 @@
         }
     }
 
+    if (isset($_GET['restore']) && $_GET['restore'] == 'ok') {
+        echo "<div class='alert alert-success'>✅ Konfiguracja przywrócona pomyślnie! Usługi zostały zrestartowane.</div>";
+    }
+
+    if (isset($_POST['export_backup'])) {
+
+        $backup_name = 'PrimeNode_Backup_' . date('Y-m-d_His') . '.zip';
+        $zip_path = '/dev/shm/' . $backup_name;
+
+        $files_to_zip = [
+            '/etc/svxlink/svxlink.conf' => 'svxlink.conf',
+            '/var/www/html/radio_config.json' => 'radio_config.json',
+            '/etc/svxlink/networks.json' => 'networks.json',
+            '/var/www/html/dtmf_custom.json' => 'dtmf_custom.json',
+            '/etc/svxlink/node_info.json' => 'node_info.json'
+        ];
+
+        if (class_exists('ZipArchive')) {
+            $zip = new ZipArchive();
+            if ($zip->open($zip_path, ZipArchive::CREATE) === TRUE) {
+                foreach ($files_to_zip as $path => $name) {
+                    if (file_exists($path)) { $zip->addFile($path, $name); }
+                }
+                $zip->close();
+            }
+        } else {
+            $files_str = implode(' ', array_filter(array_keys($files_to_zip), 'file_exists'));
+            shell_exec("zip -j " . escapeshellarg($zip_path) . " " . $files_str);
+        }
+
+        if (file_exists($zip_path)) {
+            $b64 = base64_encode(file_get_contents($zip_path));
+            unlink($zip_path); 
+            
+            echo "<script>
+
+                var a = document.createElement('a');
+                a.href = 'data:application/zip;base64,$b64';
+                a.download = '$backup_name';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                setTimeout(function() {
+                    window.location.href = 'index.php';
+                }, 500);
+            </script>";
+        } else {
+            echo "<div class='alert alert-error'>❌ Błąd: Nie udało się utworzyć pliku ZIP w /dev/shm/.</div>";
+        }
+    }
+
+    if (isset($_POST['import_backup']) && isset($_FILES['backup_zip'])) {
+
+        if ($_FILES['backup_zip']['error'] !== UPLOAD_ERR_OK) {
+            echo "<div class='alert alert-error'>❌ Błąd przesyłania pliku na serwer. Kod błędu: " . $_FILES['backup_zip']['error'] . "</div>";
+        } else {
+            $uploaded = $_FILES['backup_zip']['tmp_name'];
+            $tmp_dir = '/dev/shm/restore_pn/';
+            
+            shell_exec("sudo rm -rf " . escapeshellarg($tmp_dir));
+            mkdir($tmp_dir, 0700, true); 
+
+            $success = false;
+            if (class_exists('ZipArchive')) {
+                $zip = new ZipArchive;
+                if ($zip->open($uploaded) === TRUE) {
+                    $zip->extractTo($tmp_dir);
+                    $zip->close();
+                    $success = true;
+                }
+            } else {
+                shell_exec("unzip -j -o " . escapeshellarg($uploaded) . " -d " . escapeshellarg($tmp_dir));
+                $success = true;
+            }
+
+            if ($success) {
+                $map = [
+                    'svxlink.conf' => '/etc/svxlink/svxlink.conf',
+                    'radio_config.json' => '/var/www/html/radio_config.json',
+                    'networks.json' => '/etc/svxlink/networks.json',
+                    'dtmf_custom.json' => '/var/www/html/dtmf_custom.json',
+                    'node_info.json' => '/etc/svxlink/node_info.json'
+                ];
+
+                $restored_count = 0;
+                $debug_log = "";
+
+                foreach ($map as $file => $dest) {
+                    $src = $tmp_dir . $file;
+                    if (file_exists($src)) {
+
+                        $out = shell_exec("sudo cp -fv " . escapeshellarg($src) . " " . escapeshellarg($dest) . " 2>&1");
+                        error_log("RESTORE COPY ($file): " . trim($out));
+                        $debug_log .= $out . "\n";
+
+
+                        if (strpos($dest, '/etc/svxlink/') !== false) {
+                            shell_exec("sudo chown root:root " . escapeshellarg($dest));
+                            shell_exec("sudo chmod 644 " . escapeshellarg($dest));
+                        } else {
+                            shell_exec("sudo chown www-data:www-data " . escapeshellarg($dest));
+                            shell_exec("sudo chmod 664 " . escapeshellarg($dest));
+                        }
+                        $restored_count++;
+                    }
+                }
+                shell_exec("sudo rm -rf " . escapeshellarg($tmp_dir));
+                
+                if ($restored_count > 0) {
+
+                    if (function_exists('opcache_reset')) {
+                        opcache_reset();
+                    }
+                    clearstatcache(true);
+                    shell_exec("sudo systemctl restart svxlink > /dev/null 2>&1 &");
+                    usleep(500000); 
+
+                    echo "<script>window.location.href='index.php?restore=ok';</script>";
+                exit; 
+                } else {
+                    echo "<div class='alert alert-error'>❌ Błąd: Brak wymaganych plików w archiwum ZIP.<br><pre>$debug_log</pre></div>";
+                }
+            } else {
+                echo "<div class='alert alert-error'>❌ Błąd otwarcia ZIP. Spróbuj pobrać i wgrać paczkę ponownie.</div>";
+            }
+        }
+    }
+
+
     function save_networks_json($data, $path) {
-        file_put_contents($path, json_encode($data, JSON_PRETTY_PRINT));
+
+        $tmp = '/dev/shm/tmp_networks.json';
+        file_put_contents($tmp, json_encode($data, JSON_PRETTY_PRINT));
+        shell_exec("sudo cp -f " . escapeshellarg($tmp) . " " . escapeshellarg($path));
+        shell_exec("sudo chown www-data:www-data " . escapeshellarg($path));
+        shell_exec("sudo chmod 664 " . escapeshellarg($path));
+
+        @unlink($tmp);
     }
 
     if (!file_exists($net_file)) {
         $default_net = [ "active" => 0, "list" => [] ];
         save_networks_json($default_net, $net_file);
-        shell_exec("sudo chmod 666 $net_file"); 
+        shell_exec("sudo chmod 664 $net_file"); 
     }
 
     $networks_raw = @file_get_contents($net_file);
@@ -241,12 +377,39 @@
             'opt_yes' => 'TAK',
             'opt_no' => 'NIE',
             'btn_save' => 'Zapisz Ustawienia Globalne',
-	        'tg_modal_title' => '🎙️ Wybierz Grupy TG',
+            'tg_modal_title' => '🎙️ Wybierz Grupy TG',
             'tg_selected' => 'Wybrane:',
             'tg_ph_manual' => 'Wpisz nr TG...',
             'btn_add_tg' => 'DODAJ',
             'btn_confirm' => '✅ ZATWIERDŹ',
-            'btn_cancel_modal' => '❌ ANULUJ'
+            'btn_cancel_modal' => '❌ ANULUJ',
+
+            'sect_aprs' => '🌍 Ustawienia APRS',
+            'lbl_aprs_enable' => 'Włącz Raportowanie APRS',
+            'lbl_aprs_pass' => 'APRS Passcode',
+            'ph_aprs_pass' => 'Np. 12345',
+            'lbl_aprs_ssid' => 'SSID APRS (Opcjonalnie)',
+            'opt_aprs_ssid_none' => 'Brak (Główny znak)',
+            'lbl_aprs_icon' => 'Ikona na mapie APRS',
+            'lbl_aprs_interval' => 'Interwał Beacon (minuty)',
+            'lbl_aprs_comment' => 'Twój Komentarz',
+            'ph_aprs_comment' => 'Opis stacji...',
+            'lbl_aprs_lat' => 'Szerokość (LAT)',
+            'ph_aprs_lat' => 'Np. 51.3665 lub 51.21.59N',
+            'lbl_aprs_lon' => 'Długość (LON)',
+            'ph_aprs_lon' => 'Np. 19.3761 lub 019.22.34E',
+            'lbl_aprs_power' => 'Moc nadajnika (W)',
+            'ph_aprs_num' => 'Np. ',
+            'lbl_aprs_gain' => 'Zysk anteny (dBi)',
+            'lbl_aprs_height' => 'Wysokość anteny (m n.p.g.)',
+            'icon_e0' => '🌐 [ E 0 ] Węzeł EchoLink (Kółko z E)',
+            'icon_n' => '🎯 [ / n ] Węzeł / Node (Czarna kropka)',
+            'icon_digi' => '🌟 [ / # ] Cyfrowe Digi (Gwiazdka)',
+            'icon_r' => '📡 [ / r ] Przemiennik (Zielona Antena)',
+            'icon_home' => '🏠 [ / - ] Dom (Stacja QTH)',
+            'icon_car' => '🚗 [ / > ] Samochód (Stacja Mobile)',
+            'icon_van' => '🚙 [ \ v ] Van (Niebieskie autko)',
+            'icon_human' => '🚶 [ / [ ] Człowiek (Przenośna)',
         ],
         'en' => [
             'opt_default' => 'Default',
@@ -302,12 +465,39 @@
             'opt_yes' => 'YES',
             'opt_no' => 'NO',
             'btn_save' => 'Save Global Settings',
-	        'tg_modal_title' => '🎙️ Select TG Groups',
+            'tg_modal_title' => '🎙️ Select TG Groups',
             'tg_selected' => 'Selected:',
             'tg_ph_manual' => 'Enter TG no...',
             'btn_add_tg' => 'ADD',
             'btn_confirm' => '✅ CONFIRM',
-            'btn_cancel_modal' => '❌ CANCEL'
+            'btn_cancel_modal' => '❌ CANCEL',
+
+            'sect_aprs' => '🌍 APRS Settings',
+            'lbl_aprs_enable' => 'Enable APRS Reporting',
+            'lbl_aprs_pass' => 'APRS Passcode',
+            'ph_aprs_pass' => 'e.g. 12345',
+            'lbl_aprs_ssid' => 'APRS SSID (Optional)',
+            'opt_aprs_ssid_none' => 'None (Main callsign)',
+            'lbl_aprs_icon' => 'Map Icon (Symbol)',
+            'lbl_aprs_interval' => 'Beacon Interval (minutes)',
+            'lbl_aprs_comment' => 'Your Comment',
+            'ph_aprs_comment' => 'Station description...',
+            'lbl_aprs_lat' => 'Latitude (LAT)',
+            'ph_aprs_lat' => 'e.g. 51.3665 or 51.21.59N',
+            'lbl_aprs_lon' => 'Longitude (LON)',
+            'ph_aprs_lon' => 'e.g. 19.3761 or 019.22.34E',
+            'lbl_aprs_power' => 'TX Power (W)',
+            'ph_aprs_num' => 'e.g. ',
+            'lbl_aprs_gain' => 'Antenna Gain (dBi)',
+            'lbl_aprs_height' => 'Antenna Height (m AGL)',
+            'icon_e0' => '🌐 [ E 0 ] EchoLink Node (Circle with E)',
+            'icon_n' => '🎯 [ / n ] Node (Black dot)',
+            'icon_digi' => '🌟 [ / # ] Digital Digi (Star)',
+            'icon_r' => '📡 [ / r ] Repeater (Green Antenna)',
+            'icon_home' => '🏠 [ / - ] Home (QTH Station)',
+            'icon_car' => '🚗 [ / > ] Car (Mobile Station)',
+            'icon_van' => '🚙 [ \ v ] Van (Blue car)',
+            'icon_human' => '🚶 [ / [ ] Human (Portable)',
         ]
     ];
 ?>
@@ -445,6 +635,115 @@
             </div>
         </div>
 
+        <?php
+
+            $locInfo = $ini['LocationInfo'] ?? [];
+            $aprs_enabled = (isset($glob['LOCATION_INFO']) && $glob['LOCATION_INFO'] === 'LocationInfo') ? '1' : '0';
+            $aprs_passcode = $locInfo['PASSCODE'] ?? '';
+            $aprs_lat = $locInfo['LAT_POSITION'] ?? '';
+            $aprs_lon = $locInfo['LON_POSITION'] ?? '';
+            $aprs_power = $locInfo['TX_POWER'] ?? '5';
+            $aprs_gain = $locInfo['ANTENNA_GAIN'] ?? '2';
+            $aprs_height = str_replace('m', '', ($locInfo['ANTENNA_HEIGHT'] ?? '10'));
+            $aprs_interval = $locInfo['BEACON_INTERVAL'] ?? '25';
+            $aprs_icon = trim($locInfo['SYMBOL'] ?? 'E0', '"\'');
+            $aprs_callsign_raw = $locInfo['CALLSIGN'] ?? '';
+            $aprs_ssid = '';
+            if (strpos($aprs_callsign_raw, '-') !== false) {
+                $parts = explode('-', $aprs_callsign_raw);
+                $aprs_ssid = end($parts);
+            }
+            
+            $aprs_comment_raw = trim($locInfo['COMMENT'] ?? '', '"\'');
+            $aprs_comment = str_replace(' - PrimeNode SVXLink System', '', $aprs_comment_raw);
+        ?>
+        <style>
+            .toggle-switch { position: relative; display: inline-block; width: 46px; height: 24px; }
+            .toggle-switch input { opacity: 0; width: 0; height: 0; }
+            .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #555; transition: .3s; border-radius: 24px; border: 1px solid #444; }
+            .toggle-slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: #aaa; transition: .3s; border-radius: 50%; }
+            input:checked + .toggle-slider { background-color: #4CAF50; border-color: #388E3C; }
+            input:checked + .toggle-slider:before { transform: translateX(22px); background-color: #fff; }
+        </style>
+        
+        <div class="panel-box box-full">
+            <h4 class="panel-title" style="color: #2196F3; border-color: #2196F3;"><?php echo $TC[$lang]['sect_aprs']; ?></h4>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                
+                <div class="form-group" style="grid-column: 1 / -1; display: flex; flex-direction: column;">
+                    <label style="margin-bottom: 8px;"><?php echo $TC[$lang]['lbl_aprs_enable']; ?></label>
+                    <label class="toggle-switch">
+                        <input type="hidden" name="AprsEnable" value="0">
+                        <input type="checkbox" name="AprsEnable" value="1" <?php if($aprs_enabled == '1') echo 'checked'; ?>>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                
+                <div class="form-group">
+                    <label><?php echo $TC[$lang]['lbl_aprs_pass']; ?></label>
+                    <input type="password" name="AprsPasscode" value="<?php echo $aprs_passcode; ?>" placeholder="<?php echo $TC[$lang]['ph_aprs_pass']; ?>">
+                </div>
+                <div class="form-group">
+                    <label><?php echo $TC[$lang]['lbl_aprs_ssid']; ?></label>
+                    <select name="AprsSsid">
+                        <option value="" <?php if($aprs_ssid == '') echo 'selected'; ?>><?php echo $TC[$lang]['opt_aprs_ssid_none']; ?></option>
+                        <?php for($i=1; $i<=15; $i++): ?>
+                        <option value="<?php echo $i; ?>" <?php if($aprs_ssid == (string)$i) echo 'selected'; ?>>-<?php echo $i; ?></option>
+                        <?php endfor; ?>
+                        <option value="X" <?php if($aprs_ssid == 'X') echo 'selected'; ?>>-X</option>
+                        <option value="A" <?php if($aprs_ssid == 'A') echo 'selected'; ?>>-A</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label><?php echo $TC[$lang]['lbl_aprs_icon']; ?></label>
+                    <select name="AprsIcon">
+                        <option value="E0" <?php if($aprs_icon == 'E0') echo 'selected'; ?>><?php echo $TC[$lang]['icon_e0']; ?></option>
+                        <option value="/n" <?php if($aprs_icon == '/n') echo 'selected'; ?>><?php echo $TC[$lang]['icon_n']; ?></option>
+                        <option value="/#" <?php if($aprs_icon == '/#') echo 'selected'; ?>><?php echo $TC[$lang]['icon_digi']; ?></option>
+                        <option value="/r" <?php if($aprs_icon == '/r') echo 'selected'; ?>><?php echo $TC[$lang]['icon_r']; ?></option>
+                        <option value="/-" <?php if($aprs_icon == '/-') echo 'selected'; ?>><?php echo $TC[$lang]['icon_home']; ?></option>
+                        <option value="/>" <?php if($aprs_icon == '/>') echo 'selected'; ?>><?php echo $TC[$lang]['icon_car']; ?></option>
+                        <option value="1v" <?php if($aprs_icon == '1v') echo 'selected'; ?>><?php echo $TC[$lang]['icon_van']; ?></option>
+                        <option value="/[" <?php if($aprs_icon == '/[') echo 'selected'; ?>><?php echo $TC[$lang]['icon_human']; ?></option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label><?php echo $TC[$lang]['lbl_aprs_interval']; ?></label>
+                    <input type="number" name="AprsInterval" value="<?php echo $aprs_interval; ?>" placeholder="25">
+                </div>
+
+                <div class="form-group">
+                    <label><?php echo $TC[$lang]['lbl_aprs_comment']; ?></label>
+                    <input type="text" name="AprsComment" value="<?php echo htmlspecialchars($aprs_comment); ?>" placeholder="<?php echo $TC[$lang]['ph_aprs_comment']; ?>">
+                </div>
+                <div class="form-group">
+                    <label><?php echo $TC[$lang]['lbl_aprs_height']; ?></label>
+                    <input type="number" name="AprsHeight" value="<?php echo $aprs_height; ?>" placeholder="<?php echo $TC[$lang]['ph_aprs_num']; ?>12">
+                </div>
+
+                <div class="form-group">
+                    <label><?php echo $TC[$lang]['lbl_aprs_lat']; ?></label>
+                    <input type="text" name="AprsLat" value="<?php echo $aprs_lat; ?>" placeholder="<?php echo $TC[$lang]['ph_aprs_lat']; ?>">
+                </div>
+                <div class="form-group">
+                    <label><?php echo $TC[$lang]['lbl_aprs_lon']; ?></label>
+                    <input type="text" name="AprsLon" value="<?php echo $aprs_lon; ?>" placeholder="<?php echo $TC[$lang]['ph_aprs_lon']; ?>">
+                </div>
+
+                <div class="form-group">
+                    <label><?php echo $TC[$lang]['lbl_aprs_power']; ?></label>
+                    <input type="number" name="AprsPower" value="<?php echo $aprs_power; ?>" placeholder="<?php echo $TC[$lang]['ph_aprs_num']; ?>5">
+                </div>
+                <div class="form-group">
+                    <label><?php echo $TC[$lang]['lbl_aprs_gain']; ?></label>
+                    <input type="number" name="AprsGain" value="<?php echo $aprs_gain; ?>" placeholder="<?php echo $TC[$lang]['ph_aprs_num']; ?>2">
+                </div>
+                
+            </div>
+        </div>
+
         <div class="panel-box box-full">
             <h4 class="panel-title green"><?php echo $TC[$lang]['sect_adv']; ?></h4>
             
@@ -482,6 +781,32 @@
     </div>
     <button type="submit" name="save_svx_full" class="btn btn-blue" style="margin-top:20px;"><?php echo $TC[$lang]['btn_save']; ?></button>
 </form>
+
+<div class="panel-box box-full" style="border: 1px solid #9C27B0; margin-top: 20px;">
+    <h4 class="panel-title" style="color: #9C27B0; border-color: #9C27B0;">💾 Kopia Zapasowa i Przywracanie</h4>
+    <div style="display: flex; gap: 20px; padding: 10px; align-items: stretch;">
+        
+        <div style="flex: 1; border-right: 1px solid #444; padding-right: 20px; display: flex; flex-direction: column;">
+            <p style="font-size: 12px; color: #aaa; margin: 0 0 15px 0;">Pobierz kopię wszystkich ustawień (APRS, Sieci, Radio, DTMF) do pliku ZIP.</p>
+            <form method="post" style="margin-top: auto; display: flex; flex-direction: column; justify-content: flex-end;">
+                <button type="submit" name="export_backup" class="btn" style="background: #9C27B0; color: #fff; width: 100%; margin: 0; padding: 10px;">
+                    📥 POBIERZ BACKUP
+                </button>
+            </form>
+        </div>
+
+        <div style="flex: 1; display: flex; flex-direction: column;">
+            <p style="font-size: 12px; color: #aaa; margin: 0 0 15px 0;">Wybierz plik ZIP, aby przywrócić zapisaną wcześniej konfigurację.</p>
+            <form method="post" enctype="multipart/form-data" style="margin-top: auto; display: flex; flex-direction: column; justify-content: flex-end;">
+                <input type="file" name="backup_zip" accept=".zip" style="font-size: 11px; margin-bottom: 10px; color: #ccc; width: 100%;" required>
+                <button type="submit" name="import_backup" class="btn btn-green" style="width: 100%; margin: 0; padding: 10px;" onclick="return confirm('Uwaga: To nadpisze obecne ustawienia! Kontynuować?')">
+                    📤 PRZYWRÓĆ Z PLIKU
+                </button>
+            </form>
+        </div>
+
+    </div>
+</div>
 
 <?php
 $tg_list_data = [];

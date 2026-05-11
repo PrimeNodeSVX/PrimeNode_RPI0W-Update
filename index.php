@@ -511,19 +511,30 @@
 <body>
 
 <div id="changelog-overlay" style="display: none;">
-    <div id="changelog-modal" data-version="1.0">
-        <h2 style="margin-top:0; color:#4CAF50; border-bottom: 1px solid #333; padding-bottom: 10px;">🚀 PrimeNode V1.2 - Co nowego?</h2>
+    <div id="changelog-modal" data-version="1.4">
+        <h2 style="margin-top:0; color:#4CAF50; border-bottom: 1px solid #333; padding-bottom: 10px;">🚀 PrimeNode V1.4 - Co nowego?</h2>
         
         <div style="text-align: left; font-size: 14px; color: #ccc; line-height: 1.6; max-height: 50vh; overflow-y: auto; padding-right: 10px;">
+            <p style="margin-top: 0; color: #eee; font-size: 13px;">
+                <i>Na wstępie ogromne podziękowania dla całej społeczności! Dziękuję za aktywne korzystanie z systemu, wyłapywanie błędów oraz fantastyczne propozycje zmian. Starałem się wdrożyć większość z nich i z niecierpliwością czekam na kolejne uwagi i sugestie!</i>
+            </p>
             <ul style="padding-left: 20px;">
-                <li>🌟 <b>Płynne animacje:</b> Smartfonowe, płynne przełączanie zakładek.</li>
-                <li>🗺️ <b>Stabilna Mapa (GridMapper):</b> Pełnoekranowa mapa z blokadą uciekania w "szarą pustkę".</li>
-                <li>📡 <b>Wizualizacja Nadawania (TX):</b> Kafelki węzłów i znaczniki na mapie dynamicznie pulsują na czerwono, gdy ktoś nadaje!</li>
-                <li>📱 <b>Inteligentne Ikonki:</b> Automatyczne rozpoznawanie typu węzła (Radio 📻, Aplikacja mobilna 📱, PC 💻).</li>
-                <li>ℹ️ <b>Dane Radiowe:</b> Informacje o częstotliwości (QRG) i CTCSS dodane do wyskakujących wizytówek.</li>
-                <li>⚡ <b>Szybkie Przełączanie (Quick-Dial):</b> Kliknij nadający węzeł w zakładce, aby jednym przyciskiem przejść na jego rozmowę (TG)!</li>
-                <li>🐛 <b>Stabilność API:</b> Zoptymalizowano czas odświeżania i poprawiono odczyt danych z różnych sieci (np. FM Poland vs SQLink).</li>
+                <li>🌍 <b>System raportowania APRS:</b> Wprowadzono pełną obsługę wysyłania ramek APRS z pozycją i statusem Twojego węzła bezpośrednio z panelu.</li>
+                <li>💾 <b>Moduł Kopia Zapasowa (Backup):</b> Nowe, bezpieczne narzędzie do łatwego eksportowania i przywracania całej konfiguracji jednym kliknięciem.</li>
+                <li>📻 <b>Zaawansowane ustawienia Radia:</b> W zakładce Radio pojawiły się nowe opcje strojenia dźwięku. Możesz teraz zarządzać filtrami audio SvxLink (Pre/De-emphasis) oraz, w przypadku korzystania z modułu SHARI, bezpośrednio konfigurować filtry sprzętowe układu SA818 (Bandwidth, LPF, HPF)!</li>
+                <li>🐛 <b>Optymalizacja i poprawki:</b> Wyeliminowano drobne błędy i udoskonalono kod, znacznie zwiększając stabilność całego systemu.</li>
+                <li>📊 <b>Licznik Węzłów:</b> W zakładce logów dodano wygodny licznik pokazujący sumaryczną ilość aktualnie podłączonych stacji.</li>
+                <li>🏷️ <b>Nazwa Reflektora:</b> Główny panel obok statusu "PODŁĄCZONY" wyświetla teraz przyjazną nazwę Twojej sieci, zdefiniowaną w konfiguracji.</li>
+                <li>🔊 <b>Nowe komunikaty TG:</b> Baza wzbogaciła się o nowe, uniwersalne pliki audio do recytowania grup rozmownych (TG).</li>
+                <li>🎙️ <b>Zapowiedzi sieci (Audio Roaming):</b> Wdrożono inteligentny mechanizm odtwarzający nazwę sieci podczas przełączania (z poziomu panelu WWW oraz przez komendy DTMF).</li>
             </ul>
+            
+            <div style="background: #2a2a2a; border-left: 3px solid #FF9800; padding: 12px; margin-top: 15px; font-size: 12px; border-radius: 4px; color: #eee;">
+                <b style="color: #FF9800;">ℹ️ Jak dodać własne zapowiedzi sieci?</b><br><br>
+                Wgraj swój plik dźwiękowy (np. przez program WinSCP) do folderu:<br>
+                <code style="color:#4CAF50; display:block; margin: 5px 0; padding: 5px; background: #111; border-radius: 3px;">/usr/local/share/svxlink/sounds/ref_sounds</code>
+                Wymagany format pliku to: <b>.wav</b> (Parametry: <b>16kHz, 16-bit, Mono, PCM</b>). Po wgraniu pliku, wystarczy przypisać go do danej sieci w zakładce <i>Konfiguracja</i>!
+            </div>
         </div>
         
         <button class="btn btn-green" style="margin-top: 20px; width: 100%; font-size: 16px; padding: 12px;" onclick="closeChangelog()">Super, rozumiem!</button>
@@ -631,7 +642,7 @@
     }
     ?>
     SvxLink v<?php echo htmlspecialchars($svx_ver); ?> Copyright (C) 2003-<?php echo date("Y"); ?> Tobias Blomberg / <span class="callsign-blue">SM0SVX</span><br>
-    PrimeNode System • By SQ7UTP <span style="color: #aaa;">| Version: <strong style="color: #4CAF50;">V1.3</strong></span><br>
+    PrimeNode System • By SQ7UTP <span style="color: #aaa;">| Version: <strong style="color: #4CAF50;">V1.4</strong></span><br>
     Copyright © 2025-<?php echo date("Y"); ?>
 </div>
 

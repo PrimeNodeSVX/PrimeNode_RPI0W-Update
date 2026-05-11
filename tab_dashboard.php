@@ -137,11 +137,56 @@ function formatCtcssCode($code, $map) {
     <?php endif; ?>
 </div>
 
+<style>
+    .eq-container {
+        display: none;
+        width: 100%; 
+        max-width: 600px; 
+        margin: 10px auto 0 auto;
+        height: 35px;
+        align-items: flex-end;
+        justify-content: center;
+        gap: 5px;
+    }
+
+    .eq-bar {
+        flex: 1; 
+        max-width: 8px;
+        background: linear-gradient(to top, #4CAF50 0%, #FFEB3B 55%, #F44336 100%);
+        border-radius: 3px 3px 0 0;
+        opacity: 0.9;
+    }
+
+    .eq-bar:nth-child(7n+1) { animation: eq-1 0.35s infinite alternate ease-in-out; }
+    .eq-bar:nth-child(7n+2) { animation: eq-2 0.50s infinite alternate ease-in-out; animation-delay: 0.1s; }
+    .eq-bar:nth-child(7n+3) { animation: eq-3 0.40s infinite alternate ease-in-out; animation-delay: 0.3s; }
+    .eq-bar:nth-child(7n+4) { animation: eq-4 0.60s infinite alternate ease-in-out; animation-delay: 0.2s; }
+    .eq-bar:nth-child(7n+5) { animation: eq-5 0.45s infinite alternate ease-in-out; animation-delay: 0.4s; }
+    .eq-bar:nth-child(7n+6) { animation: eq-2 0.55s infinite alternate ease-in-out; animation-delay: 0.15s; }
+    .eq-bar:nth-child(7n+7) { animation: eq-4 0.38s infinite alternate ease-in-out; animation-delay: 0.25s; }
+
+    @keyframes eq-1 { 0% { height: 10%; } 100% { height: 85%; } }
+    @keyframes eq-2 { 0% { height: 15%; } 100% { height: 100%; } } 
+    @keyframes eq-3 { 0% { height: 5%;  } 100% { height: 60%; } }  
+    @keyframes eq-4 { 0% { height: 20%; } 100% { height: 95%; } }
+    @keyframes eq-5 { 0% { height: 10%; } 100% { height: 75%; } }
+</style>
+
 <div id="live-monitor" class="live-box">
     <div class="live-status"><?php echo $TD[$lang]['status_standby']; ?></div>
     <div class="live-callsign">---</div>
-    <div class="live-info" style="font-size: 16px; color: #4CAF50; font-weight: bold; margin-top: 2px; min-height: 20px;"></div>
+    
+    <div class="live-info" style="font-size: 16px; font-weight: bold; margin-top: 2px; min-height: 20px;"></div>
     <div class="live-tg"></div>
+
+    <div id="smart-eq" class="eq-container">
+        <div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div>
+        <div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div>
+        <div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div>
+        <div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div>
+        <div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div>
+        <div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div>
+    </div>
 </div>
 
 <h3 style="color: #4CAF50; margin-top:20px;"><?php echo $TD[$lang]['lh_title']; ?></h3>

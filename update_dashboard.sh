@@ -148,6 +148,19 @@ chmod 666 $WWW_DIR/dtmf_custom.json 2>/dev/null
 chmod 666 $WWW_DIR/radio_config.json 2>/dev/null
 chmod 666 /etc/svxlink/networks.json 2>/dev/null
 
+if ! grep -q "/bin/cp, /usr/bin/cp" /etc/sudoers; then
+    echo ">> Dodawanie uprawnień sudo dla www-data do pliku sudoers..."
+    echo "www-data ALL=(ALL) NOPASSWD: /bin/rm, /usr/bin/rm" >> /etc/sudoers
+    echo "www-data ALL=(ALL) NOPASSWD: /bin/cp, /usr/bin/cp" >> /etc/sudoers
+    echo "www-data ALL=(ALL) NOPASSWD: /bin/chown, /usr/bin/chown" >> /etc/sudoers
+    echo "www-data ALL=(ALL) NOPASSWD: /bin/chmod, /usr/bin/chmod" >> /etc/sudoers
+    
+    echo ">> Restartowanie usługi apache2..."
+    systemctl restart apache2
+else
+    echo ">> Uprawnienia sudo dla www-data są już aktualne (pomijam)."
+fi
+
 cat << 'EOF' > /usr/local/bin/svx_event_logger.sh
 #!/bin/bash
 LOG_DEST="/var/www/html/ram/svx_events.log"
