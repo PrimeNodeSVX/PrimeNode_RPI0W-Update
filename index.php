@@ -521,6 +521,7 @@
             <ul style="padding-left: 20px;">
                 <li>🌍 <b>System raportowania APRS:</b> Wprowadzono pełną obsługę wysyłania ramek APRS z pozycją i statusem Twojego węzła bezpośrednio z panelu.</li>
                 <li>💾 <b>Moduł Kopia Zapasowa (Backup):</b> Nowe, bezpieczne narzędzie do łatwego eksportowania i przywracania całej konfiguracji jednym kliknięciem.</li>
+                <li>📶 <b>Stabilność Rescue AP:</b> Poprawiono działanie awaryjnego punktu dostępowego. System ten aktywuje się, gdy Hotspot nie może połączyć się z domowym WiFi, umożliwiając konfigurację sieci. Wyeliminowano błędy zrywające połączenie w tym trybie.</li>
                 <li>🛑 <b>Zatrzymywanie SvxLink:</b> W zakładce Zasilanie dodano przycisk umożliwiający całkowite zatrzymanie usługi SvxLink bez konieczności wyłączania całego urządzenia.</li>
                 <li>📻 <b>Zaawansowane ustawienia Radia:</b> Nowe opcje strojenia dźwięku – zarządzaj filtrami audio SvxLink (Pre/De-emphasis) oraz sprzętowymi parametrami układu SA818 (Bandwidth, LPF, HPF).</li>
                 <li>📊 <b>Licznik Węzłów:</b> W zakładce logów dodano wygodny licznik pokazujący sumaryczną ilość aktualnie podłączonych stacji.</li>
