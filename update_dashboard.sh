@@ -87,22 +87,23 @@ CORE_DIR="$SOUNDS_DIR/PL/Core"
 mkdir -p "$REF_DIR"
 mkdir -p "$CORE_DIR"
 
-
 if [ -d "$GIT_DIR/ref_sounds" ]; then
     cp -R "$GIT_DIR/ref_sounds/"* "$REF_DIR/" 2>/dev/null
 fi
 
+if [ -d "$GIT_DIR/PL/Core" ]; then
+    cp -R "$GIT_DIR/PL/Core/"* "$CORE_DIR/" 2>/dev/null
+fi
 
 if [ -f "$GIT_DIR/online_PN.wav" ]; then
     cp "$GIT_DIR/online_PN.wav" "$CORE_DIR/online_PN.wav"
 elif [ -f "$REF_DIR/online_PN.wav" ]; then
-
     cp "$REF_DIR/online_PN.wav" "$CORE_DIR/online_PN.wav"
 fi
 
 chmod 755 "$REF_DIR"
 find "$REF_DIR" -type f -exec chmod 644 {} \; 2>/dev/null
-[ -f "$CORE_DIR/online_PN.wav" ] && chmod 644 "$CORE_DIR/online_PN.wav"
+find "$CORE_DIR" -type f -exec chmod 644 {} \; 2>/dev/null
 
 echo ">> Synchronizacja konfiguracji radia (Python)..."
 python3 /usr/local/bin/update_svx_full.py
