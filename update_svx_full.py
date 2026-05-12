@@ -20,21 +20,30 @@ LOG_FILE_RAM = "/dev/shm/svxlink.log"
 def format_coords(val, is_lat=True):
     if not val: return None
     try:
-        if any(c in str(val).upper() for c in ['N', 'S', 'E', 'W']):
-            return str(val).strip()
-        decimal = float(val)
+        val_str = str(val).strip().replace(',', '.')
+
+        if any(c in val_str.upper() for c in ['N', 'S', 'E', 'W']):
+            return val_str
+        decimal = float(val_str)
         degrees = int(abs(decimal))
         minutes_float = (abs(decimal) - degrees) * 60
         minutes = int(minutes_float)
         seconds = int(round((minutes_float - minutes) * 60))
+        if seconds >= 60:
+            seconds -= 60
+            minutes += 1
+        if minutes >= 60:
+            minutes -= 60
+            degrees += 1
         if is_lat:
             direction = 'N' if decimal >= 0 else 'S'
             return f"{degrees:02d}.{minutes:02d}.{seconds:02d}{direction}"
         else:
             direction = 'E' if decimal >= 0 else 'W'
             return f"{degrees:03d}.{minutes:02d}.{seconds:02d}{direction}"
-    except:
-        return val
+    except Exception as e:
+
+        return None
 
 def load_lines(path):
     if not os.path.exists(path): return []
@@ -311,6 +320,7 @@ def main():
     lon_val = data.get('AprsLon')
     lat_fixed = format_coords(lat_val, True) if lat_val else None
     lon_fixed = format_coords(lon_val, False) if lon_val else None
+    
     aprs_ssid = data.get('AprsSsid')
     if aprs_ssid and str(aprs_ssid).strip() != "":
         aprs_callsign = f"{main_callsign}-{str(aprs_ssid).strip()}"
@@ -326,8 +336,8 @@ def main():
 
     user_comment = data.get('AprsComment')
     if user_comment is not None:
-        user_comment = user_comment.replace(' - PrimeNode SVXLink System', '').strip()
-        full_aprs_comment = f'"{user_comment} - PrimeNode SVXLink System"'
+        user_comment = user_comment.replace(' - PrimeNode', '').strip()
+        full_aprs_comment = f'"{user_comment[:36]}"'
     else:
         full_aprs_comment = None
 
@@ -335,6 +345,20 @@ def main():
     height_fixed = f"{height_val}m" if height_val else None
 
     lines = remove_garbage(lines, "LocationInfo", ["SYMBOL_TABLE", "SYMBOL_CODE"])
+    aprs_interval_val = data.get('AprsInterval')
+    if aprs_interval_val is not None:
+        try:
+            if int(aprs_interval_val) < 10:
+                aprs_interval_val = "10"
+        except ValueError:
+            aprs_interval_val = "10"
+
+    aprs_enable = data.get('AprsEnable', '0')
+    aprs_passcode = data.get('AprsPasscode', '')
+
+    if aprs_enable == '1':
+        if not lat_fixed or not lon_fixed or not aprs_passcode.strip():
+            aprs_enable = '0'
 
     mapping = {
         "ReflectorLogic": {
@@ -361,20 +385,20 @@ def main():
             "TIMEOUT": data.get('EL_ModTimeout'), "LINK_IDLE_TIMEOUT": data.get('EL_IdleTimeout')
         },
         "LocationInfo": {
-            "APRS_SERVER_LIST": "poland.aprs2.net:14580" if "AprsEnable" in data else None,
-            "BEACON_INTERVAL": data.get('AprsInterval'),
-            "PASSCODE": data.get('AprsPasscode'),
+            "APRS_SERVER_LIST": "lodz.aprs2.net:14580" if aprs_enable == '1' else None,
+            "BEACON_INTERVAL": aprs_interval_val,
+            "PASSCODE": aprs_passcode if aprs_enable == '1' else None,
             "LAT_POSITION": lat_fixed,
             "LON_POSITION": lon_fixed,
-            "CALLSIGN": aprs_callsign if "AprsEnable" in data else None,
+            "CALLSIGN": aprs_callsign if aprs_enable == '1' else None,
             "COMMENT": full_aprs_comment,
             "SYMBOL": f'"{aprs_icon_raw}"' if aprs_icon_raw else None,
-            "FREQUENCY": tx_freq if "AprsEnable" in data else None,
+            "FREQUENCY": tx_freq if aprs_enable == '1' else None,
             "TX_POWER": data.get('AprsPower'),
             "ANTENNA_HEIGHT": height_fixed,
             "ANTENNA_GAIN": data.get('AprsGain'),
-            "ANTENNA_DIR": "-1" if "AprsEnable" in data else None,
-            "TONE": (ctcss if ctcss != "0" else "") if "AprsEnable" in data else None
+            "ANTENNA_DIR": "-1" if aprs_enable == '1' else None,
+            "TONE": (ctcss if ctcss != "0" else "") if aprs_enable == '1' else None
         },
         "Rx1": rx1_map,
         "Tx1": tx1_map
@@ -385,10 +409,9 @@ def main():
             if json_val is not None:
                 lines = update_key_in_lines(lines, section, cfg_key, str(json_val))
 
-    aprs_enable = data.get('AprsEnable')
     if aprs_enable == '1':
         lines = update_key_in_lines(lines, "GLOBAL", "LOCATION_INFO", "LocationInfo")
-    elif aprs_enable == '0':
+    else:
         lines = remove_garbage(lines, "GLOBAL", ["LOCATION_INFO"])
 
     radio_data['qth_name'] = qth_name
@@ -396,6 +419,8 @@ def main():
     radio_data['qth_loc'] = qth_loc
     if gpio_ptt: radio_data['gpio_ptt'] = gpio_ptt
     if gpio_sql: radio_data['gpio_sql'] = gpio_sql
+    if lat_val: radio_data['aprs_lat_raw'] = lat_val
+    if lon_val: radio_data['aprs_lon_raw'] = lon_val
 
     shari_sql_val = data.get('shari_sql')
     if shari_sql_val: radio_data['shari_sql'] = shari_sql_val

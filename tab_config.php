@@ -44,22 +44,20 @@
 
         if (file_exists($zip_path)) {
             $b64 = base64_encode(file_get_contents($zip_path));
-            unlink($zip_path); 
-            
-            echo "<script>
+            $filename = basename($zip_path);
 
-                var a = document.createElement('a');
-                a.href = 'data:application/zip;base64,$b64';
-                a.download = '$backup_name';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                setTimeout(function() {
-                    window.location.href = 'index.php';
-                }, 500);
+            echo "<script>
+                var link = document.createElement('a');
+                link.href = 'data:application/zip;base64," . $b64 . "';
+                link.download = '" . $filename . "';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
             </script>";
+
+            unlink($zip_path); 
         } else {
-            echo "<div class='alert alert-error'>❌ Błąd: Nie udało się utworzyć pliku ZIP w /dev/shm/.</div>";
+            echo "<div class='alert alert-error'>❌ Błąd: Nie udało się utworzyć pliku ZIP.</div>";
         }
     }
 
@@ -640,8 +638,9 @@
             $locInfo = $ini['LocationInfo'] ?? [];
             $aprs_enabled = (isset($glob['LOCATION_INFO']) && $glob['LOCATION_INFO'] === 'LocationInfo') ? '1' : '0';
             $aprs_passcode = $locInfo['PASSCODE'] ?? '';
-            $aprs_lat = $locInfo['LAT_POSITION'] ?? '';
-            $aprs_lon = $locInfo['LON_POSITION'] ?? '';
+            $aprs_lat = isset($radio['aprs_lat_raw']) ? $radio['aprs_lat_raw'] : ($locInfo['LAT_POSITION'] ?? '');
+            $aprs_lon = isset($radio['aprs_lon_raw']) ? $radio['aprs_lon_raw'] : ($locInfo['LON_POSITION'] ?? '');
+        
             $aprs_power = $locInfo['TX_POWER'] ?? '5';
             $aprs_gain = $locInfo['ANTENNA_GAIN'] ?? '2';
             $aprs_height = str_replace('m', '', ($locInfo['ANTENNA_HEIGHT'] ?? '10'));
@@ -691,8 +690,6 @@
                         <?php for($i=1; $i<=15; $i++): ?>
                         <option value="<?php echo $i; ?>" <?php if($aprs_ssid == (string)$i) echo 'selected'; ?>>-<?php echo $i; ?></option>
                         <?php endfor; ?>
-                        <option value="X" <?php if($aprs_ssid == 'X') echo 'selected'; ?>>-X</option>
-                        <option value="A" <?php if($aprs_ssid == 'A') echo 'selected'; ?>>-A</option>
                     </select>
                 </div>
 
@@ -711,12 +708,12 @@
                 </div>
                 <div class="form-group">
                     <label><?php echo $TC[$lang]['lbl_aprs_interval']; ?></label>
-                    <input type="number" name="AprsInterval" value="<?php echo $aprs_interval; ?>" placeholder="25">
+                    <input type="number" name="AprsInterval" value="<?php echo $aprs_interval; ?>" min="10" placeholder="10">
                 </div>
 
                 <div class="form-group">
                     <label><?php echo $TC[$lang]['lbl_aprs_comment']; ?></label>
-                    <input type="text" name="AprsComment" value="<?php echo htmlspecialchars($aprs_comment); ?>" placeholder="<?php echo $TC[$lang]['ph_aprs_comment']; ?>">
+                    <input type="text" name="AprsComment" value="<?php echo htmlspecialchars($aprs_comment); ?>" placeholder="<?php echo $TC[$lang]['ph_aprs_comment']; ?>" maxlength="36">
                 </div>
                 <div class="form-group">
                     <label><?php echo $TC[$lang]['lbl_aprs_height']; ?></label>
