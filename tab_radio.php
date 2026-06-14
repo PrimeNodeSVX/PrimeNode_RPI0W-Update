@@ -45,7 +45,11 @@ $TR = [
         'opt_off' => '0 - Wył',
         'opt_on' => '1 - Wł',
         'lbl_hpf' => 'High Pass Filter',
-        'lbl_lpf' => 'Low Pass Filter'
+        'lbl_lpf' => 'Low Pass Filter',
+        'radio_type_cm108' => 'Radio Zewnętrzne (Karta CM108 / HID)',
+        'card_desc_cm108' => 'Konfiguracja radia podłączonego przez zmodyfikowaną kartę CM108. Sterowanie portami HID.',
+        'cm108_title' => '⚙️ Konfiguracja CM108 (HID)',
+        'cm108_desc' => 'Zdefiniuj piny karty CM108 sterujące radiem. Dodaj wykrzyknik (!) na początku, aby odwrócić logikę (inwersja).'
     ],
     'en' => [
         'csq' => 'None (CSQ)',
@@ -92,14 +96,19 @@ $TR = [
         'opt_off' => '0 - Off',
         'opt_on' => '1 - On',
         'lbl_hpf' => 'High Pass Filter',
-        'lbl_lpf' => 'Low Pass Filter'
+        'lbl_lpf' => 'Low Pass Filter',
+        'radio_type_cm108' => 'External Radio (CM108 Card / HID)',
+        'card_desc_cm108' => 'Radio configuration connected via modified CM108 card. HID port control.',
+        'cm108_title' => '⚙️ CM108 Config (HID)',
+        'cm108_desc' => 'Define CM108 card pins controlling the radio. Prepend an exclamation mark (!) to invert logic.'
     ]
 ];
 
 $jsonFile = '/var/www/html/radio_config.json';
 $radio_display = [
     "radio_type" => "gpio", "rx" => "432.8000", "tx" => "432.8000", "ctcss" => "0000", "desc" => "Brak opisu",
-    "gpio_ptt" => "12", "gpio_sql" => "16", "shari_sql" => "4"
+    "gpio_ptt" => "12", "gpio_sql" => "16", "shari_sql" => "4",
+    "cm108_ptt" => "GPIO3", "cm108_sql" => "!VOL_DN"
 ];
 
 $CTCSS_TONES = [
@@ -132,6 +141,7 @@ if (file_exists($jsonFile)) {
             <div class="form-group" style="margin-bottom: 15px;">
                 <label style="font-weight: bold;"><?php echo $TR[$lang]['lbl_radio_type']; ?></label>
                 <select name="radio_type" id="radio-type-selector" onchange="updateRadioHelp()">
+                    <option value="cm108" <?php if(isset($radio_display['radio_type']) && $radio_display['radio_type'] == 'cm108') echo 'selected'; ?>><?php echo $TR[$lang]['radio_type_cm108']; ?></option>
                     <option value="gpio" <?php if(isset($radio_display['radio_type']) && $radio_display['radio_type'] == 'gpio') echo 'selected'; ?>><?php echo $TR[$lang]['radio_type_gpio']; ?></option>
                     <option value="shari" <?php if(isset($radio_display['radio_type']) && $radio_display['radio_type'] == 'shari') echo 'selected'; ?>><?php echo $TR[$lang]['radio_type_shari']; ?></option>
                 </select>
@@ -262,6 +272,25 @@ if (file_exists($jsonFile)) {
                     </div>
                 </div>
             </div>
+            <div id="cm108-settings-block" style="display: none;">
+                <hr style="border:0; border-top:1px solid #444; margin: 20px 0;">
+                <h4 class="panel-title blue"><?php echo $TR[$lang]['cm108_title']; ?></h4>
+                <div style="font-size: 12px; color: #aaa; margin-bottom: 15px;">
+                    <?php echo $TR[$lang]['cm108_desc']; ?>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div class="form-group">
+                        <label><?php echo $TR[$lang]['lbl_ptt']; ?></label>
+                        <input type="text" name="cm108_ptt" value="<?php echo htmlspecialchars($radio_display['cm108_ptt']); ?>" placeholder="np. GPIO3">
+                        <small style="color:#888; font-size:9px;"><?php echo $TR[$lang]['def']; ?> GPIO3</small>
+                    </div>
+                    <div class="form-group">
+                        <label><?php echo $TR[$lang]['lbl_sql']; ?></label>
+                        <input type="text" name="cm108_sql" value="<?php echo htmlspecialchars($radio_display['cm108_sql']); ?>" placeholder="np. !VOL_DN">
+                        <small style="color:#888; font-size:9px;"><?php echo $TR[$lang]['def']; ?> !VOL_DN</small>
+                    </div>
+                </div>
+            </div>
 
             <button type="submit" name="save_radio" class="btn btn-blue" style="margin-top:15px;"><?php echo $TR[$lang]['btn_save']; ?></button>
         </form>
@@ -309,6 +338,7 @@ if (file_exists($jsonFile)) {
 
 var cardDescGpio = "<?php echo addslashes($TR[$lang]['card_desc_gpio']); ?>";
 var cardDescShari = "<?php echo addslashes($TR[$lang]['card_desc_shari']); ?>";
+var cardDescCm108 = "<?php echo addslashes($TR[$lang]['card_desc_cm108']); ?>";
 
 function updateRadioHelp() {
     var selector = document.getElementById('radio-type-selector');
@@ -317,6 +347,7 @@ function updateRadioHelp() {
     var cardGpio = document.getElementById('help-card-gpio');
     var cardShari = document.getElementById('help-card-shari');
     var gpioBlock = document.getElementById('gpio-settings-block');
+    var cm108Block = document.getElementById('cm108-settings-block');
     var shariSqlInline = document.getElementById('shari-sql-inline');
     var shariFilters = document.getElementById('shari-filters-block');
     var dynamicDesc = document.getElementById('dynamic-card-desc');
@@ -325,13 +356,23 @@ function updateRadioHelp() {
         cardGpio.style.display = 'none';
         cardShari.style.display = 'block';
         gpioBlock.style.display = 'none';
+        cm108Block.style.display = 'none';
         shariSqlInline.style.display = 'block';
         shariFilters.style.display = 'block';
         dynamicDesc.innerHTML = cardDescShari;
+    } else if (val === 'cm108') {
+        cardGpio.style.display = 'block';
+        cardShari.style.display = 'none';
+        gpioBlock.style.display = 'none';
+        cm108Block.style.display = 'block';
+        shariSqlInline.style.display = 'none';
+        shariFilters.style.display = 'none';
+        dynamicDesc.innerHTML = cardDescCm108;
     } else {
         cardShari.style.display = 'none';
         cardGpio.style.display = 'block';
         gpioBlock.style.display = 'block';
+        cm108Block.style.display = 'none';
         shariSqlInline.style.display = 'none';
         shariFilters.style.display = 'none';
         dynamicDesc.innerHTML = cardDescGpio;
