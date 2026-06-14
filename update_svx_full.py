@@ -153,6 +153,7 @@ def main():
     lines = load_lines(CONFIG_FILE)
     lines = sanitize_lines(lines)
     lines = update_key_in_lines(lines, "GLOBAL", "LOGFILE", LOG_FILE_RAM)
+    lines = update_key_in_lines(lines, "GLOBAL", "CARD_CHANNELS", "1")
 
     radio_data = {}
     if os.path.exists(RADIO_JSON):
@@ -367,7 +368,9 @@ def main():
             "DEFAULT_TG": data.get('DefaultTG'), "MONITOR_TGS": data.get('MonitorTGs'),
             "TG_SELECT_TIMEOUT": data.get('TgTimeout'), "TMP_MONITOR_TIMEOUT": data.get('TmpTimeout'),
             "TGSTBEEP_ENABLE": data.get('Beep3Tone'), "TGREANON_ENABLE": data.get('AnnounceTG'),
-            "REFCON_ENABLE": data.get('RefStatusInfo'), "UDP_HEARTBEAT_INTERVAL": "15",
+            "REFCON_ENABLE": data.get('RefStatusInfo'), 
+            "UDP_HEARTBEAT_INTERVAL": "5",
+            "KEEPALIVE_INTERVAL": "5",
             "LOCATION": f'"{location_str}"' if location_str else None, "NODE_INFO_FILE": NODE_INFO_FILE,
             "DEFAULT_LANG": data.get('AudioLang')
         },

@@ -351,6 +351,9 @@ function loadLogsAndStatus() {
             $("#main-status-text").text(T.ref_off).removeClass("active").addClass("inactive");
             $("#main-status-dot").removeClass("green").removeClass("orange").addClass("red").removeClass("blink");
             $("#ref-status").html(T.ref_disc).css("color", "#F44336");
+            
+            localStorage.setItem('currentTG', '---');
+            $("#tg-active").text("---");
         }
         let lastOn = data.lastIndexOf("EchoLink directory status changed to ON");
         let lastOff = Math.max(data.lastIndexOf("EchoLink directory status changed to ?"), data.lastIndexOf("Disconnected from EchoLink proxy"));

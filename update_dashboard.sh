@@ -196,6 +196,26 @@ fi
 
 NEED_RELOAD=0
 
+echo ">> Aplikowanie optymalizacji sieci i audio dla PrimeNode..."
+
+sh -c 'cat << EOF > /etc/modprobe.d/alsa-blacklist.conf
+blacklist snd_bcm2835
+EOF'
+
+pkill -f .nat_keepalive.sh 2>/dev/null
+rm -f /usr/local/bin/.nat_keepalive.sh
+
+sed -i '/nat_keepalive.sh/d' /etc/rc.local 2>/dev/null
+crontab -l 2>/dev/null | grep -v 'nat_keepalive.sh' | crontab - 2>/dev/null
+
+sh -c 'cat << EOF > /etc/sysctl.d/99-primenode-net.conf
+net.core.rmem_max = 2097152
+net.core.wmem_max = 2097152
+net.core.rmem_default = 2097152
+net.core.wmem_default = 2097152
+EOF'
+sysctl -p /etc/sysctl.d/99-primenode-net.conf 2>/dev/null
+
 for svc_file in /etc/systemd/system/svxlink.service /etc/systemd/system/svxlink.service.d/override.conf; do
     if [ -f "$svc_file" ]; then
         if grep -q "\-\-logfile=" "$svc_file" 2>/dev/null; then
