@@ -376,12 +376,29 @@ def main():
         except ValueError:
             aprs_interval_val = "10"
 
-    aprs_enable = data.get('AprsEnable', '0')
-    aprs_passcode = data.get('AprsPasscode', '')
+    aprs_enable_raw = data.get('AprsEnable')
 
-    if aprs_enable == '1':
-        if not lat_fixed or not lon_fixed or not aprs_passcode.strip():
-            aprs_enable = '0'
+    def check_aprs_enabled(config_lines):
+        in_g = False
+        for l in config_lines:
+            s = l.strip()
+            if s == "[GLOBAL]": in_g = True
+            elif s.startswith("[") and s.endswith("]"): in_g = False
+            elif in_g and s.startswith("LOCATION_INFO="):
+                if "LocationInfo" in s: return True
+        return False
+
+    aprs_was_enabled = check_aprs_enabled(lines)
+
+    if aprs_enable_raw is not None:
+        aprs_enable = aprs_enable_raw
+        aprs_passcode = data.get('AprsPasscode', '')
+        if aprs_enable == '1':
+            if not lat_fixed or not lon_fixed or not aprs_passcode.strip():
+                aprs_enable = '0'
+    else:
+        aprs_enable = '1' if aprs_was_enabled else '0'
+        aprs_passcode = None
 
     mapping = {
         "ReflectorLogic": {
@@ -410,19 +427,19 @@ def main():
             "TIMEOUT": data.get('EL_ModTimeout'), "LINK_IDLE_TIMEOUT": data.get('EL_IdleTimeout')
         },
         "LocationInfo": {
-            "APRS_SERVER_LIST": "lodz.aprs2.net:14580" if aprs_enable == '1' else None,
+            "APRS_SERVER_LIST": "lodz.aprs2.net:14580" if (aprs_enable == '1' and aprs_enable_raw is not None) else None,
             "BEACON_INTERVAL": aprs_interval_val,
-            "PASSCODE": aprs_passcode if aprs_enable == '1' else None,
+            "PASSCODE": aprs_passcode if (aprs_enable == '1' and aprs_enable_raw is not None) else None,
             "LAT_POSITION": lat_fixed,
             "LON_POSITION": lon_fixed,
-            "CALLSIGN": aprs_callsign if aprs_enable == '1' else None,
+            "CALLSIGN": aprs_callsign if (aprs_enable == '1' and aprs_enable_raw is not None) else None,
             "COMMENT": full_aprs_comment,
             "SYMBOL": f'"{aprs_icon_raw}"' if aprs_icon_raw else None,
             "FREQUENCY": tx_freq if aprs_enable == '1' else None,
             "TX_POWER": data.get('AprsPower'),
             "ANTENNA_HEIGHT": height_fixed,
             "ANTENNA_GAIN": data.get('AprsGain'),
-            "ANTENNA_DIR": "-1" if aprs_enable == '1' else None,
+            "ANTENNA_DIR": "-1" if (aprs_enable == '1' and aprs_enable_raw is not None) else None,
             "TONE": (ctcss if ctcss != "0" else "") if aprs_enable == '1' else None
         },
         "Rx1": rx1_map,
@@ -438,6 +455,11 @@ def main():
         lines = update_key_in_lines(lines, "GLOBAL", "LOCATION_INFO", "LocationInfo")
     else:
         lines = remove_garbage(lines, "GLOBAL", ["LOCATION_INFO"])
+    if aprs_enable_raw is not None:
+        if aprs_enable == '1':
+            lines = update_key_in_lines(lines, "GLOBAL", "LOCATION_INFO", "LocationInfo")
+        else:
+            lines = remove_garbage(lines, "GLOBAL", ["LOCATION_INFO"])
 
     radio_data['qth_name'] = qth_name
     radio_data['qth_city'] = qth_city

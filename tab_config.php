@@ -17,6 +17,7 @@
     }
 
     if (isset($_POST['export_backup'])) {
+        shell_exec("sudo /usr/sbin/alsactl store -f /dev/shm/asound.state");
 
         $backup_name = 'PrimeNode_Backup_' . date('Y-m-d_His') . '.zip';
         $zip_path = '/dev/shm/' . $backup_name;
@@ -26,7 +27,8 @@
             '/var/www/html/radio_config.json' => 'radio_config.json',
             '/etc/svxlink/networks.json' => 'networks.json',
             '/var/www/html/dtmf_custom.json' => 'dtmf_custom.json',
-            '/etc/svxlink/node_info.json' => 'node_info.json'
+            '/etc/svxlink/node_info.json' => 'node_info.json',
+            '/dev/shm/asound.state' => 'asound.state'
         ];
 
         if (class_exists('ZipArchive')) {
@@ -91,7 +93,8 @@
                     'radio_config.json' => '/var/www/html/radio_config.json',
                     'networks.json' => '/etc/svxlink/networks.json',
                     'dtmf_custom.json' => '/var/www/html/dtmf_custom.json',
-                    'node_info.json' => '/etc/svxlink/node_info.json'
+                    'node_info.json' => '/etc/svxlink/node_info.json',
+                    'asound.state' => '/dev/shm/asound_restore.state'
                 ];
 
                 $restored_count = 0;
@@ -116,6 +119,12 @@
                         $restored_count++;
                     }
                 }
+                if (file_exists('/dev/shm/asound_restore.state')) {
+                    shell_exec("sudo /usr/sbin/alsactl restore -f /dev/shm/asound_restore.state 2>&1");
+                    shell_exec("sudo /usr/sbin/alsactl store");
+                    unlink('/dev/shm/asound_restore.state');
+                }
+                
                 shell_exec("sudo rm -rf " . escapeshellarg($tmp_dir));
                 
                 if ($restored_count > 0) {
