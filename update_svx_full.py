@@ -302,8 +302,8 @@ def main():
             pass
 
     elif radio_type == "cm108":
-        cm108_ptt = data.get('cm108_ptt') or radio_data.get('cm108_ptt', 'GPIO3')
-        cm108_sql = data.get('cm108_sql') or radio_data.get('cm108_sql', '!VOL_DN')
+        cm108_ptt = data.get('GpioPtt') or radio_data.get('cm108_ptt', 'GPIO3')
+        cm108_sql = data.get('GpioSql') or radio_data.get('cm108_sql', '!VOL_DN')
         
         rx1_map = {
             "SQL_DET": "HIDRAW",
@@ -438,15 +438,16 @@ def main():
     radio_data['qth_name'] = qth_name
     radio_data['qth_city'] = qth_city
     radio_data['qth_loc'] = qth_loc
-    if gpio_ptt: radio_data['gpio_ptt'] = gpio_ptt
-    if gpio_sql: radio_data['gpio_sql'] = gpio_sql
+
+    if radio_type == "cm108":
+        if data.get('GpioPtt'): radio_data['cm108_ptt'] = data.get('GpioPtt')
+        if data.get('GpioSql'): radio_data['cm108_sql'] = data.get('GpioSql')
+    elif radio_type == "gpio":
+        if gpio_ptt: radio_data['gpio_ptt'] = gpio_ptt
+        if gpio_sql: radio_data['gpio_sql'] = gpio_sql
+
     if lat_val: radio_data['aprs_lat_raw'] = lat_val
     if lon_val: radio_data['aprs_lon_raw'] = lon_val
-    cm108_ptt_val = data.get('cm108_ptt')
-    if cm108_ptt_val: radio_data['cm108_ptt'] = cm108_ptt_val
-    
-    cm108_sql_val = data.get('cm108_sql')
-    if cm108_sql_val: radio_data['cm108_sql'] = cm108_sql_val
 
     shari_sql_val = data.get('shari_sql')
     if shari_sql_val: radio_data['shari_sql'] = shari_sql_val

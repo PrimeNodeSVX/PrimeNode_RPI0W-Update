@@ -262,12 +262,12 @@ if (file_exists($jsonFile)) {
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                     <div class="form-group">
                         <label><?php echo $TR[$lang]['lbl_ptt']; ?></label>
-                        <input type="text" name="gpio_ptt" value="<?php echo htmlspecialchars($radio_display['gpio_ptt']); ?>" placeholder="np. !12">
+                        <input type="text" id="input_gpio_ptt" name="gpio_ptt" value="<?php echo htmlspecialchars($radio_display['gpio_ptt']); ?>" placeholder="np. !12">
                         <small style="color:#888; font-size:9px;"><?php echo $TR[$lang]['def']; ?> 12</small>
                     </div>
                     <div class="form-group">
                         <label><?php echo $TR[$lang]['lbl_sql']; ?></label>
-                        <input type="text" name="gpio_sql" value="<?php echo htmlspecialchars($radio_display['gpio_sql']); ?>" placeholder="np. !16">
+                        <input type="text" id="input_gpio_sql" name="gpio_sql" value="<?php echo htmlspecialchars($radio_display['gpio_sql']); ?>" placeholder="np. !16">
                         <small style="color:#888; font-size:9px;"><?php echo $TR[$lang]['def']; ?> 16</small>
                     </div>
                 </div>
@@ -281,12 +281,12 @@ if (file_exists($jsonFile)) {
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                     <div class="form-group">
                         <label><?php echo $TR[$lang]['lbl_ptt']; ?></label>
-                        <input type="text" name="cm108_ptt" value="<?php echo htmlspecialchars($radio_display['cm108_ptt']); ?>" placeholder="np. GPIO3">
+                        <input type="text" id="input_cm108_ptt" name="cm108_ptt" value="<?php echo htmlspecialchars($radio_display['cm108_ptt']); ?>" placeholder="np. GPIO3">
                         <small style="color:#888; font-size:9px;"><?php echo $TR[$lang]['def']; ?> GPIO3</small>
                     </div>
                     <div class="form-group">
                         <label><?php echo $TR[$lang]['lbl_sql']; ?></label>
-                        <input type="text" name="cm108_sql" value="<?php echo htmlspecialchars($radio_display['cm108_sql']); ?>" placeholder="np. !VOL_DN">
+                        <input type="text" id="input_cm108_sql" name="cm108_sql" value="<?php echo htmlspecialchars($radio_display['cm108_sql']); ?>" placeholder="np. !VOL_DN">
                         <small style="color:#888; font-size:9px;"><?php echo $TR[$lang]['def']; ?> !VOL_DN</small>
                     </div>
                 </div>
@@ -352,6 +352,11 @@ function updateRadioHelp() {
     var shariFilters = document.getElementById('shari-filters-block');
     var dynamicDesc = document.getElementById('dynamic-card-desc');
     
+    var iGpioPtt = document.getElementById('input_gpio_ptt');
+    var iGpioSql = document.getElementById('input_gpio_sql');
+    var iCm108Ptt = document.getElementById('input_cm108_ptt');
+    var iCm108Sql = document.getElementById('input_cm108_sql');
+    
     if (val === 'shari') {
         cardGpio.style.display = 'none';
         cardShari.style.display = 'block';
@@ -360,6 +365,11 @@ function updateRadioHelp() {
         shariSqlInline.style.display = 'block';
         shariFilters.style.display = 'block';
         dynamicDesc.innerHTML = cardDescShari;
+        
+        if(iGpioPtt) iGpioPtt.removeAttribute('name');
+        if(iGpioSql) iGpioSql.removeAttribute('name');
+        if(iCm108Ptt) iCm108Ptt.removeAttribute('name');
+        if(iCm108Sql) iCm108Sql.removeAttribute('name');
     } else if (val === 'cm108') {
         cardGpio.style.display = 'block';
         cardShari.style.display = 'none';
@@ -368,6 +378,11 @@ function updateRadioHelp() {
         shariSqlInline.style.display = 'none';
         shariFilters.style.display = 'none';
         dynamicDesc.innerHTML = cardDescCm108;
+
+        if(iCm108Ptt) iCm108Ptt.setAttribute('name', 'gpio_ptt');
+        if(iCm108Sql) iCm108Sql.setAttribute('name', 'gpio_sql');
+        if(iGpioPtt) iGpioPtt.removeAttribute('name');
+        if(iGpioSql) iGpioSql.removeAttribute('name');
     } else {
         cardShari.style.display = 'none';
         cardGpio.style.display = 'block';
@@ -376,6 +391,11 @@ function updateRadioHelp() {
         shariSqlInline.style.display = 'none';
         shariFilters.style.display = 'none';
         dynamicDesc.innerHTML = cardDescGpio;
+        
+        if(iGpioPtt) iGpioPtt.setAttribute('name', 'gpio_ptt');
+        if(iGpioSql) iGpioSql.setAttribute('name', 'gpio_sql');
+        if(iCm108Ptt) iCm108Ptt.setAttribute('name', 'cm108_ptt');
+        if(iCm108Sql) iCm108Sql.setAttribute('name', 'cm108_sql');
     }
 }
 
