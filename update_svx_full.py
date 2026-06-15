@@ -242,7 +242,9 @@ def main():
         simplex_callsign = ""
 
     hidraw_port = "/dev/hidraw0"
-    if os.path.exists("/sys/class/hidraw"):
+    if os.path.exists("/dev/SVX-CM"):
+        hidraw_port = "/dev/SVX-CM"
+    elif os.path.exists("/sys/class/hidraw"):
         for dev in os.listdir("/sys/class/hidraw"):
             with open(f"/sys/class/hidraw/{dev}/device/uevent") as f:
                 content = f.read()
@@ -310,7 +312,9 @@ def main():
             "HID_DEVICE": hidraw_port,
             "HID_SQL_PIN": cm108_sql,
             "DTMF_PTY": "/dev/shm/dtmf_ctrl",
-            "DEEMPHASIS": svx_deemph
+            "DEEMPHASIS": svx_deemph,
+            "DTMF_MAX_REV_TWIST": "18",
+            "DTMF_MAX_FWD_TWIST": "18"
         }
         tx1_map = {
             "PTT_TYPE": "Hidraw",
