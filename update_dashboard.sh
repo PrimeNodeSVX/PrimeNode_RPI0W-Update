@@ -198,6 +198,36 @@ NEED_RELOAD=0
 
 echo ">> Aplikowanie optymalizacji sieci i audio dla PrimeNode..."
 
+echo ">> Sprawdzanie i aktualizacja pliku Logic.tcl (DTMF 997)..."
+LOGIC_TCL="/usr/local/share/svxlink/events.d/Logic.tcl"
+
+if [ -f "$LOGIC_TCL" ]; then
+    if ! grep -q "NASZ NOWY KOD WYŁĄCZAJĄCY (997)" "$LOGIC_TCL"; then
+        echo ">> Wdrażanie komendy DTMF 997 (Bezpieczne wyłączanie)..."
+        cat << 'EOF' > /tmp/dtmf_997.tcl
+  if {$cmd == "997"} {
+      puts ">>> Zamykanie systemu (kod 997) <<<"
+      catch {
+          if {${::active_module} != ""} {
+              ${::active_module}::deactivate
+          }
+      }
+      catch {playFile "/usr/local/share/svxlink/sounds/PL/Core/poweroff.wav"}
+      playSilence 500
+      catch {exec sudo bash -c "sleep 5 && shutdown -h now" &}
+      
+      return 1
+  }
+EOF
+
+        sed -i '/proc dtmf_cmd_received {cmd} {/r /tmp/dtmf_997.tcl' "$LOGIC_TCL"
+        rm -f /tmp/dtmf_997.tcl
+        NEED_RELOAD=1
+    else
+        echo ">> Komenda DTMF 997 jest już wdrożona (pomijam)."
+    fi
+fi
+
 sh -c 'cat << EOF > /etc/modprobe.d/alsa-blacklist.conf
 blacklist snd_bcm2835
 EOF'
