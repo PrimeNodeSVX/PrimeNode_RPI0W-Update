@@ -105,6 +105,18 @@ chmod 755 "$REF_DIR"
 find "$REF_DIR" -type f -exec chmod 644 {} \; 2>/dev/null
 find "$CORE_DIR" -type f -exec chmod 644 {} \; 2>/dev/null
 
+echo ">> Zabezpieczenie ustawień znaku (AnnounceCall)..."
+if [ ! -s "/tmp/svx_new_settings.json" ]; then
+    CUR_CALL=$(grep -A 10 "^\[ReflectorLogic\]" /etc/svxlink/svxlink.conf | grep -m 1 "^CALLSIGN=" | cut -d'=' -f2)
+    SIMP_CALL=$(grep -A 10 "^\[SimplexLogic\]" /etc/svxlink/svxlink.conf | grep -m 1 "^CALLSIGN=" | cut -d'=' -f2)
+    
+    ANN_CALL="0"
+    if [ -n "$SIMP_CALL" ] && [ "$SIMP_CALL" != '""' ] && [ "$SIMP_CALL" != 'None' ]; then 
+        ANN_CALL="1"
+    fi
+    echo "{\"Callsign\":\"$CUR_CALL\", \"AnnounceCall\":\"$ANN_CALL\"}" > /tmp/svx_new_settings.json
+fi
+
 echo ">> Synchronizacja konfiguracji radia (Python)..."
 python3 /usr/local/bin/update_svx_full.py
 
