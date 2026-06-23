@@ -183,6 +183,7 @@ FLAG_ERROR="/var/www/html/ram/el_error.flag"
 mkdir -p /var/www/html/ram
 touch "$LOG_DEST"
 chmod 666 "$LOG_DEST"
+rm -f "$FLAG_ONLINE" "$FLAG_ERROR"
 
 tail -F -n 50 /dev/shm/svxlink.log 2>/dev/null | while read -r line; do
     echo "$line" >> "$LOG_DEST"
@@ -194,8 +195,10 @@ tail -F -n 50 /dev/shm/svxlink.log 2>/dev/null | while read -r line; do
             touch "$FLAG_ONLINE" && rm -f "$FLAG_ERROR" ;;
         *"EchoLink directory status changed to"*"OFF"*)
             rm -f "$FLAG_ONLINE" ;;
-        *"EchoLink authentication failed"*|*"Connection failed"*)
+        *"EchoLink authentication failed"*|*"Connection failed"*|*"Could not connect"*|*"Access denied"*|*"Login failed"*|*"Cannot resolve"*|*"Disconnected from EchoLink proxy"*)
             rm -f "$FLAG_ONLINE" && touch "$FLAG_ERROR" ;;
+        *"SvxLink v"*|*"Starting SvxLink"*)
+            rm -f "$FLAG_ONLINE" "$FLAG_ERROR" ;;
     esac
 done
 EOF
