@@ -206,7 +206,34 @@
     if (isset($_POST['ajax_dtmf'])) {
         $code = $_POST['ajax_dtmf'];
         if (preg_match('/^[0-9A-D*#]+$/', $code)) {
-            shell_exec("sudo /usr/local/bin/send_dtmf.sh " . escapeshellarg($code));
+            
+            $chunks = [];
+            $current_chunk = $code[0];
+            
+            for ($i = 1; $i < strlen($code); $i++) {
+                if ($code[$i] === $code[$i - 1]) {
+                    $chunks[] = $current_chunk;
+                    $current_chunk = $code[$i];
+                } else {
+                    $current_chunk .= $code[$i];
+                }
+            }
+            $chunks[] = $current_chunk;
+
+            $script_content = "#!/bin/bash\n";
+            foreach ($chunks as $index => $chunk) {
+                $script_content .= "sudo /usr/local/bin/send_dtmf.sh " . escapeshellarg($chunk) . "\n";
+                if ($index < count($chunks) - 1) {
+                    $script_content .= "sleep 0.3\n"; 
+                }
+            }
+            
+            $script_content .= "rm -f \"\$0\"\n";
+            
+            $tmp_file = '/tmp/dtmf_run_' . uniqid() . '.sh';
+            file_put_contents($tmp_file, $script_content);
+            shell_exec("nohup bash " . escapeshellarg($tmp_file) . " > /dev/null 2>&1 &");
+            
             echo "OK: $code";
         } else { echo "ERROR"; }
         exit;
