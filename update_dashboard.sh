@@ -206,6 +206,18 @@ if ! grep -q "svx_event_logger.sh" /etc/rc.local; then
     sed -i '/exit 0/i /usr/local/bin/svx_event_logger.sh &' /etc/rc.local
 fi
 
+if [ ! -f "/etc/cron.d/echolink_update" ]; then
+    cat << 'EOF' > /etc/cron.d/echolink_update
+0 * * * * root /usr/bin/python3 /usr/local/bin/fetch_echolink.py >/dev/null 2>&1
+EOF
+    chmod 644 /etc/cron.d/echolink_update
+    systemctl restart cron
+fi
+
+if [ -x "/usr/local/bin/fetch_echolink.py" ]; then
+    /usr/bin/python3 /usr/local/bin/fetch_echolink.py >/dev/null 2>&1
+fi
+
 NEED_RELOAD=0
 
 echo ">> Aplikowanie optymalizacji sieci i audio dla PrimeNode..."
