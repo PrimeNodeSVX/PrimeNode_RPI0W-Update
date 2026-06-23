@@ -83,9 +83,11 @@ fi
 echo ">> Konfiguracja dynamicznych zapowiedzi audio..."
 REF_DIR="$SOUNDS_DIR/ref_sounds"
 CORE_DIR="$SOUNDS_DIR/PL/Core"
+DEFAULT_DIR="$SOUNDS_DIR/PL/Default"
 
 mkdir -p "$REF_DIR"
 mkdir -p "$CORE_DIR"
+mkdir -p "$DEFAULT_DIR"
 
 if [ -d "$GIT_DIR/ref_sounds" ]; then
     cp -R "$GIT_DIR/ref_sounds/"* "$REF_DIR/" 2>/dev/null
@@ -93,6 +95,10 @@ fi
 
 if [ -d "$GIT_DIR/PL/Core" ]; then
     cp -R "$GIT_DIR/PL/Core/"* "$CORE_DIR/" 2>/dev/null
+fi
+
+if [ -d "$GIT_DIR/PL/Default" ]; then
+    cp -R "$GIT_DIR/PL/Default/"* "$DEFAULT_DIR/" 2>/dev/null
 fi
 
 if [ -f "$GIT_DIR/online_PN.wav" ]; then
@@ -104,6 +110,7 @@ fi
 chmod 755 "$REF_DIR"
 find "$REF_DIR" -type f -exec chmod 644 {} \; 2>/dev/null
 find "$CORE_DIR" -type f -exec chmod 644 {} \; 2>/dev/null
+find "$DEFAULT_DIR" -type f -exec chmod 644 {} \; 2>/dev/null
 
 echo ">> Zabezpieczenie ustawień znaku (AnnounceCall)..."
 if [ ! -s "/tmp/svx_new_settings.json" ]; then
