@@ -240,13 +240,23 @@
     }
 
     $cards = shell_exec("cat /proc/asound/cards");
-    if (preg_match('/(\d+)\s\[(Device|Set|USB)/', $cards, $matches)) {
+    if (preg_match('/(\d+)\s\[(Device|Set|USB|wm8960)/i', $cards, $matches)) {
         $CARD_ID = (int)$matches[1];
     } else {
         $CARD_ID = 0;
     }
 
-    $MIXER_IDS = ['Mic_Cap_Sw' => 7, 'Mic_Cap_Vol' => 8, 'Auto_Gain_Ctrl' => 9, 'Spk_Play_Sw' => 5, 'Spk_Play_Vol' => 6];
+    $is_wm8960 = (strpos($cards, 'wm8960') !== false);
+    if ($is_wm8960) {
+        $MIXER_IDS = ['Mic_Cap_Sw' => 3, 'Mic_Cap_Vol' => 1, 'Auto_Gain_Ctrl' => 0, 'Spk_Play_Sw' => 0, 'Spk_Play_Vol' => 10];
+        $max_rx = 63;
+        $max_tx = 255;
+    } else {
+        $MIXER_IDS = ['Mic_Cap_Sw' => 7, 'Mic_Cap_Vol' => 8, 'Auto_Gain_Ctrl' => 9, 'Spk_Play_Sw' => 5, 'Spk_Play_Vol' => 6];
+        $max_rx = 35;
+        $max_tx = 37;
+    }
+
     $audio = []; $audio_msg = '';
     
     function get_alsa_value($card, $numid) {
@@ -339,7 +349,7 @@
         $is_installing = false;
         
         if ($r_type === 'rfguru') {
-            $check_audio = shell_exec("aplay -l 2>&1");
+            $check_audio = shell_exec("cat /proc/asound/cards 2>&1");
             if (strpos($check_audio, 'wm8960') === false) {
                 $is_installing = true;
                 shell_exec("sudo nohup /usr/local/bin/install_rfguru.sh > /dev/null 2>&1 &");

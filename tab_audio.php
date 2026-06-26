@@ -38,7 +38,7 @@ $TA = [
         <div class="audio-card highlight">
             <h4 class="audio-title green"><?php echo $TA[$lang]['rx_title']; ?></h4>
             
-            <div class="switch-row">
+            <div class="switch-row" <?php if($MIXER_IDS['Mic_Cap_Sw'] == 0) echo 'style="opacity:0.3; pointer-events:none;"'; ?>>
                 <div class="switch-label"><?php echo $TA[$lang]['lbl_mic_cap']; ?></div>
                 <input type="checkbox" name="Mic_Cap_Sw" value="1" <?php if($audio['Mic_Cap_Sw']) echo "checked"; ?>>
             </div>
@@ -46,12 +46,12 @@ $TA = [
             <div class="slider-group">
                 <div class="slider-header">
                     <span><?php echo $TA[$lang]['lbl_mic_vol']; ?></span>
-                    <span class="slider-val"><span id="v_rx"><?php echo $audio['Mic_Cap_Vol']; ?></span>/35</span>
+                    <span class="slider-val"><span id="v_rx"><?php echo $audio['Mic_Cap_Vol']; ?></span>/<?php echo $max_rx; ?></span>
                 </div>
-                <input type="range" name="mic_cap_vol" min="0" max="35" value="<?php echo $audio['Mic_Cap_Vol']; ?>" oninput="document.getElementById('v_rx').innerText=this.value">
+                <input type="range" name="mic_cap_vol" min="0" max="<?php echo $max_rx; ?>" value="<?php echo $audio['Mic_Cap_Vol']; ?>" oninput="document.getElementById('v_rx').innerText=this.value">
             </div>
 
-            <div class="switch-row">
+            <div class="switch-row" <?php if($MIXER_IDS['Auto_Gain_Ctrl'] == 0) echo 'style="opacity:0.3; pointer-events:none;"'; ?>>
                 <div class="switch-label"><?php echo $TA[$lang]['lbl_agc']; ?></div>
                 <input type="checkbox" name="Auto_Gain_Ctrl" value="1" <?php if($audio['Auto_Gain_Ctrl']) echo "checked"; ?>>
             </div>
@@ -61,7 +61,7 @@ $TA = [
         <div class="audio-card highlight" style="border-color:#2196F3;">
             <h4 class="audio-title" style="color:#2196F3;"><?php echo $TA[$lang]['tx_title']; ?></h4>
             
-            <div class="switch-row">
+            <div class="switch-row" <?php if($MIXER_IDS['Spk_Play_Sw'] == 0) echo 'style="opacity:0.3; pointer-events:none;"'; ?>>
                 <div class="switch-label"><?php echo $TA[$lang]['lbl_spk_play']; ?></div>
                 <input type="checkbox" name="Spk_Play_Sw" value="1" <?php if($audio['Spk_Play_Sw']) echo "checked"; ?>>
             </div>
@@ -69,9 +69,9 @@ $TA = [
             <div class="slider-group">
                 <div class="slider-header">
                     <span><?php echo $TA[$lang]['lbl_spk_vol']; ?></span>
-                    <span class="slider-val"><span id="v_tx"><?php echo $audio['Spk_Play_Vol']; ?></span>/37</span>
+                    <span class="slider-val"><span id="v_tx"><?php echo $audio['Spk_Play_Vol']; ?></span>/<?php echo $max_tx; ?></span>
                 </div>
-                <input type="range" name="spk_play_vol" min="0" max="37" value="<?php echo $audio['Spk_Play_Vol']; ?>" oninput="document.getElementById('v_tx').innerText=this.value">
+                <input type="range" name="spk_play_vol" min="0" max="<?php echo $max_tx; ?>" value="<?php echo $audio['Spk_Play_Vol']; ?>" oninput="document.getElementById('v_tx').innerText=this.value">
             </div>
         </div>
 
