@@ -255,12 +255,12 @@ def main():
     radio_type = radio_data.get("radio_type", "gpio")
 
     lines = remove_garbage(lines, "Rx1", [
-        "SQL_GPIOD_LINE", "SQL_GPIOD_CHIP", "SQL_GPIOD_OPEN_THRESH", "GPIO_SQL_PIN", 
+        "AUDIO_DEV", "SQL_GPIOD_LINE", "SQL_GPIOD_CHIP", "SQL_GPIOD_OPEN_THRESH", "GPIO_SQL_PIN", 
         "HID_SQL_PIN", "CTCSS_MODE", "CTCSS_FQ", 
         "HID_PIN", "HID_DEVICE", "CTCSS_OPEN_THRESH", "CTCSS_CLOSE_THRESH"
     ])
     lines = remove_garbage(lines, "Tx1", [
-        "PTT_GPIOD_LINE", "PTT_GPIOD_CHIP", "PTT_PIN", 
+        "AUDIO_DEV", "PTT_GPIOD_LINE", "PTT_GPIOD_CHIP", "PTT_PIN", 
         "HID_PTT_PIN", "HID_DEVICE", "PTT_TYPE"
     ])
 
@@ -269,6 +269,7 @@ def main():
 
     if radio_type == "shari":
         rx1_map = {
+            "AUDIO_DEV": "alsa:plughw:0",
             "SQL_DET": "CTCSS",
             "CTCSS_FQ": ctcss if float(ctcss) > 0 else "100.0",
             "CTCSS_MODE": "0",
@@ -283,6 +284,7 @@ def main():
             rx1_map["HID_SQL_PIN"] = "!VOL_DN"
 
         tx1_map = {
+            "AUDIO_DEV": "alsa:plughw:0",
             "PTT_TYPE": "Hidraw",
             "HID_DEVICE": hidraw_port,
             "HID_PTT_PIN": "GPIO3",
@@ -303,12 +305,9 @@ def main():
         except Exception as e:
             pass
 
-
-
-
     elif radio_type == "rfguru":
         rx1_map = {
-            "AUDIO_DEV": "alsa:plughw:wm8960soundcard",
+            "AUDIO_DEV": "alsa:plughw:0",
             "SQL_DET": "GPIOD",
             "SQL_GPIOD_CHIP": "gpiochip0",
             "SQL_GPIOD_LINE": "!12",
@@ -317,7 +316,7 @@ def main():
             "DEEMPHASIS": svx_deemph
         }
         tx1_map = {
-            "AUDIO_DEV": "alsa:plughw:wm8960soundcard",
+            "AUDIO_DEV": "alsa:plughw:0",
             "PTT_TYPE": "GPIOD",
             "PTT_GPIOD_CHIP": "gpiochip0",
             "PTT_GPIOD_LINE": "!16",
@@ -342,6 +341,7 @@ def main():
         cm108_sql = data.get('GpioSql') or radio_data.get('cm108_sql', '!VOL_DN')
         
         rx1_map = {
+            "AUDIO_DEV": "alsa:plughw:0",
             "SQL_DET": "HIDRAW",
             "HID_DEVICE": hidraw_port,
             "HID_SQL_PIN": cm108_sql,
@@ -351,6 +351,7 @@ def main():
             "DTMF_MAX_FWD_TWIST": "18"
         }
         tx1_map = {
+            "AUDIO_DEV": "alsa:plughw:0",
             "PTT_TYPE": "Hidraw",
             "HID_DEVICE": hidraw_port,
             "HID_PTT_PIN": cm108_ptt,
@@ -359,6 +360,7 @@ def main():
 
     else:
         rx1_map = {
+            "AUDIO_DEV": "alsa:plughw:0",
             "SQL_DET": "GPIOD",
             "SQL_GPIOD_CHIP": "gpiochip0",
             "SQL_GPIOD_LINE": gpio_sql,
@@ -367,6 +369,7 @@ def main():
             "DEEMPHASIS": svx_deemph
         }
         tx1_map = {
+            "AUDIO_DEV": "alsa:plughw:0",
             "PTT_TYPE": "GPIOD",
             "PTT_GPIOD_CHIP": "gpiochip0",
             "PTT_GPIOD_LINE": gpio_ptt,
