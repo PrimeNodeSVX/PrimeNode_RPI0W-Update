@@ -335,8 +335,22 @@
     }
 
     if (isset($_POST['save_radio'])) {
+        $r_type = $_POST['radio_type'] ?? 'gpio';
+        $is_installing = false;
+        
+        if ($r_type === 'rfguru') {
+            $check_audio = shell_exec("aplay -l 2>&1");
+            if (strpos($check_audio, 'wm8960') === false) {
+                $is_installing = true;
+                shell_exec("sudo nohup /usr/local/bin/install_rfguru.sh > /dev/null 2>&1 &");
+                echo "<div class='alert alert-warning' style='font-size:14px; padding:20px; line-height:1.5;'><strong>⚙️ Inicjalizacja Płytki RF Guru</strong><br>Wykryto brak sterownika cyfrowego audio I2S (WM8960).<br>System rozpoczął jego pobieranie i kompilację w tle.<br><br><b style='color:#d32f2f;'>NIE WYŁĄCZAJ ZASILANIA URZĄDZENIA!</b><br>Proces zajmie od 10 do 15 minut. Po zakończeniu, Malina zrestartuje się automatycznie.</div>";
+            } else {
+                echo "<div class='alert alert-success'>✅ RF Guru: Sterownik WM8960 jest aktywny i działa poprawnie!</div>";
+            }
+        }
+
         $updateData = [
-            "radio_type" => $_POST['radio_type'] ?? 'gpio',
+            "radio_type" => $r_type,
             "rx" => $_POST['rx_freq'],
             "tx" => $_POST['tx_freq'],
             "ctcss" => $_POST['ctcss_val'],
@@ -358,8 +372,10 @@
         file_put_contents('/tmp/svx_new_settings.json', json_encode($updateData));
         shell_exec('sudo /usr/bin/python3 /usr/local/bin/update_svx_full.py 2>&1');
         
-        shell_exec('sudo /usr/bin/systemctl restart svxlink > /dev/null 2>&1 &');
-        echo "<div class='alert alert-success'>".$TR[$lang]['radio_gpio_saved']."</div><meta http-equiv='refresh' content='3'>";
+        if (!$is_installing) {
+            shell_exec('sudo /usr/bin/systemctl restart svxlink > /dev/null 2>&1 &');
+            echo "<div class='alert alert-success'>".$TR[$lang]['radio_gpio_saved']."</div><meta http-equiv='refresh' content='3'>";
+        }
     }
 
     if (isset($_POST['restart_srv'])) { shell_exec('sudo /usr/bin/systemctl restart svxlink > /dev/null 2>&1 &'); echo "<div class='alert alert-success'>".$TR[$lang]['restart_svc']."</div>"; }

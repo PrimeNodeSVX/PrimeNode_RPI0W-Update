@@ -144,6 +144,7 @@ if (file_exists($jsonFile)) {
                     <option value="cm108" <?php if(isset($radio_display['radio_type']) && $radio_display['radio_type'] == 'cm108') echo 'selected'; ?>><?php echo $TR[$lang]['radio_type_cm108']; ?></option>
                     <option value="gpio" <?php if(isset($radio_display['radio_type']) && $radio_display['radio_type'] == 'gpio') echo 'selected'; ?>><?php echo $TR[$lang]['radio_type_gpio']; ?></option>
                     <option value="shari" <?php if(isset($radio_display['radio_type']) && $radio_display['radio_type'] == 'shari') echo 'selected'; ?>><?php echo $TR[$lang]['radio_type_shari']; ?></option>
+                    <option value="rfguru" <?php if(isset($radio_display['radio_type']) && $radio_display['radio_type'] == 'rfguru') echo 'selected'; ?>>RF Guru Board (I2S WM8960)</option>
                 </select>
             </div>
             <div class="form-group">
@@ -357,6 +358,9 @@ function updateRadioHelp() {
     var iCm108Ptt = document.getElementById('input_cm108_ptt');
     var iCm108Sql = document.getElementById('input_cm108_sql');
     
+    if(iGpioPtt) { iGpioPtt.readOnly = false; iGpioPtt.style.opacity = '1'; }
+    if(iGpioSql) { iGpioSql.readOnly = false; iGpioSql.style.opacity = '1'; }
+    
     if (val === 'shari') {
         cardGpio.style.display = 'none';
         cardShari.style.display = 'block';
@@ -368,6 +372,29 @@ function updateRadioHelp() {
         
         if(iGpioPtt) iGpioPtt.removeAttribute('name');
         if(iGpioSql) iGpioSql.removeAttribute('name');
+        if(iCm108Ptt) iCm108Ptt.removeAttribute('name');
+        if(iCm108Sql) iCm108Sql.removeAttribute('name');
+    } else if (val === 'rfguru') {
+        cardGpio.style.display = 'none';
+        cardShari.style.display = 'block'; 
+        gpioBlock.style.display = 'block'; 
+        cm108Block.style.display = 'none';
+        shariSqlInline.style.display = 'block';
+        shariFilters.style.display = 'block';
+        dynamicDesc.innerHTML = "<b>RF Guru:</b> Piny !16(PTT) i !12(SQL) blokowane automatycznie. Moduł SA818 jest programowany przy zapisie.";
+        
+        if(iGpioPtt) {
+            iGpioPtt.setAttribute('name', 'gpio_ptt');
+            iGpioPtt.value = '!16';
+            iGpioPtt.readOnly = true;
+            iGpioPtt.style.opacity = '0.5';
+        }
+        if(iGpioSql) {
+            iGpioSql.setAttribute('name', 'gpio_sql');
+            iGpioSql.value = '!12';
+            iGpioSql.readOnly = true;
+            iGpioSql.style.opacity = '0.5';
+        }
         if(iCm108Ptt) iCm108Ptt.removeAttribute('name');
         if(iCm108Sql) iCm108Sql.removeAttribute('name');
     } else if (val === 'cm108') {

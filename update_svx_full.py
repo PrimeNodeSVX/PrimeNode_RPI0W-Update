@@ -303,6 +303,40 @@ def main():
         except Exception as e:
             pass
 
+
+
+
+    elif radio_type == "rfguru":
+        rx1_map = {
+            "AUDIO_DEV": "alsa:plughw:1",
+            "SQL_DET": "GPIOD",
+            "SQL_GPIOD_CHIP": "gpiochip0",
+            "SQL_GPIOD_LINE": "!12",
+            "SQL_GPIOD_OPEN_THRESH": "10",
+            "DTMF_PTY": "/dev/shm/dtmf_ctrl",
+            "DEEMPHASIS": svx_deemph
+        }
+        tx1_map = {
+            "AUDIO_DEV": "alsa:plughw:1",
+            "PTT_TYPE": "GPIOD",
+            "PTT_GPIOD_CHIP": "gpiochip0",
+            "PTT_GPIOD_LINE": "!16",
+            "PREEMPHASIS": svx_preemph
+        }
+        try:
+            orig_ctcss = data.get("ctcss") or radio_data.get("ctcss", "0000")
+            shari_sql = data.get("shari_sql") or radio_data.get("shari_sql", "4")
+            sa_bw = str(data.get("sa_bw", radio_data.get("sa_bw", "1")))
+            sa_vol = str(data.get("sa_vol", radio_data.get("sa_vol", "8")))
+            sa_prede = str(data.get("sa_prede", radio_data.get("sa_prede", "0")))
+            sa_hpf = str(data.get("sa_hpf", radio_data.get("sa_hpf", "0")))
+            sa_lpf = str(data.get("sa_lpf", radio_data.get("sa_lpf", "0")))
+
+            cmd = f"sudo /usr/bin/python3 /usr/local/bin/setup_radio.py {rx_freq} {tx_freq} {orig_ctcss} {shari_sql} {sa_bw} {sa_vol} {sa_prede} {sa_hpf} {sa_lpf}"
+            os.system(cmd)
+        except Exception as e:
+            pass
+
     elif radio_type == "cm108":
         cm108_ptt = data.get('GpioPtt') or radio_data.get('cm108_ptt', 'GPIO3')
         cm108_sql = data.get('GpioSql') or radio_data.get('cm108_sql', '!VOL_DN')
