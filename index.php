@@ -248,7 +248,13 @@
 
     $is_wm8960 = (strpos($cards, 'wm8960') !== false);
     if ($is_wm8960) {
-        $MIXER_IDS = ['Mic_Cap_Sw' => 3, 'Mic_Cap_Vol' => 1, 'Auto_Gain_Ctrl' => 0, 'Spk_Play_Sw' => 0, 'Spk_Play_Vol' => 10];
+        $MIXER_IDS = [
+            'Mic_Cap_Sw' => 3,
+            'Mic_Cap_Vol' => 1,
+            'ADC_Vol' => 36,
+            'Spk_Play_Vol' => 10,
+            'HP_Vol' => 11
+        ];
         $max_rx = 63;
         $max_tx = 255;
     } else {
@@ -268,13 +274,32 @@
     }
 
     if (isset($_POST['save_audio'])) {
-        foreach (['mic_cap_vol' => 'Mic_Cap_Vol', 'spk_play_vol' => 'Spk_Play_Vol'] as $p => $m) {
-            $numid = $MIXER_IDS[$m]; $val = (int)$_POST[$p];
-            if ($numid > 0) shell_exec("sudo /usr/bin/amixer -c $CARD_ID cset numid=$numid $val");
+        $save_sliders = ['mic_cap_vol' => 'Mic_Cap_Vol', 'spk_play_vol' => 'Spk_Play_Vol'];
+        if ($is_wm8960) {
+            $save_sliders['adc_vol'] = 'ADC_Vol';
+            $save_sliders['hp_vol'] = 'HP_Vol';
         }
-        foreach (['Mic_Cap_Sw', 'Auto_Gain_Ctrl', 'Spk_Play_Sw'] as $m) {
-            $numid = $MIXER_IDS[$m]; $state = isset($_POST[$m]) && $_POST[$m] == '1' ? 'on' : 'off';
-            if ($numid > 0) shell_exec("sudo /usr/bin/amixer -c $CARD_ID cset numid=$numid $state");
+        
+        foreach ($save_sliders as $p => $m) {
+            if (isset($_POST[$p]) && isset($MIXER_IDS[$m])) {
+                $numid = $MIXER_IDS[$m]; 
+                $val = (int)$_POST[$p];
+                if ($numid > 0) shell_exec("sudo /usr/bin/amixer -c $CARD_ID cset numid=$numid $val");
+            }
+        }
+
+        if ($is_wm8960 && isset($_POST['hp_vol'])) {
+            $val = (int)$_POST['hp_vol'];
+            shell_exec("sudo /usr/bin/amixer -c $CARD_ID cset numid=13 $val");
+        }
+        
+        $switches = $is_wm8960 ? ['Mic_Cap_Sw'] : ['Mic_Cap_Sw', 'Auto_Gain_Ctrl', 'Spk_Play_Sw'];
+        foreach ($switches as $m) {
+            if (isset($MIXER_IDS[$m])) {
+                $numid = $MIXER_IDS[$m]; 
+                $state = isset($_POST[$m]) && $_POST[$m] == '1' ? 'on' : 'off';
+                if ($numid > 0) shell_exec("sudo /usr/bin/amixer -c $CARD_ID cset numid=$numid $state");
+            }
         }
         shell_exec("sudo /usr/sbin/alsactl store $CARD_ID");
         $audio_msg = '<div class="alert alert-success">'.$TR[$lang]['audio_saved'].'</div>';
