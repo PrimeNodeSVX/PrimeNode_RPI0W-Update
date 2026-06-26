@@ -308,7 +308,7 @@ def main():
 
     elif radio_type == "rfguru":
         rx1_map = {
-            "AUDIO_DEV": "alsa:plughw:1",
+            "AUDIO_DEV": "alsa:plughw:wm8960soundcard",
             "SQL_DET": "GPIOD",
             "SQL_GPIOD_CHIP": "gpiochip0",
             "SQL_GPIOD_LINE": "!12",
@@ -317,7 +317,7 @@ def main():
             "DEEMPHASIS": svx_deemph
         }
         tx1_map = {
-            "AUDIO_DEV": "alsa:plughw:1",
+            "AUDIO_DEV": "alsa:plughw:wm8960soundcard",
             "PTT_TYPE": "GPIOD",
             "PTT_GPIOD_CHIP": "gpiochip0",
             "PTT_GPIOD_LINE": "!16",
