@@ -48,6 +48,7 @@ amixer -c 0 cset numid=35 off
 amixer -c 0 cset numid=16 0
 amixer -c 0 cset numid=15 0
 
+alsactl --file=/etc/wm8960-soundcard/wm8960_asound.state store 0
 alsactl store 0
 
 sed -i '/rfguru_audio_init.sh/d' /etc/rc.local

@@ -346,6 +346,10 @@
                 if ($numid > 0) shell_exec("sudo /usr/bin/amixer -c $CARD_ID cset numid=$numid $state");
             }
         }
+        
+        if ($is_wm8960) {
+            shell_exec("sudo /usr/sbin/alsactl --file=/etc/wm8960-soundcard/wm8960_asound.state store $CARD_ID");
+        }
         shell_exec("sudo /usr/sbin/alsactl store $CARD_ID");
         $audio_msg = '<div class="alert alert-success">'.$TR[$lang]['audio_saved'].'</div>';
     }
