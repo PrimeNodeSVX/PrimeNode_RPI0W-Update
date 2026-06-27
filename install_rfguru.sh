@@ -22,28 +22,43 @@ sudo ./install.sh >> $LOG_FILE 2>&1
 
 echo "=== KOMPILACJA ZAKONCZONA SUCESEM ===" >> $LOG_FILE
 
-echo "Aplikowanie optymalnych ustawien Audio (SQ7UTP)..." >> $LOG_FILE
-sudo amixer -c 0 cset numid=1 0
-sudo amixer -c 0 cset numid=36 231
-sudo amixer -c 0 cset numid=10 231
-sudo amixer -c 0 cset numid=13 115
-sudo amixer -c 0 cset numid=11 115
-sudo amixer -c 0 cset numid=9 0
-sudo amixer -c 0 cset numid=8 0
-sudo amixer -c 0 cset numid=3 on
-sudo amixer -c 0 cset numid=45 on
-sudo amixer -c 0 cset numid=48 on
-sudo amixer -c 0 cset numid=49 on
-sudo amixer -c 0 cset numid=50 on
-sudo amixer -c 0 cset numid=51 on
-sudo amixer -c 0 cset numid=54 on
-sudo amixer -c 0 cset numid=25 off
-sudo amixer -c 0 cset numid=26 0
-sudo amixer -c 0 cset numid=35 off
-sudo amixer -c 0 cset numid=16 0
-sudo amixer -c 0 cset numid=15 0
+echo "Tworzenie skryptu jednorazowej inicjalizacji Audio po restarcie..." >> $LOG_FILE
 
-sudo alsactl store 0
+cat << 'EOF' > /usr/local/bin/rfguru_audio_init.sh
+#!/bin/bash
+sleep 15
+
+amixer -c 0 cset numid=1 0
+amixer -c 0 cset numid=36 231
+amixer -c 0 cset numid=10 231
+amixer -c 0 cset numid=13 115
+amixer -c 0 cset numid=11 115
+amixer -c 0 cset numid=9 0
+amixer -c 0 cset numid=8 0
+amixer -c 0 cset numid=3 on
+amixer -c 0 cset numid=45 on
+amixer -c 0 cset numid=48 on
+amixer -c 0 cset numid=49 on
+amixer -c 0 cset numid=50 on
+amixer -c 0 cset numid=51 on
+amixer -c 0 cset numid=54 on
+amixer -c 0 cset numid=25 off
+amixer -c 0 cset numid=26 0
+amixer -c 0 cset numid=35 off
+amixer -c 0 cset numid=16 0
+amixer -c 0 cset numid=15 0
+
+alsactl store 0
+
+sed -i '/rfguru_audio_init.sh/d' /etc/rc.local
+rm -f /usr/local/bin/rfguru_audio_init.sh
+EOF
+
+chmod +x /usr/local/bin/rfguru_audio_init.sh
+
+if ! grep -q "rfguru_audio_init.sh" /etc/rc.local; then
+    sed -i '/exit 0/i /usr/local/bin/rfguru_audio_init.sh &' /etc/rc.local
+fi
 
 date >> $LOG_FILE
 echo "Restart systemu za 5 sekund..." >> $LOG_FILE
