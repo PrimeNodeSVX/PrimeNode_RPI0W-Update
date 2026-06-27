@@ -164,6 +164,8 @@ fi
 usermod -aG sudo www-data
 chown -R www-data:www-data $WWW_DIR
 chmod -R 755 $WWW_DIR
+mkdir -p $WWW_DIR/ram
+chmod -R 777 $WWW_DIR/ram
 chmod 666 $WWW_DIR/dtmf_custom.json 2>/dev/null
 chmod 666 $WWW_DIR/radio_config.json 2>/dev/null
 chmod 666 /etc/svxlink/networks.json 2>/dev/null
@@ -174,6 +176,7 @@ if ! grep -q "/bin/cp, /usr/bin/cp" /etc/sudoers; then
     echo "www-data ALL=(ALL) NOPASSWD: /bin/cp, /usr/bin/cp" >> /etc/sudoers
     echo "www-data ALL=(ALL) NOPASSWD: /bin/chown, /usr/bin/chown" >> /etc/sudoers
     echo "www-data ALL=(ALL) NOPASSWD: /bin/chmod, /usr/bin/chmod" >> /etc/sudoers
+    echo "www-data ALL=(ALL) NOPASSWD: /usr/bin/python3, /usr/bin/amixer, /usr/sbin/alsactl, /usr/bin/systemctl, /usr/sbin/reboot, /usr/sbin/shutdown" >> /etc/sudoers
     
     echo ">> Restartowanie usługi apache2..."
     systemctl restart apache2

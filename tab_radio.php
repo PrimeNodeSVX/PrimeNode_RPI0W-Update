@@ -49,7 +49,13 @@ $TR = [
         'radio_type_cm108' => 'Radio Zewnętrzne (Karta CM108 / HID)',
         'card_desc_cm108' => 'Konfiguracja radia podłączonego przez zmodyfikowaną kartę CM108. Sterowanie portami HID.',
         'cm108_title' => '⚙️ Konfiguracja CM108 (HID)',
-        'cm108_desc' => 'Zdefiniuj piny karty CM108 sterujące radiem. Dodaj wykrzyknik (!) na początku, aby odwrócić logikę (inwersja).'
+        'cm108_desc' => 'Zdefiniuj piny karty CM108 sterujące radiem. Dodaj wykrzyknik (!) na początku, aby odwrócić logikę (inwersja).',
+        'card_desc_rfguru' => 'Moduł zintegrowany. Wymusza piny PTT (16) i SQL (12) oraz cyfrowe audio I2S (WM8960).',
+        'warn_title_rfguru' => '📻 Płytka RF Guru (SA818 + I2S WM8960)',
+        'warn_info_rfguru' => 'W trybie RF Guru system automatycznie programuje układ SA818 i komunikuje się przez dedykowane cyfrowe audio I2S.',
+        'rfguru_t1' => '⚙️ <b>Automatyczne piny:</b> System zablokuje i wymusi piny sprzętowe GPIO 16 (PTT) oraz GPIO 12 (SQL).',
+        'rfguru_t2' => '🎛️ <b>Audio I2S (WM8960):</b> Zaawansowany kodek dźwięku. Konieczne jest precyzyjne dostrojenie suwaków w zakładce Audio.',
+        'rfguru_t3' => '📡 <b>SA818:</b> Po zapisaniu, system zaprogramuje zewnętrzny moduł radiowy zgodnie z parametrami.'
     ],
     'en' => [
         'csq' => 'None (CSQ)',
@@ -100,7 +106,13 @@ $TR = [
         'radio_type_cm108' => 'External Radio (CM108 Card / HID)',
         'card_desc_cm108' => 'Radio configuration connected via modified CM108 card. HID port control.',
         'cm108_title' => '⚙️ CM108 Config (HID)',
-        'cm108_desc' => 'Define CM108 card pins controlling the radio. Prepend an exclamation mark (!) to invert logic.'
+        'cm108_desc' => 'Define CM108 card pins controlling the radio. Prepend an exclamation mark (!) to invert logic.',
+        'card_desc_rfguru' => 'Integrated module. Forces PTT (16) and SQL (12) pins and digital I2S audio (WM8960).',
+        'warn_title_rfguru' => '📻 RF Guru Board (SA818 + I2S WM8960)',
+        'warn_info_rfguru' => 'In RF Guru mode, the system automatically programs the SA818 chip and uses dedicated I2S digital audio.',
+        'rfguru_t1' => '⚙️ <b>Automatic pins:</b> The system will lock and force hardware pins GPIO 16 (PTT) and GPIO 12 (SQL).',
+        'rfguru_t2' => '🎛️ <b>I2S Audio (WM8960):</b> Advanced audio codec. Precise slider adjustment in the Audio tab is required.',
+        'rfguru_t3' => '📡 <b>SA818:</b> Upon saving, the system will program the external radio module.'
     ]
 ];
 
@@ -332,6 +344,22 @@ if (file_exists($jsonFile)) {
                 </ul>
             </div>
         </div>
+        <div id="help-card-rfguru" class="panel-box" style="border-left: 5px solid #2196F3; background: #1a232c; display: none;">
+            <h4 class="panel-title" style="color: #2196F3; border: none;"><?php echo $TR[$lang]['warn_title_rfguru']; ?></h4>
+            <div style="font-size: 13px; color: #ddd; line-height: 1.6;">
+                <div style="display: flex; align-items: flex-start; gap: 10px; margin-bottom: 15px; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 5px;">
+                    <div style="font-size: 24px;">🚀</div>
+                    <div>
+                        <b style="color: #2196F3;">INFO:</b> <?php echo $TR[$lang]['warn_info_rfguru']; ?>
+                    </div>
+                </div>
+                <ul style="list-style: none; padding: 0; margin-top: 10px;">
+                    <li style="margin-bottom: 8px; border-bottom: 1px solid #333; padding-bottom: 5px;"><?php echo $TR[$lang]['rfguru_t1']; ?></li>
+                    <li style="margin-bottom: 8px; border-bottom: 1px solid #333; padding-bottom: 5px;"><?php echo $TR[$lang]['rfguru_t3']; ?></li>
+                    <li style="margin-bottom: 8px;"><?php echo $TR[$lang]['rfguru_t2']; ?></li>
+                </ul>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -340,6 +368,7 @@ if (file_exists($jsonFile)) {
 var cardDescGpio = "<?php echo addslashes($TR[$lang]['card_desc_gpio']); ?>";
 var cardDescShari = "<?php echo addslashes($TR[$lang]['card_desc_shari']); ?>";
 var cardDescCm108 = "<?php echo addslashes($TR[$lang]['card_desc_cm108']); ?>";
+var cardDescRfguru = "<?php echo addslashes($TR[$lang]['card_desc_rfguru']); ?>";
 
 function updateRadioHelp() {
     var selector = document.getElementById('radio-type-selector');
@@ -347,6 +376,8 @@ function updateRadioHelp() {
     
     var cardGpio = document.getElementById('help-card-gpio');
     var cardShari = document.getElementById('help-card-shari');
+    var cardRfguru = document.getElementById('help-card-rfguru');
+    
     var gpioBlock = document.getElementById('gpio-settings-block');
     var cm108Block = document.getElementById('cm108-settings-block');
     var shariSqlInline = document.getElementById('shari-sql-inline');
@@ -364,6 +395,7 @@ function updateRadioHelp() {
     if (val === 'shari') {
         cardGpio.style.display = 'none';
         cardShari.style.display = 'block';
+        cardRfguru.style.display = 'none';
         gpioBlock.style.display = 'none';
         cm108Block.style.display = 'none';
         shariSqlInline.style.display = 'block';
@@ -374,14 +406,16 @@ function updateRadioHelp() {
         if(iGpioSql) iGpioSql.removeAttribute('name');
         if(iCm108Ptt) iCm108Ptt.removeAttribute('name');
         if(iCm108Sql) iCm108Sql.removeAttribute('name');
+        
     } else if (val === 'rfguru') {
         cardGpio.style.display = 'none';
-        cardShari.style.display = 'block'; 
+        cardShari.style.display = 'none'; 
+        cardRfguru.style.display = 'block';
         gpioBlock.style.display = 'block'; 
         cm108Block.style.display = 'none';
         shariSqlInline.style.display = 'block';
         shariFilters.style.display = 'block';
-        dynamicDesc.innerHTML = "<b>RF Guru:</b> Piny !16(PTT) i !12(SQL) blokowane automatycznie. Moduł SA818 jest programowany przy zapisie.";
+        dynamicDesc.innerHTML = cardDescRfguru;
         
         if(iGpioPtt) {
             iGpioPtt.setAttribute('name', 'gpio_ptt');
@@ -397,9 +431,11 @@ function updateRadioHelp() {
         }
         if(iCm108Ptt) iCm108Ptt.removeAttribute('name');
         if(iCm108Sql) iCm108Sql.removeAttribute('name');
+        
     } else if (val === 'cm108') {
         cardGpio.style.display = 'block';
         cardShari.style.display = 'none';
+        cardRfguru.style.display = 'none';
         gpioBlock.style.display = 'none';
         cm108Block.style.display = 'block';
         shariSqlInline.style.display = 'none';
@@ -410,8 +446,10 @@ function updateRadioHelp() {
         if(iCm108Sql) iCm108Sql.setAttribute('name', 'gpio_sql');
         if(iGpioPtt) iGpioPtt.removeAttribute('name');
         if(iGpioSql) iGpioSql.removeAttribute('name');
+        
     } else {
         cardShari.style.display = 'none';
+        cardRfguru.style.display = 'none';
         cardGpio.style.display = 'block';
         gpioBlock.style.display = 'block';
         cm108Block.style.display = 'none';

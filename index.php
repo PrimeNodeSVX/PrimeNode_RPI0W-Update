@@ -239,26 +239,40 @@
         exit;
     }
 
+    $radio_cfg_file = '/var/www/html/radio_config.json';
+    $r_cfg = [];
+    if (file_exists($radio_cfg_file)) {
+        $r_cfg = json_decode(file_get_contents($radio_cfg_file), true);
+    }
+
+    $is_wm8960 = (isset($r_cfg['radio_type']) && $r_cfg['radio_type'] === 'rfguru');
+
     $cards = shell_exec("cat /proc/asound/cards");
-    if (preg_match('/(\d+)\s\[(Device|Set|USB|wm8960)/i', $cards, $matches)) {
+    
+    if ($is_wm8960 && preg_match('/(\d+)\s\[.*wm8960.*/i', $cards, $matches)) {
+        $CARD_ID = (int)$matches[1];
+    } elseif (!$is_wm8960 && preg_match('/(\d+)\s\[(Device|Set|USB)/i', $cards, $matches)) {
         $CARD_ID = (int)$matches[1];
     } else {
         $CARD_ID = 0;
     }
 
-    $is_wm8960 = (strpos($cards, 'wm8960') !== false);
     if ($is_wm8960) {
         $MIXER_IDS = [
-            'Mic_Cap_Sw' => 3,
-            'Mic_Cap_Vol' => 1,
-            'ADC_Vol' => 36,
-            'Spk_Play_Vol' => 10,
-            'HP_Vol' => 11
+            'Mic_Cap_Sw' => 3,     
+            'Mic_Boost_Vol' => 9
         ];
-        $max_rx = 63;
-        $max_tx = 255;
+        $SCONTROLS = [
+            'Mic_Cap_Vol' => 'Capture',
+            'ADC_Vol' => 'ADC PCM',
+            'Spk_Play_Vol' => 'Playback',
+            'HP_Vol' => 'Headphone'
+        ];
+        $max_rx = 100;
+        $max_tx = 100;
     } else {
         $MIXER_IDS = ['Mic_Cap_Sw' => 7, 'Mic_Cap_Vol' => 8, 'Auto_Gain_Ctrl' => 9, 'Spk_Play_Sw' => 5, 'Spk_Play_Vol' => 6];
+        $SCONTROLS = [];
         $max_rx = 35;
         $max_tx = 37;
     }
@@ -273,14 +287,20 @@
         return 0;
     }
 
+    function get_alsa_mapped_pct($card, $scontrol) {
+        $cmd = "sudo /usr/bin/amixer -c $card -M sget '$scontrol' 2>&1";
+        $output = shell_exec($cmd);
+        if (preg_match('/\[(\d+)%\]/', $output, $matches)) return (int)$matches[1];
+        return 0;
+    }
+
     if (isset($_POST['save_audio'])) {
-        $save_sliders = ['mic_cap_vol' => 'Mic_Cap_Vol', 'spk_play_vol' => 'Spk_Play_Vol'];
-        if ($is_wm8960) {
-            $save_sliders['adc_vol'] = 'ADC_Vol';
-            $save_sliders['hp_vol'] = 'HP_Vol';
+        $save_sliders_raw = [];
+        if (!$is_wm8960) {
+            $save_sliders_raw = ['mic_cap_vol' => 'Mic_Cap_Vol', 'spk_play_vol' => 'Spk_Play_Vol'];
         }
         
-        foreach ($save_sliders as $p => $m) {
+        foreach ($save_sliders_raw as $p => $m) {
             if (isset($_POST[$p]) && isset($MIXER_IDS[$m])) {
                 $numid = $MIXER_IDS[$m]; 
                 $val = (int)$_POST[$p];
@@ -288,9 +308,34 @@
             }
         }
 
-        if ($is_wm8960 && isset($_POST['hp_vol'])) {
-            $val = (int)$_POST['hp_vol'];
-            shell_exec("sudo /usr/bin/amixer -c $CARD_ID cset numid=13 $val");
+        if ($is_wm8960) {
+            $save_scontrols = [
+                'mic_cap_vol' => 'Mic_Cap_Vol', 
+                'adc_vol' => 'ADC_Vol', 
+                'spk_play_vol' => 'Spk_Play_Vol', 
+                'hp_vol' => 'HP_Vol'
+            ];
+
+            if (isset($_POST['mic_boost_vol']) && isset($MIXER_IDS['Mic_Boost_Vol'])) {
+                $numid = $MIXER_IDS['Mic_Boost_Vol'];
+                $val = (int)$_POST['mic_boost_vol'];
+                shell_exec("sudo /usr/bin/amixer -c $CARD_ID cset numid=$numid $val");
+            }
+
+            foreach ($save_scontrols as $p => $m) {
+                if (isset($_POST[$p]) && isset($SCONTROLS[$m])) {
+                    $sctrl = $SCONTROLS[$m];
+                    $val = (int)$_POST[$p];
+                    if ($val >= 0 && $val <= 100) {
+                        shell_exec("sudo /usr/bin/amixer -c $CARD_ID -M sset '$sctrl' {$val}%");
+                    }
+                }
+            }
+            
+            if (isset($_POST['hp_vol'])) {
+                $val = (int)$_POST['hp_vol'];
+                shell_exec("sudo /usr/bin/amixer -c $CARD_ID -M sset 'Speaker' {$val}%");
+            }
         }
         
         $switches = $is_wm8960 ? ['Mic_Cap_Sw'] : ['Mic_Cap_Sw', 'Auto_Gain_Ctrl', 'Spk_Play_Sw'];
@@ -309,7 +354,14 @@
        $audio_msg = ""; 
     }
 
-    foreach ($MIXER_IDS as $k => $id) $audio[$k] = ($id > 0) ? get_alsa_value($CARD_ID, $id) : 0;
+    foreach ($MIXER_IDS as $k => $id) {
+        $audio[$k] = ($id > 0) ? get_alsa_value($CARD_ID, $id) : 0;
+    }
+    if ($is_wm8960) {
+        foreach ($SCONTROLS as $k => $sctrl) {
+            $audio[$k] = get_alsa_mapped_pct($CARD_ID, $sctrl);
+        }
+    }
 
     function parse_svx_conf($file) {
         $ini = []; $curr = "GLOBAL";
@@ -372,44 +424,138 @@
     if (isset($_POST['save_radio'])) {
         $r_type = $_POST['radio_type'] ?? 'gpio';
         $is_installing = false;
+        $abort_save = false;
         
         if ($r_type === 'rfguru') {
             $check_audio = shell_exec("cat /proc/asound/cards 2>&1");
             if (strpos($check_audio, 'wm8960') === false) {
-                $is_installing = true;
-                shell_exec("sudo nohup /usr/local/bin/install_rfguru.sh > /dev/null 2>&1 &");
-                echo "<div class='alert alert-warning' style='font-size:14px; padding:20px; line-height:1.5;'><strong>⚙️ Inicjalizacja Płytki RF Guru</strong><br>Wykryto brak sterownika cyfrowego audio I2S (WM8960).<br>System rozpoczął jego pobieranie i kompilację w tle.<br><br><b style='color:#d32f2f;'>NIE WYŁĄCZAJ ZASILANIA URZĄDZENIA!</b><br>Proces zajmie od 10 do 15 minut. Po zakończeniu, Malina zrestartuje się automatycznie.</div>";
+                if (!isset($_POST['confirm_rfguru_install'])) {
+                    $abort_save = true;
+                    echo '
+                    <div id="rfguru-safe-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); z-index: 9999; display: flex; justify-content: center; align-items: center;">
+                        <div style="background: #222; border: 2px solid #FF9800; border-radius: 8px; padding: 25px; max-width: 500px; text-align: center; box-shadow: 0 0 20px rgba(255, 152, 0, 0.4); margin: 20px;">
+                            <h2 style="color: #FF9800; margin-top: 0; font-size: 22px;">⚠️ Wymagana Instalacja</h2>
+                            <p style="color: #eee; font-size: 15px; line-height: 1.5;">
+                                Wybrałeś profil sprzętowy <b>RF Guru</b>, ale system nie wykrył zainstalowanych sterowników cyfrowego audio (I2S WM8960).
+                            </p>
+                            <p style="color: #ccc; font-size: 13px; line-height: 1.5; background: #111; padding: 15px; border-left: 3px solid #F44336; text-align: left; border-radius: 4px;">
+                                <b style="color: #F44336; font-size: 14px;">UWAGA - PRZECZYTAJ UWAŻNIE:</b><br><br>
+                                Kompilacja sterownika potrwa <b>od 10 do 15 minut</b>. W tym czasie urządzenie będzie mocno obciążone, a na koniec <b>samo uruchomi się ponownie</b>.<br><br>
+                                Odłączenie zasilania lub wyłączenie urządzenia w trakcie tej instalacji może <b>uszkodzić system operacyjny na karcie SD</b>!
+                            </p>
+                            <form method="post" style="margin-top: 25px; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">';
+                            
+                            foreach($_POST as $k => $v) {
+                                echo '<input type="hidden" name="'.htmlspecialchars($k).'" value="'.htmlspecialchars($v).'">';
+                            }
+                            
+                    echo '      <input type="hidden" name="confirm_rfguru_install" value="1">
+                                <button type="button" style="background: #F44336; color: #fff; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; max-width: 200px;" onclick="document.getElementById(\'rfguru-safe-overlay\').style.display=\'none\'; window.location.href=window.location.pathname;">❌ Anuluj (Pomyłka)</button>
+                                <button type="submit" style="background: #4CAF50; color: #fff; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; max-width: 200px;">✅ Rozumiem, Instaluj</button>
+                            </form>
+                        </div>
+                    </div>';
+                } else {
+                    $is_installing = true;
+                    @mkdir('/var/www/html/ram', 0777, true);
+                    @file_put_contents('/var/www/html/ram/rfguru_install.log', "Zainicjowano z poziomu WWW. Przekazywanie żądania do procesów Root...\n");
+                    touch('/tmp/rfguru_install.flag');
+                    echo '
+                    <div id="rfguru-install-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); backdrop-filter: blur(8px); z-index: 9999; display: flex; justify-content: center; align-items: center;">
+                        <div style="background: #222; border: 2px solid #2196F3; border-radius: 8px; padding: 25px; max-width: 700px; width: 90%; text-align: center; box-shadow: 0 0 30px rgba(33, 150, 243, 0.4); margin: 20px;">
+                            <h2 style="color: #2196F3; margin-top: 0; font-size: 24px;">⚙️ Trwa Instalacja Sterowników...</h2>
+                            <p id="install-desc" style="color: #eee; font-size: 15px; margin-bottom: 20px;">
+                                Proces kompilacji został uruchomiony. Malina zrestartuje się automatycznie po zakończeniu.<br>
+                                <b style="color: #F44336;">NIE ODŁĄCZAJ ZASILANIA!</b>
+                            </p>
+                            
+                            <div id="log-container" style="background: #000; border: 1px solid #444; border-radius: 4px; padding: 15px; text-align: left;">
+                                <div style="color: #888; font-size: 11px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px;">Podgląd terminala na żywo:</div>
+                                <div id="log-view" style="color: #0f0; font-family: monospace; font-size: 13px; height: 250px; overflow-y: auto; white-space: pre-wrap; line-height: 1.4;">Inicjalizacja środowiska instalatora...</div>
+                            </div>
+                            
+                            <div id="install-spinner" style="margin-top: 20px; color: #888; font-size: 13px;">
+                                <span style="display:inline-block; animation: pulse 1.5s infinite;">⏳ System w trakcie pracy...</span>
+                            </div>
+                        </div>
+                    </div>
+                    <style>@keyframes pulse { 0% {opacity: 0.5;} 50% {opacity: 1;} 100% {opacity: 0.5;} }</style>
+                    <script>
+                        window.isRestarting = false;
+                        let checkInterval = setInterval(() => {
+                            fetch("get_install_log.php?t=" + new Date().getTime())
+                            .then(r => {
+                                if(!r.ok) throw new Error("Offline");
+                                return r.text();
+                            })
+                            .then(t => {
+                                const log = document.getElementById("log-view");
+                                if(window.isRestarting && t.includes("Oczekiwanie")) {
+                                    clearInterval(checkInterval);
+                                    document.getElementById("rfguru-install-overlay").innerHTML = `
+                                        <div style="background: #222; border: 2px solid #4CAF50; border-radius: 8px; padding: 25px; max-width: 500px; text-align: center; box-shadow: 0 0 30px rgba(76, 175, 80, 0.4); margin: 20px;">
+                                            <h2 style="color: #4CAF50; margin-top: 0; font-size: 24px;">✅ Instalacja Zakończona!</h2>
+                                            <p style="color: #eee; font-size: 15px; margin-bottom: 20px;">System uruchomił się ponownie z nowym jądrem. Moduł RF Guru jest gotowy do pracy!</p>
+                                            <button onclick="window.location.href=\'/\'" style="background: #4CAF50; color: white; border: none; padding: 12px 20px; cursor: pointer; font-weight: bold; border-radius:4px; width:100%; font-size: 16px;">Przejdź do systemu</button>
+                                        </div>
+                                    `;
+                                    return;
+                                }
+
+                                if(t.trim().length > 0 && !window.isRestarting) {
+                                    log.innerText = t;
+                                    log.scrollTop = log.scrollHeight;
+                                    if(t.includes("KOMPILACJA ZAKONCZONA") || t.includes("Restart systemu")) {
+                                        window.isRestarting = true;
+                                        document.getElementById("install-spinner").innerHTML = "<span style=\'color:#FF9800; font-weight:bold; animation: pulse 1s infinite;\'>🔄 Trwa restartowanie systemu... Czekaj na przywrócenie połączenia.</span>";
+                                    }
+                                }
+                            })
+                            .catch(e => {
+                                window.isRestarting = true;
+                                const log = document.getElementById("log-view");
+                                if(log && !log.innerText.includes("Utracono połączenie")) {
+                                    log.innerText += "\\n\\n[Utracono połączenie z serwerem! Trwa restart Maliny... Czekaj na automatyczne przywrócenie komunikacji.]";
+                                    log.scrollTop = log.scrollHeight;
+                                }
+                                document.getElementById("install-spinner").innerHTML = "<span style=\'color:#FF9800; font-weight:bold; animation: pulse 1s infinite;\'>🔄 Uruchamianie ponowne systemu... Trwa to zazwyczaj minutę.</span>";
+                            });
+                        }, 1500);
+                    </script>';
+                }
             } else {
                 echo "<div class='alert alert-success'>✅ RF Guru: Sterownik WM8960 jest aktywny i działa poprawnie!</div>";
             }
         }
 
-        $updateData = [
-            "radio_type" => $r_type,
-            "rx" => $_POST['rx_freq'],
-            "tx" => $_POST['tx_freq'],
-            "ctcss" => $_POST['ctcss_val'],
-            "desc" => $_POST['radio_desc'],
-            "GpioPtt" => $_POST['gpio_ptt'] ?? '12',
-            "GpioSql" => $_POST['gpio_sql'] ?? '16',
-            "shari_sql" => $_POST['shari_sql'] ?? '4',
-            "svx_deemph"  => $_POST['svx_deemph'] ?? '0',
-            "svx_preemph" => $_POST['svx_preemph'] ?? '0',
-            "sa_bw"       => $_POST['sa_bw'] ?? '1',
-            "sa_vol"      => $_POST['sa_vol'] ?? '8',
-            "sa_prede"    => $_POST['sa_prede'] ?? '0',
-            "sa_hpf"      => $_POST['sa_hpf'] ?? '0',
-            "sa_lpf"      => $_POST['sa_lpf'] ?? '0',
-            "Callsign"    => $vals['Callsign'] ?? '',
-            "AnnounceCall"=> $vals['AnnounceCall'] ?? '0'
-        ];
-        
-        file_put_contents('/tmp/svx_new_settings.json', json_encode($updateData));
-        shell_exec('sudo /usr/bin/python3 /usr/local/bin/update_svx_full.py 2>&1');
-        
-        if (!$is_installing) {
-            shell_exec('sudo /usr/bin/systemctl restart svxlink > /dev/null 2>&1 &');
-            echo "<div class='alert alert-success'>".$TR[$lang]['radio_gpio_saved']."</div><meta http-equiv='refresh' content='3'>";
+        if (!$abort_save) {
+            $updateData = [
+                "radio_type" => $r_type,
+                "rx" => $_POST['rx_freq'],
+                "tx" => $_POST['tx_freq'],
+                "ctcss" => $_POST['ctcss_val'],
+                "desc" => $_POST['radio_desc'],
+                "GpioPtt" => $_POST['gpio_ptt'] ?? '12',
+                "GpioSql" => $_POST['gpio_sql'] ?? '16',
+                "shari_sql" => $_POST['shari_sql'] ?? '4',
+                "svx_deemph"  => $_POST['svx_deemph'] ?? '0',
+                "svx_preemph" => $_POST['svx_preemph'] ?? '0',
+                "sa_bw"       => $_POST['sa_bw'] ?? '1',
+                "sa_vol"      => $_POST['sa_vol'] ?? '8',
+                "sa_prede"    => $_POST['sa_prede'] ?? '0',
+                "sa_hpf"      => $_POST['sa_hpf'] ?? '0',
+                "sa_lpf"      => $_POST['sa_lpf'] ?? '0',
+                "Callsign"    => $vals['Callsign'] ?? '',
+                "AnnounceCall"=> $vals['AnnounceCall'] ?? '0'
+            ];
+            
+            file_put_contents('/tmp/svx_new_settings.json', json_encode($updateData));
+            shell_exec('sudo /usr/bin/python3 /usr/local/bin/update_svx_full.py 2>&1');
+
+            if (!$is_installing) {
+                shell_exec('sudo /usr/bin/systemctl restart svxlink > /dev/null 2>&1 &');
+                echo "<div class='alert alert-success'>".$TR[$lang]['radio_gpio_saved']."</div><meta http-equiv='refresh' content='3'>";
+            }
         }
     }
 
