@@ -19,6 +19,7 @@ $H = [
         
         's2_title' => '2. Tryby Radiowe (Hardware)',
         's2_text' => 'PrimeNode wspiera różne konfiguracje sprzętowe, które wybierzesz w zakładce <strong>Radio</strong>:',
+        's2_rfguru' => '🌟 <strong>Moduł RF Guru (I2S):</strong> Zaawansowana płytka ze sprzętowym kodekiem WM8960. Oferuje rewelacyjną jakość dźwięku. Przy pierwszej konfiguracji system przeprowadzi automatyczną, bezpieczną instalację niezbędnych sterowników.',
         's2_shari' => '🛰️ <strong>Moduł SHARI / SA818:</strong> Zintegrowane rozwiązanie radiowe. Częstotliwość, kody CTCSS oraz Squelch programujesz bezpośrednio z poziomu panelu WWW. System sam wyśle dane do modułu po kliknięciu Zapisz.',
         's2_cm108' => '📻 <strong>Karta USB (CM108) + Radio:</strong> Klasyczny tryb dla zewnętrznych radiotelefonów (np. Baofeng/Quansheng). Pozwala na użycie własnych pinów GPIO dla sygnałów PTT oraz SQL.',
 
@@ -88,6 +89,7 @@ $H = [
         
         's2_title' => '2. Radio Modes (Hardware)',
         's2_text' => 'PrimeNode supports various hardware configurations in the <strong>Radio</strong> tab:',
+        's2_rfguru' => '🌟 <strong>RF Guru Module (I2S):</strong> Advanced board with hardware WM8960 audio codec. Offers excellent sound quality. On first setup, the system performs an automated, safe installation of required drivers.',
         's2_shari' => '🛰️ <strong>SHARI / SA818 Module:</strong> Integrated radio solution. Program the frequency and CTCSS directly from the web panel.',
         's2_cm108' => '📻 <strong>USB Card (CM108) + Radio:</strong> Classic mode for external radios. Allows the use of custom GPIO pins for PTT and SQL.',
 
@@ -169,6 +171,7 @@ $H = [
     <div class="help-title" style="color:#2196F3;"><span class="help-icon">📻</span> <?php echo $H[$lang]['s2_title']; ?></div>
     <div class="help-text">
         <?php echo $H[$lang]['s2_text']; ?>
+        <p><?php echo $H[$lang]['s2_rfguru']; ?></p>
         <p><?php echo $H[$lang]['s2_shari']; ?></p>
         <p><?php echo $H[$lang]['s2_cm108']; ?></p>
     </div>
