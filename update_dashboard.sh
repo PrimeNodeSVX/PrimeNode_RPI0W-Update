@@ -67,6 +67,7 @@ fi
 
 [ -f "$GIT_DIR/radio_config.json" ] && [ ! -f "$WWW_DIR/radio_config.json" ] && cp "$GIT_DIR/radio_config.json" "$WWW_DIR/"
 [ -f "$GIT_DIR/dtmf_custom.json" ] && [ ! -f "$WWW_DIR/dtmf_custom.json" ] && cp "$GIT_DIR/dtmf_custom.json" "$WWW_DIR/"
+[ -f "$GIT_DIR/wm8960_asound.state" ] && cp "$GIT_DIR/wm8960_asound.state" "/root/wm8960_asound.state"
 
 if compgen -G "$GIT_DIR/*.py" > /dev/null; then
     echo ">> Instalacja skryptów Python..."

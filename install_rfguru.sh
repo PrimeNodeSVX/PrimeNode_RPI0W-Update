@@ -21,47 +21,18 @@ echo "UWAGA: To zajmie około 10-15 minut na Raspberry Pi..." >> $LOG_FILE
 sudo ./install.sh >> $LOG_FILE 2>&1
 
 echo "=== KOMPILACJA ZAKONCZONA SUCESEM ===" >> $LOG_FILE
+date >> $LOG_FILE
 
-echo "Tworzenie skryptu jednorazowej inicjalizacji Audio po restarcie..." >> $LOG_FILE
+echo "Aplikowanie profilu Audio SQ7UTP..." >> $LOG_FILE
 
-cat << 'EOF' > /usr/local/bin/rfguru_audio_init.sh
-#!/bin/bash
-sleep 15
-
-amixer -c 0 cset numid=1 0
-amixer -c 0 cset numid=36 231
-amixer -c 0 cset numid=10 231
-amixer -c 0 cset numid=13 115
-amixer -c 0 cset numid=11 115
-amixer -c 0 cset numid=9 0
-amixer -c 0 cset numid=8 0
-amixer -c 0 cset numid=3 on
-amixer -c 0 cset numid=45 on
-amixer -c 0 cset numid=48 on
-amixer -c 0 cset numid=49 on
-amixer -c 0 cset numid=50 on
-amixer -c 0 cset numid=51 on
-amixer -c 0 cset numid=54 on
-amixer -c 0 cset numid=25 off
-amixer -c 0 cset numid=26 0
-amixer -c 0 cset numid=35 off
-amixer -c 0 cset numid=16 0
-amixer -c 0 cset numid=15 0
-
-alsactl --file=/etc/wm8960-soundcard/wm8960_asound.state store 0
-alsactl store 0
-
-sed -i '/rfguru_audio_init.sh/d' /etc/rc.local
-rm -f /usr/local/bin/rfguru_audio_init.sh
-EOF
-
-chmod +x /usr/local/bin/rfguru_audio_init.sh
-
-if ! grep -q "rfguru_audio_init.sh" /etc/rc.local; then
-    sed -i '/exit 0/i /usr/local/bin/rfguru_audio_init.sh &' /etc/rc.local
+if [ -f "/root/wm8960_asound.state" ]; then
+    sudo cp /root/wm8960_asound.state /etc/wm8960-soundcard/wm8960_asound.state
+    sudo chmod 644 /etc/wm8960-soundcard/wm8960_asound.state
+    echo "Profil Audio wgrany pomyslnie." >> $LOG_FILE
+else
+    echo "OSTRZEZENIE: Brak pliku wm8960_asound.state w folderze root!" >> $LOG_FILE
 fi
 
-date >> $LOG_FILE
 echo "Restart systemu za 5 sekund..." >> $LOG_FILE
 sleep 5
 sudo reboot
