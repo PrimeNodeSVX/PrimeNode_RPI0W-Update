@@ -293,7 +293,7 @@ echo ">> Konfiguracja dzwieku Roger Beep (ptt.wav)..."
 if [ -f "$LOGIC_TCL" ]; then
     if ! grep -q "ptt.wav" "$LOGIC_TCL"; then
         echo ">> Podmiana standardowego Roger Beep na plik ptt.wav..."
-        sed -i 's/playTone 440 200 100/playFile "\/usr\/local\/share\/svxlink\/sounds\/PL\/Core\/ptt.wav"/' "$LOGIC_TCL"
+        sed -i 's/playTone 440 500 100/playFile "\/usr\/local\/share\/svxlink\/sounds\/PL\/Core\/ptt.wav"/' "$LOGIC_TCL"
         NEED_RELOAD=1
     else
         echo ">> Dzwięk Roger Beep (ptt.wav) jest już ustawiony (pomijam)."
