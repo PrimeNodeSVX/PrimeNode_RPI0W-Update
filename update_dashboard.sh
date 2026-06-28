@@ -266,6 +266,29 @@ EOF
     fi
 fi
 
+echo ">> Aktualizacja dzwięków dla komendy 555 (Roaming)..."
+if [ -f "$LOGIC_TCL" ]; then
+    if ! grep -q "playTone 880" "$LOGIC_TCL"; then
+        echo ">> Wdrażanie sekwencji tonowej i zapowiedzi dla 555..."
+        
+        sed -i '/exec sudo \/usr\/bin\/python3 \/usr\/local\/bin\/dtmf_switch.py/i \
+      catch {playTone 880 100 100}\
+      playSilence 50\
+      catch {playTone 1000 100 100}\
+      playSilence 50\
+      catch {playTone 1200 100 100}\
+      playSilence 10\
+      catch {playMsg "Core" "connecting_to"}\
+      catch {playMsg "Core" "online"}' "$LOGIC_TCL"
+
+        sed -i 's/exec sudo \/usr\/bin\/python3 \/usr\/local\/bin\/dtmf_switch.py $net_id &/catch {exec sudo \/usr\/bin\/python3 \/usr\/local\/bin\/dtmf_switch.py $net_id \&}/g' "$LOGIC_TCL"
+        
+        NEED_RELOAD=1
+    else
+        echo ">> Dzwieki dla DTMF 555 juz istnieja (pomijam)."
+    fi
+fi
+
 sh -c 'cat << EOF > /etc/modprobe.d/alsa-blacklist.conf
 blacklist snd_bcm2835
 EOF'

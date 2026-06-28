@@ -276,7 +276,9 @@ def main():
             "CTCSS_OPEN_THRESH": "12",
             "CTCSS_CLOSE_THRESH": "5",
             "DTMF_PTY": "/dev/shm/dtmf_ctrl",
-            "DEEMPHASIS": svx_deemph
+            "DEEMPHASIS": svx_deemph,
+            "DTMF_MAX_REV_TWIST": "20",
+            "DTMF_MAX_FWD_TWIST": "20"
         }
         if ctcss == "0" or ctcss == "0000":
             rx1_map["SQL_DET"] = "HIDRAW"
@@ -313,7 +315,9 @@ def main():
             "SQL_GPIOD_LINE": "!12",
             "SQL_GPIOD_OPEN_THRESH": "10",
             "DTMF_PTY": "/dev/shm/dtmf_ctrl",
-            "DEEMPHASIS": svx_deemph
+            "DEEMPHASIS": svx_deemph,
+            "DTMF_MAX_REV_TWIST": "20",
+            "DTMF_MAX_FWD_TWIST": "20"
         }
         tx1_map = {
             "AUDIO_DEV": "alsa:plughw:0",
@@ -366,7 +370,9 @@ def main():
             "SQL_GPIOD_LINE": gpio_sql,
             "SQL_GPIOD_OPEN_THRESH": "10",
             "DTMF_PTY": "/dev/shm/dtmf_ctrl",
-            "DEEMPHASIS": svx_deemph
+            "DEEMPHASIS": svx_deemph,
+            "DTMF_MAX_REV_TWIST": "20",
+            "DTMF_MAX_FWD_TWIST": "20"
         }
         tx1_map = {
             "AUDIO_DEV": "alsa:plughw:0",
