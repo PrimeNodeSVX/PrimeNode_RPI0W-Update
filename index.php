@@ -739,26 +739,24 @@
 <body>
 
 <div id="changelog-overlay" style="display: none;">
-    <div id="changelog-modal" data-version="1.5">
-        <h2 style="margin-top:0; color:#4CAF50; border-bottom: 1px solid #333; padding-bottom: 10px;">🚀 PrimeNode V1.5 - Co nowego?</h2>
+    <div id="changelog-modal" data-version="1.6">
+        <h2 style="margin-top:0; color:#4CAF50; border-bottom: 1px solid #333; padding-bottom: 10px;">🚀 PrimeNode V1.6 - Co nowego?</h2>
         
         <div style="text-align: left; font-size: 14px; color: #ccc; line-height: 1.6; max-height: 50vh; overflow-y: auto; padding-right: 10px;">
             <p style="margin-top: 0; color: #eee; font-size: 13px;">
-                <i>Ogromne podziękowania dla kolegów zgłaszających błędy oraz podsuwających nowe pomysły! Wasze wsparcie jest niezwykle ważne i cenne dla prawidłowego funkcjonowania całego systemu PrimeNode. Wspólnie dbamy o to, aby każdy z Was był w pełni zadowolony z jego użytkowania. Serdeczne 73!</i>
+                <i>Ogromne podziękowania dla wszystkich kolegów zgłaszających błędy. W tej aktualizacji <b>szczególne i bardzo gorące podziękowania kieruję do Oktawiana (SP2EOE)</b>! To z jego inicjatywy został podjęty temat obsługi nowych układów, a dzięki temu, że wypożyczył mi swoją płytkę RF Guru, ta niesamowicie skomplikowana operacja mogła zakończyć się sukcesem. Bez jego sprzętu i wsparcia byłoby to niezwykle trudne. Serdeczne 73!</i>
             </p>
             <ul style="padding-left: 20px;">
-                <li>🔍 <b>Wyszukiwarka EchoLink:</b> Dodano nową, błyskawiczną wyszukiwarkę na żywo dla stacji EchoLink z całego świata (w zakładce DTMF).</li>
-                <li>🎛️ <b>Zakładki EchoLink:</b> Wprowadzono dedykowane zakładki, które ułatwiają zarządzanie własnymi przyciskami i adresami w module EchoLink.</li>
-                <li>📻 <b>Karta CM108 + HID:</b> Wdrożono pełną konfigurację dla radiotelefonów podłączonych przez zmodyfikowaną kartę USB (CM108) wraz z obsługą sterowania portami HID.</li>
-                <li>🔊 <b>Poprawa Audio:</b> Poprawiono jakość dźwięków i zapowiedzi systemowych.</li>
-                <li>💾 <b>Aktualizacja Backup:</b> Usprawniono działanie modułu tworzenia i przywracania pełnej kopii zapasowej (Backup).</li>
-                <li>📺 <b>Zewnętrzny Monitor:</b> Poprawiono komunikację i wyświetlanie danych na zewnętrznych monitorkach (szczególnie na ekranach OLED 2.42" opartych na Wemos D1 Mini).</li>
-                <li>🐛 <b>Poprawki węzłów:</b> Rozwiązano zgłaszane problemy z poprawnym rozpoznawaniem i logowaniem węzłów w sieci EchoLink.</li>
+                <li>📻 <b>Pełne wsparcie dla RF Guru:</b> Wdrożono zautomatyzowaną obsługę i bezpieczny instalator dla zintegrowanej płytki RF Guru (moduł SA818 + kodek I2S WM8960).</li>
+                <li>🎛️ <b>Optymalne Audio "Out of the Box":</b> Instalator wgrywa profil z najbardziej optymalnymi parametrami początkowymi, co eliminuje fabryczne przesterowania (clipping). Każdy sprzęt jest jednak inny – podstawowe poziomy dostroisz pod swoją radiostację w zakładce <b>Audio</b>, a pełen dostęp do kilkudziesięciu zaawansowanych filtrów sprzętowych kodeka uzyskasz wpisując w terminalu komendę <code>alsamixer</code>.</li>
+                <li>🎧 <b>Niezawodny DTMF:</b> Złagodzono rygorystyczne filtry dekodera DTMF (parametr Twist) dla wszystkich profili (RF Guru, SHARI, CM108, GPIO). System teraz bezbłędnie wyłapuje kody wpisywane z radia.</li>
+                <li>🔄 <b>Szybki Roaming Sieci:</b> Zaimplementowano wsparcie dla tonów DTMF rozpoczynających się od <code>555</code>. Pozwalają one na natychmiastowe przełączanie reflektorów w locie, wzbogacone o przyjemne powiadomienia dźwiękowe.</li>
+                <li>🛡️ <b>Bezpieczeństwo Karty SD:</b> Wprowadzono "Live Log Viewer" z blokadą interfejsu na czas kompilacji kernela. Zawsze wiesz, na jakim etapie jest instalacja, bez ryzyka uceglenia systemu.</li>
             </ul>
             
             <div style="background: #2a2a2a; border-left: 3px solid #2196F3; padding: 12px; margin-top: 15px; font-size: 12px; border-radius: 4px; color: #eee;">
-                <b style="color: #2196F3;">ℹ️ Jak używać wyszukiwarki EchoLink?</b><br><br>
-                Przejdź do zakładki <b>DTMF</b> i wpisz w wyszukiwarkę minimum 3 znaki (np. "SP7"). System natychmiast przeszuka bazę! Stację z listy możesz od razu wywołać, albo dodać jako stały przycisk do swojej prywatnej grupy klikając <b>"+ Grupa"</b>.
+                <b style="color: #2196F3;">ℹ️ Jak uruchomić RF Guru?</b><br><br>
+                Przejdź do zakładki <b>Radio</b>, wybierz z listy "RF Guru Board" i kliknij Zapisz. PrimeNode poprowadzi Cię przez w pełni zautomatyzowany proces. Usiądź wygodnie i obserwuj terminal na żywo – po restarcie moduł będzie działał na gotowym, bezpiecznym profilu bazowym!
             </div>
         </div>
         
@@ -867,7 +865,7 @@
     }
     ?>
     SvxLink v<?php echo htmlspecialchars($svx_ver); ?> Copyright (C) 2003-<?php echo date("Y"); ?> Tobias Blomberg / <span class="callsign-blue">SM0SVX</span><br>
-    PrimeNode System • By SQ7UTP <span style="color: #aaa;">| Version: <strong style="color: #4CAF50;">V1.5</strong></span><br>
+    PrimeNode System • By SQ7UTP <span style="color: #aaa;">| Version: <strong style="color: #4CAF50;">V1.6</strong></span><br>
     Copyright © 2025-<?php echo date("Y"); ?>
 </div>
 
