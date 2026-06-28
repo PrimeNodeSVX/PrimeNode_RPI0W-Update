@@ -291,8 +291,9 @@ fi
 
 echo ">> Konfiguracja dzwieku Roger Beep (ptt.wav)..."
 if [ -f "$LOGIC_TCL" ]; then
-    if ! grep -q 'ptt.wav' "$LOGIC_TCL"; then
+    if grep -q 'CW::play $sql_rx_id' "$LOGIC_TCL"; then
         echo ">> Calkowita podmiana bloku funkcji send_rgr_sound na twardo..."
+        
         sed -i '/^proc send_rgr_sound {} {/,/^}/c\
 proc send_rgr_sound {} {\
   variable sql_rx_id\
@@ -303,7 +304,7 @@ proc send_rgr_sound {} {\
 
         NEED_RELOAD=1
     else
-        echo ">> Dzwieki Roger Beep (ptt.wav) sa juz wdrozone (pomijam)."
+        echo ">> Dzwieki Roger Beep (ptt.wav) sa juz wdrozone poprawnie (pomijam)."
     fi
 fi
 
