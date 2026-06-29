@@ -28,7 +28,8 @@
             '/etc/svxlink/networks.json' => 'networks.json',
             '/var/www/html/dtmf_custom.json' => 'dtmf_custom.json',
             '/etc/svxlink/node_info.json' => 'node_info.json',
-            '/dev/shm/asound.state' => 'asound.state'
+            '/dev/shm/asound.state' => 'asound.state',
+            '/etc/wm8960-soundcard/wm8960_asound.state' => 'wm8960_asound.state'
         ];
 
         if (class_exists('ZipArchive')) {
@@ -94,7 +95,8 @@
                     'networks.json' => '/etc/svxlink/networks.json',
                     'dtmf_custom.json' => '/var/www/html/dtmf_custom.json',
                     'node_info.json' => '/etc/svxlink/node_info.json',
-                    'asound.state' => '/dev/shm/asound_restore.state'
+                    'asound.state' => '/dev/shm/asound_restore.state',
+                    'wm8960_asound.state' => '/etc/wm8960-soundcard/wm8960_asound.state'
                 ];
 
                 $restored_count = 0;
@@ -103,13 +105,11 @@
                 foreach ($map as $file => $dest) {
                     $src = $tmp_dir . $file;
                     if (file_exists($src)) {
-
                         $out = shell_exec("sudo cp -fv " . escapeshellarg($src) . " " . escapeshellarg($dest) . " 2>&1");
                         error_log("RESTORE COPY ($file): " . trim($out));
                         $debug_log .= $out . "\n";
 
-
-                        if (strpos($dest, '/etc/svxlink/') !== false) {
+                        if (strpos($dest, '/etc/svxlink/') !== false || strpos($dest, 'wm8960') !== false) {
                             shell_exec("sudo chown root:root " . escapeshellarg($dest));
                             shell_exec("sudo chmod 644 " . escapeshellarg($dest));
                         } else {
@@ -119,10 +119,19 @@
                         $restored_count++;
                     }
                 }
+                
                 if (file_exists('/dev/shm/asound_restore.state')) {
                     shell_exec("sudo /usr/sbin/alsactl restore -f /dev/shm/asound_restore.state 2>&1");
                     shell_exec("sudo /usr/sbin/alsactl store");
                     unlink('/dev/shm/asound_restore.state');
+                }
+
+                if (file_exists('/etc/wm8960-soundcard/wm8960_asound.state')) {
+                    $card_id = shell_exec("aplay -l | grep -i wm8960 | awk -F': ' '{print $1}' | awk '{print $2}'");
+                    $card_id = trim($card_id);
+                    if ($card_id !== "") {
+                        shell_exec("sudo /usr/sbin/alsactl --file=/etc/wm8960-soundcard/wm8960_asound.state restore $card_id 2>&1");
+                    }
                 }
                 
                 shell_exec("sudo rm -rf " . escapeshellarg($tmp_dir));
