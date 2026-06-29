@@ -214,6 +214,14 @@ if ! grep -q "svx_event_logger.sh" /etc/rc.local; then
     sed -i '/exit 0/i /usr/local/bin/svx_event_logger.sh &' /etc/rc.local
 fi
 
+echo ">> Aplikowanie poprawki AGC dla kart USB (CM108/SHARI)..."
+if ! grep -q "alsactl restore" /etc/rc.local; then
+    echo ">> Dodawanie opoznionego przywracania audio (10s) do rc.local..."
+    sed -i '/exit 0/i \    (sleep 10 && /usr/sbin/alsactl restore) &' /etc/rc.local
+else
+    echo ">> Poprawka AGC w rc.local jest juz obecna (pomijam)."
+fi
+
 if [ ! -f "/etc/cron.d/echolink_update" ]; then
     cat << 'EOF' > /etc/cron.d/echolink_update
 0 * * * * root /usr/bin/python3 /usr/local/bin/fetch_echolink.py >/dev/null 2>&1
