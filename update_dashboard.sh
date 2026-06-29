@@ -75,12 +75,6 @@ if compgen -G "$GIT_DIR/*.py" > /dev/null; then
     chmod +x /usr/local/bin/*.py
 fi
 
-if [ -f "$GIT_DIR/dtmf_switch.py" ]; then
-    cp "$GIT_DIR/dtmf_switch.py" "/usr/local/bin/dtmf_switch.py"
-    chmod +x "/usr/local/bin/dtmf_switch.py"
-    echo ">> Zaktualizowano skrypt dtmf_switch.py"
-fi
-
 echo ">> Konfiguracja dynamicznych zapowiedzi audio..."
 REF_DIR="$SOUNDS_DIR/ref_sounds"
 CORE_DIR="$SOUNDS_DIR/PL/Core"
@@ -235,14 +229,14 @@ fi
 NEED_RELOAD=0
 
 echo ">> Aplikowanie optymalizacji sieci i audio dla PrimeNode..."
-
-echo ">> Sprawdzanie i aktualizacja pliku Logic.tcl (DTMF 997)..."
 LOGIC_TCL="/usr/local/share/svxlink/events.d/Logic.tcl"
 
 if [ -f "$LOGIC_TCL" ]; then
-    if ! grep -q "NASZ NOWY KOD WYŁĄCZAJĄCY (997)" "$LOGIC_TCL"; then
-        echo ">> Wdrażanie komendy DTMF 997 (Bezpieczne wyłączanie)..."
-        cat << 'EOF' > /tmp/dtmf_997.tcl
+    echo ">> Czyszczenie powielonych/starych wpisow DTMF 997..."
+    perl -0777 -pi -e 's/\s*if \{\$cmd == "997"\} \{.*?\n\s*return 1\n\s*\}//gs' "$LOGIC_TCL"
+    
+    echo ">> Wdrażanie komendy DTMF 997 (Bezpieczne wyłączanie)..."
+    cat << 'EOF' > /tmp/dtmf_997.tcl
   if {$cmd == "997"} {
       puts ">>> Zamykanie systemu (kod 997) <<<"
       catch {
@@ -257,20 +251,13 @@ if [ -f "$LOGIC_TCL" ]; then
       return 1
   }
 EOF
+    sed -i '/proc dtmf_cmd_received {cmd} {/r /tmp/dtmf_997.tcl' "$LOGIC_TCL"
+    rm -f /tmp/dtmf_997.tcl
+    NEED_RELOAD=1
 
-        sed -i '/proc dtmf_cmd_received {cmd} {/r /tmp/dtmf_997.tcl' "$LOGIC_TCL"
-        rm -f /tmp/dtmf_997.tcl
-        NEED_RELOAD=1
-    else
-        echo ">> Komenda DTMF 997 jest już wdrożona (pomijam)."
-    fi
-fi
-
-echo ">> Aktualizacja dzwięków dla komendy 555 (Roaming)..."
-if [ -f "$LOGIC_TCL" ]; then
+    echo ">> Aktualizacja dzwięków dla komendy 555 (Roaming)..."
     if ! grep -q "playTone 880" "$LOGIC_TCL"; then
         echo ">> Wdrażanie sekwencji tonowej i zapowiedzi dla 555..."
-        
         sed -i '/exec sudo \/usr\/bin\/python3 \/usr\/local\/bin\/dtmf_switch.py/i \
       catch {playTone 880 100 100}\
       playSilence 50\
@@ -282,18 +269,14 @@ if [ -f "$LOGIC_TCL" ]; then
       catch {playMsg "Core" "online"}' "$LOGIC_TCL"
 
         sed -i 's/exec sudo \/usr\/bin\/python3 \/usr\/local\/bin\/dtmf_switch.py $net_id &/catch {exec sudo \/usr\/bin\/python3 \/usr\/local\/bin\/dtmf_switch.py $net_id \&}/g' "$LOGIC_TCL"
-        
         NEED_RELOAD=1
     else
         echo ">> Dzwieki dla DTMF 555 juz istnieja (pomijam)."
     fi
-fi
 
-echo ">> Konfiguracja dzwieku Roger Beep (ptt.wav)..."
-if [ -f "$LOGIC_TCL" ]; then
+    echo ">> Konfiguracja dzwieku Roger Beep (ptt.wav)..."
     if grep -q 'CW::play $sql_rx_id' "$LOGIC_TCL"; then
         echo ">> Calkowita podmiana bloku funkcji send_rgr_sound na twardo..."
-        
         sed -i '/^proc send_rgr_sound {} {/,/^}/c\
 proc send_rgr_sound {} {\
   variable sql_rx_id\
@@ -301,7 +284,6 @@ proc send_rgr_sound {} {\
   playFile "/usr/local/share/svxlink/sounds/PL/Core/ptt.wav"\
   playSilence 100\
 }' "$LOGIC_TCL"
-
         NEED_RELOAD=1
     else
         echo ">> Dzwieki Roger Beep (ptt.wav) sa juz wdrozone poprawnie (pomijam)."
@@ -311,12 +293,6 @@ fi
 sh -c 'cat << EOF > /etc/modprobe.d/alsa-blacklist.conf
 blacklist snd_bcm2835
 EOF'
-
-pkill -f .nat_keepalive.sh 2>/dev/null
-rm -f /usr/local/bin/.nat_keepalive.sh
-
-sed -i '/nat_keepalive.sh/d' /etc/rc.local 2>/dev/null
-crontab -l 2>/dev/null | grep -v 'nat_keepalive.sh' | crontab - 2>/dev/null
 
 sh -c 'cat << EOF > /etc/sysctl.d/99-primenode-net.conf
 net.core.rmem_max = 2097152
