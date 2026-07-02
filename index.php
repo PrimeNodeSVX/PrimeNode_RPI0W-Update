@@ -658,7 +658,15 @@
     if (isset($_POST['wifi_connect'])) { 
         $ssid = escapeshellarg($_POST['ssid']); 
         $pass = escapeshellarg($_POST['pass']); 
-        $wifi_output = shell_exec("sudo LC_ALL=C.UTF-8 nmcli dev wifi connect $ssid password $pass 2>&1"); 
+        
+        if (isset($_POST['save_offline'])) {
+            shell_exec("sudo LC_ALL=C.UTF-8 nmcli connection delete $ssid 2>&1"); 
+            shell_exec("sudo LC_ALL=C.UTF-8 nmcli connection add type wifi ifname wlan0 con-name $ssid autoconnect yes ssid $ssid 2>&1");
+            shell_exec("sudo LC_ALL=C.UTF-8 nmcli connection modify $ssid wifi-sec.key-mgmt wpa-psk wifi-sec.psk $pass 2>&1");
+            $wifi_output = shell_exec("sudo LC_ALL=C.UTF-8 nmcli connection up $ssid 2>&1"); 
+        } else {
+            $wifi_output = shell_exec("sudo LC_ALL=C.UTF-8 nmcli dev wifi connect $ssid password $pass 2>&1"); 
+        }
     }
     
     if (isset($_POST['wifi_delete'])) { 

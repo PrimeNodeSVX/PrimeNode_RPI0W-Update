@@ -78,8 +78,14 @@ $TW = [
 <form method="post" style="margin-top:10px;" onsubmit="document.getElementById('btn-conn').innerHTML = '<?php echo $TW[$lang]['connecting']; ?>';">
     <input type="hidden" name="active_tab" class="active-tab-input" value="WiFi">
     
-    <input type="text" id="wifi-ssid" name="ssid" placeholder="SSID">
+    <input type="text" id="wifi-ssid" name="ssid" placeholder="SSID (wybierz z listy lub wpisz ręcznie)">
     <input type="password" name="pass" placeholder="<?php echo $TW[$lang]['ph_pass']; ?>" style="margin-top:5px;">
+    
+    <label style="display: block; margin-top: 10px; margin-bottom: 15px; color: #ccc; font-size: 14px; text-align: left; cursor: pointer; background: #222; padding: 10px; border-radius: 5px; border: 1px solid #444;">
+        <input type="checkbox" name="save_offline" value="1" style="vertical-align: middle; margin-right: 8px; width: 16px; height: 16px;">
+        <span style="vertical-align: middle;"><b>Zapisz profil w pamięci</b><br>
+        <i style="color:#999; font-size:11px; margin-left:28px; display:block;">Zaznacz to, jeśli sieci nie ma teraz w zasięgu. Zostanie zapamiętana na przyszłość i Malina połączy się z nią automatycznie.</i></span>
+    </label>
     
     <button type="submit" name="wifi_connect" id="btn-conn" class="btn btn-green"><?php echo $TW[$lang]['btn_connect']; ?></button>
 </form>
