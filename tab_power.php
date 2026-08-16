@@ -62,6 +62,14 @@ if (!file_exists($update_flag_file)) {
 if (trim(@file_get_contents($update_flag_file)) === "UPDATE_AVAILABLE") {
     $update_available = true;
 }
+
+if (isset($_POST['core_update'])) {
+    @mkdir('/var/www/html/ram', 0777, true);
+    @file_put_contents('/var/www/html/ram/core_install.log', "Zainicjowano z poziomu WWW. Przygotowanie do pobrania zrodla...\n");
+    shell_exec('sudo /usr/local/bin/update_core.sh > /dev/null 2>&1 &');
+    $show_core_modal = true;
+}
+
 ?>
 <style>
     #loading-overlay {
@@ -152,6 +160,10 @@ if (trim(@file_get_contents($update_flag_file)) === "UPDATE_AVAILABLE") {
     <?php endif; ?>
     
     <button type="submit" name="git_update" class="btn btn-green" onclick="showLoader()"><?php echo $TP[$lang]['btn_upd']; ?></button>
+
+    <hr style="border: 0; border-top: 1px solid #444; margin: 20px 0;">
+    <h4 class="panel-title" style="color: #F44336; border: none;">Zaawansowane (Silnik Radiowy)</h4>
+    <button type="submit" name="core_update" class="btn btn-red" style="margin-bottom:20px;" onclick="return confirm('UWAGA: Kompilacja zajmie ok. 25 minut. System zostanie w tym czasie unieruchomiony. Na pewno?')">⚙️ Aktualizuj Core SvxLink do V26.05</button>
 </form>
 
 <script>
@@ -159,3 +171,43 @@ if (trim(@file_get_contents($update_flag_file)) === "UPDATE_AVAILABLE") {
         document.getElementById('loading-overlay').style.display = 'flex';
     }
 </script>
+
+<?php if (isset($show_core_modal) && $show_core_modal): ?>
+<div id="core-install-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); backdrop-filter: blur(8px); z-index: 9999; display: flex; justify-content: center; align-items: center;">
+    <div style="background: #222; border: 2px solid #F44336; border-radius: 8px; padding: 25px; max-width: 700px; width: 90%; text-align: center; box-shadow: 0 0 30px rgba(244, 67, 54, 0.4); margin: 20px;">
+        <h2 style="color: #F44336; margin-top: 0; font-size: 24px;">⚙️ Trwa Kompilacja Silnika SvxLink...</h2>
+        <p style="color: #eee; font-size: 15px; margin-bottom: 20px;">
+            Proces będzie trwał około 20-30 minut w zależności od obciążenia procesora.<br>
+            <b style="color: #FF9800;">NIE WYŁĄCZAJ STRONY I NIE ODŁĄCZAJ ZASILANIA!</b>
+        </p>
+        
+        <div style="background: #000; border: 1px solid #444; border-radius: 4px; padding: 15px; text-align: left;">
+            <div style="color: #888; font-size: 11px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px;">Podgląd terminala na żywo:</div>
+            <div id="core-log-view" style="color: #0f0; font-family: monospace; font-size: 13px; height: 250px; overflow-y: auto; white-space: pre-wrap; line-height: 1.4;">Inicjalizacja...</div>
+        </div>
+        
+        <div id="core-install-spinner" style="margin-top: 20px; color: #888; font-size: 13px;">
+            <span style="display:inline-block; animation: pulse 1.5s infinite;">⏳ System pracuje, pobieranie...</span>
+        </div>
+    </div>
+</div>
+<script>
+    window.isCoreRestarting = false;
+    let checkCoreInterval = setInterval(() => {
+        fetch("get_core_log.php?t=" + new Date().getTime())
+        .then(r => r.text())
+        .then(t => {
+            const log = document.getElementById("core-log-view");
+            if(t.trim().length > 0 && !window.isCoreRestarting) {
+                log.innerText = t;
+                log.scrollTop = log.scrollHeight;
+                if(t.includes("ZAKONCZONA SUKCESEM")) {
+                    window.isCoreRestarting = true;
+                    document.getElementById("core-install-spinner").innerHTML = "<span style='color:#4CAF50; font-weight:bold; animation: pulse 1s infinite;'>🔄 Gotowe! Trwa restartowanie hotspota...</span>";
+                    setTimeout(function(){ window.location.href = '/'; }, 15000);
+                }
+            }
+        }).catch(e => {});
+    }, 2000);
+</script>
+<?php endif; ?>

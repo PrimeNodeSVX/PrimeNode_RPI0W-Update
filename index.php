@@ -867,10 +867,13 @@
 
 <div class="main-footer">
     <?php 
-    $svx_ver = trim(shell_exec('svxlink --version 2>&1'));
-    if (empty($svx_ver) || strpos($svx_ver, 'command not found') !== false) {
+    $svx_ver = trim(shell_exec('/usr/bin/svxlink --version 2>/dev/null || /usr/local/bin/svxlink --version 2>/dev/null'));
+
+    if (empty($svx_ver)) {
         $svx_ver = "1.9.99.36@master";
     }
+
+    $svx_ver = str_ireplace(['SvxLink', 'v', ' '], '', $svx_ver);
     ?>
     SvxLink v<?php echo htmlspecialchars($svx_ver); ?> Copyright (C) 2003-<?php echo date("Y"); ?> Tobias Blomberg / <span class="callsign-blue">SM0SVX</span><br>
     PrimeNode System • By SQ7UTP <span style="color: #aaa;">| Version: <strong style="color: #4CAF50;">V1.6</strong></span><br>

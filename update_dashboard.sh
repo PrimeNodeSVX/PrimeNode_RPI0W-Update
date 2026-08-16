@@ -132,6 +132,21 @@ for script in $GIT_DIR/*.sh; do
     fi
 done
 
+echo ">> Synchronizacja łatek TCL (PrimeNode Mods)..."
+TCL_LOCAL_DIR="/usr/local/share/svxlink/events.d/local"
+mkdir -p "$TCL_LOCAL_DIR"
+
+if compgen -G "$GIT_DIR/*.tcl" > /dev/null; then
+    cp $GIT_DIR/*.tcl "$TCL_LOCAL_DIR/"
+    chmod 644 "$TCL_LOCAL_DIR/"*.tcl
+    echo ">> Wgrano autorskie pliki TCL do katalogu local."
+fi
+
+echo ">> Aktualizacja uprawnień do kompilacji..."
+if ! grep -q "update_core.sh" /etc/sudoers; then
+    echo "www-data ALL=(ALL) NOPASSWD: /usr/local/bin/update_core.sh" >> /etc/sudoers
+fi
+
 WIFI_FLAG="/etc/.primenode_wifi_v1.flag"
 
 if [ ! -f "$WIFI_FLAG" ]; then
