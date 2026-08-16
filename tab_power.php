@@ -205,6 +205,10 @@ if (isset($_POST['core_update'])) {
                     window.isCoreRestarting = true;
                     document.getElementById("core-install-spinner").innerHTML = "<span style='color:#4CAF50; font-weight:bold; animation: pulse 1s infinite;'>🔄 Gotowe! Trwa restartowanie hotspota...</span>";
                     setTimeout(function(){ window.location.href = '/'; }, 15000);
+                } else if(t.includes("SYSTEM JEST JUZ AKTUALNY")) {
+                    window.isCoreRestarting = true;
+                    document.getElementById("core-install-spinner").innerHTML = "<span style='color:#FF9800; font-weight:bold;'>⚠️ Masz już najnowszą wersję (V26.05.1). Przerywam...</span>";
+                    setTimeout(function(){ window.location.href = '/'; }, 4000);
                 }
             }
         }).catch(e => {});

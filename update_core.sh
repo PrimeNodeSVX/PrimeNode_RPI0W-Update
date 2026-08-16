@@ -6,6 +6,14 @@ chmod 777 /var/www/html/ram
 echo "=== START AKTUALIZACJI RDZENIA SVXLINK (DO STABILNEJ V26.05.1) ===" > $LOG_FILE
 date >> $LOG_FILE
 
+echo "Sprawdzanie obecnej wersji systemu..." >> $LOG_FILE
+CURRENT_VER=$(/usr/bin/svxlink --version 2>/dev/null || /usr/local/bin/svxlink --version 2>/dev/null)
+if [[ "$CURRENT_VER" == *"26.05.1"* ]]; then
+    echo ">> Wykryto wersje 26.05.1. System posiada juz najnowszy rdzen!" >> $LOG_FILE
+    echo "=== SYSTEM JEST JUZ AKTUALNY ===" >> $LOG_FILE
+    exit 0
+fi
+
 echo "Zatrzymywanie usługi SvxLink..." >> $LOG_FILE
 systemctl stop svxlink >> $LOG_FILE 2>&1 || true
 
