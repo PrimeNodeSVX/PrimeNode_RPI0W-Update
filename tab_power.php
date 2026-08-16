@@ -163,7 +163,7 @@ if (isset($_POST['core_update'])) {
 
     <hr style="border: 0; border-top: 1px solid #444; margin: 20px 0;">
     <h4 class="panel-title" style="color: #F44336; border: none;">Zaawansowane (Silnik Radiowy)</h4>
-    <button type="submit" name="core_update" class="btn btn-red" style="margin-bottom:20px;" onclick="return confirm('UWAGA: Kompilacja zajmie ok. 25 minut. System zostanie w tym czasie unieruchomiony. Na pewno?')">⚙️ Aktualizuj Core SvxLink do V26.05</button>
+    <button type="submit" name="core_update" class="btn btn-red" style="margin-bottom:20px;" onclick="return confirm('UWAGA: Kompilacja zajmie ok. 25 minut. System zostanie w tym czasie unieruchomiony. Na pewno?')">⚙️ Aktualizuj Core SvxLink</button>
 </form>
 
 <script>
