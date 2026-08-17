@@ -164,6 +164,9 @@ if [ ! -f "$WIFI_FLAG" ]; then
     nmcli connection modify Rescue_AP 802-11-wireless-security.psk-flags 0
     nmcli connection modify Rescue_AP 802-11-wireless-security.wps-method 1
     nmcli connection modify Rescue_AP 802-11-wireless-security.pmf 1
+    nmcli connection modify Rescue_AP 802-11-wireless-security.proto rsn
+    nmcli connection modify Rescue_AP 802-11-wireless-security.pairwise ccmp
+
     systemctl restart NetworkManager
     touch "$WIFI_FLAG"
     echo ">> Konfiguracja Rescue_AP zakończona sukcesem."
