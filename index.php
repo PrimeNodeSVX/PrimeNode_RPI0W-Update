@@ -747,28 +747,26 @@
 <body>
 
 <div id="changelog-overlay" style="display: none;">
-    <div id="changelog-modal" data-version="1.6">
-        <h2 style="margin-top:0; color:#4CAF50; border-bottom: 1px solid #333; padding-bottom: 10px;">🚀 PrimeNode V1.6 - Co nowego?</h2>
+    <div id="changelog-modal" data-version="1.7">
+        <h2 style="margin-top:0; color:#4CAF50; border-bottom: 1px solid #333; padding-bottom: 10px;">🚀 PrimeNode V1.7 - Aktualizacja Silnika</h2>
         
         <div style="text-align: left; font-size: 14px; color: #ccc; line-height: 1.6; max-height: 50vh; overflow-y: auto; padding-right: 10px;">
-            <p style="margin-top: 0; color: #eee; font-size: 13px;">
-                <i>Ogromne podziękowania dla wszystkich kolegów zgłaszających błędy. W tej aktualizacji <b>szczególne i bardzo gorące podziękowania kieruję do Oktawiana (SP2EOE)</b>! To z jego inicjatywy został podjęty temat obsługi nowych układów, a dzięki temu, że wypożyczył mi swoją płytkę RF Guru, ta niesamowicie skomplikowana operacja mogła zakończyć się sukcesem. Bez jego sprzętu i wsparcia byłoby to niezwykle trudne. Serdeczne 73!</i>
+            <p style="margin-top: 0; color: #eee; font-size: 14px;">
+                Najnowsza aktualizacja wprowadza krytyczne poprawki bezpieczeństwa i stabilności samego rdzenia SvxLink (przejście na w pełni stabilną wersję <b>26.05.1</b>). Ponieważ jest to głęboka modyfikacja systemu, wymaga ona jednorazowej kompilacji ze źródeł na Twoim urządzeniu.
             </p>
-            <ul style="padding-left: 20px;">
-                <li>📻 <b>Pełne wsparcie dla RF Guru:</b> Wdrożono zautomatyzowaną obsługę i bezpieczny instalator dla zintegrowanej płytki RF Guru (moduł SA818 + kodek I2S WM8960).</li>
-                <li>🎛️ <b>Optymalne Audio "Out of the Box":</b> Instalator wgrywa profil z najbardziej optymalnymi parametrami początkowymi, co eliminuje fabryczne przesterowania (clipping). Każdy sprzęt jest jednak inny – podstawowe poziomy dostroisz pod swoją radiostację w zakładce <b>Audio</b>, a pełen dostęp do kilkudziesięciu zaawansowanych filtrów sprzętowych kodeka uzyskasz wpisując w terminalu komendę <code>alsamixer</code>.</li>
-                <li>🎧 <b>Niezawodny DTMF:</b> Złagodzono rygorystyczne filtry dekodera DTMF (parametr Twist) dla wszystkich profili (RF Guru, SHARI, CM108, GPIO). System teraz bezbłędnie wyłapuje kody wpisywane z radia.</li>
-                <li>🔄 <b>Szybki Roaming Sieci:</b> Zaimplementowano wsparcie dla tonów DTMF rozpoczynających się od <code>555</code>. Pozwalają one na natychmiastowe przełączanie reflektorów w locie, wzbogacone o przyjemne powiadomienia dźwiękowe.</li>
-                <li>🛡️ <b>Bezpieczeństwo Karty SD:</b> Wprowadzono "Live Log Viewer" z blokadą interfejsu na czas kompilacji kernela. Zawsze wiesz, na jakim etapie jest instalacja, bez ryzyka uceglenia systemu.</li>
+            
+            <ul style="padding-left: 20px; margin-top: 15px;">
+                <li style="margin-bottom: 10px;">🛠️ <b>Jak zaktualizować?</b> Przejdź do zakładki <b>Zasilanie</b> i na samym dole kliknij nowy, czerwony przycisk <b>⚙️ Aktualizuj Core SvxLink</b>.</li>
+                <li style="margin-bottom: 10px;">⏳ <b>Ile to trwa?</b> Kompilacja zajmie około <b>20 do 30 minut</b> w zależności od modelu Twojego Raspberry Pi. W tym czasie hotspot nie będzie nadawał.</li>
+                <li style="margin-bottom: 10px;">⚠️ <b>Środki ostrożności:</b> Po kliknięciu pojawi się terminal z podglądem na żywo. <b style="color: #F44336;">Pod żadnym pozorem nie odłączaj zasilania, nie zamykaj okna przeglądarki ani nie odświeżaj strony!</b> System sam powiadomi Cię o sukcesie i uruchomi się ponownie.</li>
             </ul>
             
-            <div style="background: #2a2a2a; border-left: 3px solid #2196F3; padding: 12px; margin-top: 15px; font-size: 12px; border-radius: 4px; color: #eee;">
-                <b style="color: #2196F3;">ℹ️ Jak uruchomić RF Guru?</b><br><br>
-                Przejdź do zakładki <b>Radio</b>, wybierz z listy "RF Guru Board" i kliknij Zapisz. PrimeNode poprowadzi Cię przez w pełni zautomatyzowany proces. Usiądź wygodnie i obserwuj terminal na żywo – po restarcie moduł będzie działał na gotowym, bezpiecznym profilu bazowym!
+            <div style="text-align: right; margin-top: 25px; font-size: 15px; color: #2196F3; font-weight: bold; font-style: italic;">
+                VY 73! de Marcin SQ7UTP
             </div>
         </div>
         
-        <button class="btn btn-green" style="margin-top: 20px; width: 100%; font-size: 16px; padding: 12px;" onclick="closeChangelog()">Super, rozumiem!</button>
+        <button class="btn btn-green" style="margin-top: 20px; width: 100%; font-size: 16px; padding: 12px;" onclick="closeChangelog()">Super, rozumiem. Biorę się za kompilację!</button>
     </div>
 </div>
 
