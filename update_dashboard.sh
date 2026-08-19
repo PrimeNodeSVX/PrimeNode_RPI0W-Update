@@ -147,7 +147,7 @@ if ! grep -q "update_core.sh" /etc/sudoers; then
     echo "www-data ALL=(ALL) NOPASSWD: /usr/local/bin/update_core.sh" >> /etc/sudoers
 fi
 
-WIFI_FLAG="/etc/.primenode_wifi_v1.flag"
+WIFI_FLAG="/etc/.primenode_wifi_v2.flag"
 
 if [ ! -f "$WIFI_FLAG" ]; then
     echo ">> Wdrażanie nowej, stabilnej konfiguracji Rescue_AP..."
@@ -162,7 +162,7 @@ if [ ! -f "$WIFI_FLAG" ]; then
     nmcli connection modify Rescue_AP wifi-sec.key-mgmt wpa-psk
     nmcli connection modify Rescue_AP wifi-sec.psk "primenode123"
     nmcli connection modify Rescue_AP 802-11-wireless-security.psk-flags 0
-    nmcli connection modify Rescue_AP 802-11-wireless-security.wps-method 1
+    nmcli connection modify Rescue_AP 802-11-wireless-security.wps-method 0
     nmcli connection modify Rescue_AP 802-11-wireless-security.pmf 0
     nmcli connection modify Rescue_AP 802-11-wireless-security.proto rsn
     nmcli connection modify Rescue_AP 802-11-wireless-security.pairwise ccmp
