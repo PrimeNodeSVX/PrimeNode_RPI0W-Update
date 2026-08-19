@@ -147,9 +147,20 @@ if ! grep -q "update_core.sh" /etc/sudoers; then
     echo "www-data ALL=(ALL) NOPASSWD: /usr/local/bin/update_core.sh" >> /etc/sudoers
 fi
 
-WIFI_FLAG="/etc/.primenode_wifi_v2.flag"
+WIFI_FLAG="/etc/.primenode_wifi_v3.flag"
 
 if [ ! -f "$WIFI_FLAG" ]; then
+    echo ">> Usuwanie globalnych blokad WPS i naprawa starych skryptów..."
+
+    if [ -f "/etc/NetworkManager/conf.d/disable-wps.conf" ]; then
+        rm -f /etc/NetworkManager/conf.d/disable-wps.conf
+    fi
+
+    if [ -f "/usr/local/bin/wifi_guard.sh" ]; then
+        sed -i 's/wps-method 1/wps-method 0/g' /usr/local/bin/wifi_guard.sh
+        sed -i 's/pmf 1/pmf 0/g' /usr/local/bin/wifi_guard.sh
+    fi
+
     echo ">> Wdrażanie nowej, stabilnej konfiguracji Rescue_AP..."
     nmcli connection delete Rescue_AP 2>/dev/null
     nmcli connection add type wifi ifname wlan0 con-name Rescue_AP autoconnect no ssid primenode_ap
