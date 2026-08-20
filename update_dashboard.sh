@@ -147,10 +147,10 @@ if ! grep -q "update_core.sh" /etc/sudoers; then
     echo "www-data ALL=(ALL) NOPASSWD: /usr/local/bin/update_core.sh" >> /etc/sudoers
 fi
 
-WIFI_FLAG="/etc/.primenode_wifi_v3.flag"
+WIFI_FLAG="/etc/.primenode_wifi_v4.flag"
 
 if [ ! -f "$WIFI_FLAG" ]; then
-    echo ">> Usuwanie globalnych blokad WPS i naprawa starych skryptów..."
+    echo ">> Wdrażanie nowej, pancernej konfiguracji Rescue_AP (v4)..."
 
     if [ -f "/etc/NetworkManager/conf.d/disable-wps.conf" ]; then
         rm -f /etc/NetworkManager/conf.d/disable-wps.conf
@@ -161,8 +161,8 @@ if [ ! -f "$WIFI_FLAG" ]; then
         sed -i 's/pmf 1/pmf 0/g' /usr/local/bin/wifi_guard.sh
     fi
 
-    echo ">> Wdrażanie nowej, stabilnej konfiguracji Rescue_AP..."
     nmcli connection delete Rescue_AP 2>/dev/null
+    
     nmcli connection add type wifi ifname wlan0 con-name Rescue_AP autoconnect no ssid primenode_ap
     nmcli connection modify Rescue_AP 802-11-wireless.mode ap
     nmcli connection modify Rescue_AP 802-11-wireless.band bg
@@ -172,15 +172,14 @@ if [ ! -f "$WIFI_FLAG" ]; then
     nmcli connection modify Rescue_AP ipv6.method disabled
     nmcli connection modify Rescue_AP wifi-sec.key-mgmt wpa-psk
     nmcli connection modify Rescue_AP wifi-sec.psk "primenode123"
-    nmcli connection modify Rescue_AP 802-11-wireless-security.psk-flags 0
-    nmcli connection modify Rescue_AP 802-11-wireless-security.wps-method 0
-    nmcli connection modify Rescue_AP 802-11-wireless-security.pmf 0
+    nmcli connection modify Rescue_AP 802-11-wireless-security.pmf 1
+    nmcli connection modify Rescue_AP 802-11-wireless-security.wps-method 1
     nmcli connection modify Rescue_AP 802-11-wireless-security.proto rsn
     nmcli connection modify Rescue_AP 802-11-wireless-security.pairwise ccmp
 
     systemctl restart NetworkManager
     touch "$WIFI_FLAG"
-    echo ">> Konfiguracja Rescue_AP zakończona sukcesem."
+    echo ">> Konfiguracja Rescue_AP v4 zakończona sukcesem."
 else
     echo ">> Konfiguracja Rescue_AP jest już aktualna (pomijam)."
 fi
