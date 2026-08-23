@@ -62,6 +62,12 @@ $H = [
         's9_req' => '🔑 <strong>Wymagania:</strong> Aby funkcja działała, musisz włączyć ją w zakładce Konfiguracja i wpisać swój unikalny "APRS Passcode" (kod dostępu dla Twojego znaku).',
         's9_cfg' => '📍 <strong>Konfiguracja:</strong> Wpisz współrzędne w dowolnym formacie (system sam przekonwertuje je na standard APRS), wybierz dedykowaną ikonę (np. węzeł Echolink) oraz określ interwał wysyłania ramek beacon.',
 
+        's10_title' => '10. System Makr Radiowych (Nowość V1.8)',
+        's10_text' => 'System pozwala na wywoływanie ulubionych grup Reflektora i węzłów EchoLink za pomocą krótkich, 2-cyfrowych kodów wpisywanych bezpośrednio z klawiatury radia, bez otwierania panelu WWW.',
+        's10_add' => '⚡ <strong>Kreator Makr:</strong> W zakładce <strong>DTMF</strong> kliknij przycisk "+ Dodaj Makro". Wybierz z listy docelowy kafelek (np. węzeł Sieradz) i przydziel mu krótki numer, np. "4". System sam wygeneruje odpowiednią logikę w tle.',
+        's10_use' => '📻 <strong>Wybór w radiu:</strong> Aby zadzwonić pod zapisane makro, naciśnij PTT w swoim radiu i wpisz kombinację: klawisz <span style="color:#FF9800; font-weight:bold;">D</span> + Numer Makra + <span style="color:#FF9800; font-weight:bold;">#</span> (np. <strong>D4#</strong>).',
+        's10_hint' => '💡 <strong>Gdzie na radiu jest klawisz "D"?</strong> W popularnych chińskich radiotelefonach bez pełnej klawiatury (takich jak <em>Baofeng UV-5R</em> czy <em>Quansheng UV-K5</em>), literę <strong>D</strong> wywołuje się naciskając przycisk <strong>EXIT</strong> (lub <strong>A/B</strong>) podczas wciśniętego PTT.',
+
         'qa_title' => 'Szybka Pomoc (Q&A)',
         'qa_q1' => '❓ EchoLink nie chce się połączyć (Status: Disconnected).',
         'qa_a1' => '✅ Jeśli używasz internetu z telefonu (LTE), operatorzy często blokują porty. Użyj funkcji <strong>♻️ Auto-Proxy</strong> w zakładce <strong>Config</strong>.',
@@ -131,6 +137,12 @@ $H = [
         's9_text' => 'Your hotspot can automatically send its position and radio parameters to the global APRS-IS network to appear on maps like aprs.fi.',
         's9_req' => '🔑 <strong>Requirements:</strong> Enable the feature in Config and enter your unique APRS Passcode.',
         's9_cfg' => '📍 <strong>Configuration:</strong> Enter coordinates (automatically converted to APRS format), choose an icon, and set your beacon interval.',
+
+        's10_title' => '10. Radio Macros System (New in V1.8)',
+        's10_text' => 'The system allows you to call your favorite Reflector groups and EchoLink nodes using short, 2-digit codes entered directly from the radio keypad, without opening the web panel.',
+        's10_add' => '⚡ <strong>Macro Wizard:</strong> In the <strong>DTMF</strong> tab, click "+ Add Macro". You can link a 2-digit shortcut (e.g., "4") to an existing Reflector group or EchoLink station. The system will handle the rest in the background.',
+        's10_use' => '📻 <strong>Radio Usage:</strong> To trigger a saved macro, press PTT and type the <span style="color:#FF9800; font-weight:bold;">D</span> key + Macro Number + <span style="color:#FF9800; font-weight:bold;">#</span> (e.g., <strong>D4#</strong>).',
+        's10_hint' => '💡 <strong>Where is the D key?</strong> On popular radios without a full keypad (e.g., <em>Baofeng UV-5R</em>, <em>Quansheng UV-K5</em>), the <strong>D</strong> letter is triggered by pressing the <strong>EXIT</strong> (or <strong>A/B</strong>) button while holding PTT.',
 
         'qa_title' => 'Quick Help (Q&A)',
         'qa_q1' => '❓ EchoLink won\'t connect (Status: Disconnected).',
@@ -253,6 +265,18 @@ $H = [
             <li style="margin-bottom: 8px;"><?php echo $H[$lang]['s7_step1']; ?></li>
             <li style="margin-bottom: 8px;"><?php echo $H[$lang]['s7_step2']; ?></li>
             <li><?php echo $H[$lang]['s7_step3']; ?></li>
+        </ul>
+    </div>
+</div>
+
+<div class="help-section" style="border-left: 5px solid #9C27B0; background: rgba(156,39,176,0.05);">
+    <div class="help-title" style="color:#9C27B0;"><span class="help-icon">🎯</span> <?php echo $H[$lang]['s10_title']; ?></div>
+    <div class="help-text">
+        <p><?php echo $H[$lang]['s10_text']; ?></p>
+        <ul style="list-style-type: none; padding-left: 0;">
+            <li style="margin-bottom: 10px;"><?php echo $H[$lang]['s10_add']; ?></li>
+            <li style="margin-bottom: 10px;"><?php echo $H[$lang]['s10_use']; ?></li>
+            <li><?php echo $H[$lang]['s10_hint']; ?></li>
         </ul>
     </div>
 </div>
