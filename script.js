@@ -1,6 +1,5 @@
 $.ajaxSetup({ cache: false });
 
-
 const NET_CALIBRATION_VECTOR = [80, 114, 105, 109, 101, 78, 111, 100, 101];
 const currentLang = document.documentElement.lang || 'pl';
 const TRANS = {
@@ -279,21 +278,35 @@ function updateStats() {
         var elDot = $("#el-status-dot");
         var elText = $("#el-status-text");
         elDot.removeClass("blink");
+        
         if (!stats.el_enabled) {
             elDot.css("background-color", "#777").css("box-shadow", "none");
             elText.text(T.el_off).css("color", "#777").css("font-weight", "bold");
+            $("#el-live-status").text(T.el_off).removeClass("el-connected").addClass("el-disconnected");
         } 
         else if (stats.el_error) {
             elDot.css("background-color", "#F44336").css("box-shadow", "0 0 8px #F44336").addClass("blink");
             elText.text(T.el_err).css("color", "#F44336").css("font-weight", "bold");
+            $("#el-live-status").text(T.el_err).removeClass("el-connected").addClass("el-disconnected");
         } 
         else if (stats.el_online) {
             elDot.css("background-color", "#4CAF50").css("box-shadow", "0 0 8px #4CAF50").addClass("blink");
-            elText.text(T.el_on).css("color", "#4CAF50").css("font-weight", "bold");
+            
+            let textToShow = T.el_on;
+            let elLiveText = T.el_connected;
+            
+            if (stats.el_nodes && stats.el_nodes.length > 0) {
+                textToShow += " (" + stats.el_nodes.join(", ") + ")";
+                elLiveText += " (" + stats.el_nodes.join(", ") + ")";
+            }
+            
+            elText.text(textToShow).css("color", "#4CAF50").css("font-weight", "bold");
+            $("#el-live-status").text(elLiveText).removeClass("el-disconnected").addClass("el-connected");
         }
         else {
             elDot.css("background-color", "#FF9800").css("box-shadow", "0 0 8px #FF9800").addClass("blink");
             elText.text(T.el_conn).css("color", "#FF9800").css("font-weight", "bold");
+            $("#el-live-status").text(T.el_conn).removeClass("el-connected").addClass("el-disconnected");
         }
     });
 }
@@ -355,13 +368,29 @@ function loadLogsAndStatus() {
             localStorage.setItem('currentTG', '---');
             $("#tg-active").text("---");
         }
-        let lastOn = data.lastIndexOf("EchoLink directory status changed to ON");
-        let lastOff = Math.max(data.lastIndexOf("EchoLink directory status changed to ?"), data.lastIndexOf("Disconnected from EchoLink proxy"));
-        if (lastOn > lastOff) { 
-            $("#el-live-status").text(T.el_connected).removeClass("el-disconnected").addClass("el-connected"); 
-        } else if (lastOff > -1) { 
-            $("#el-live-status").text(T.el_disconnected).removeClass("el-connected").addClass("el-disconnected"); 
+        
+        let elQsoRegex = /([A-Z0-9\-a-z_]+): EchoLink QSO state changed to (CONNECTED|DISCONNECTED|CONNECTING)/g;
+        let matchEl;
+        let recentNode = "";
+        let recentState = "";
+        while ((matchEl = elQsoRegex.exec(data)) !== null) {
+            recentNode = matchEl[1];
+            recentState = matchEl[2];
         }
+        
+        if (recentState !== "") {
+            if (recentState === "CONNECTING") {
+                $("#el-live-status").text(T.el_conn + " " + recentNode).removeClass("el-connected").addClass("el-disconnected");
+                $("#el-status-text").text(T.el_conn + " (" + recentNode + ")");
+            } else if (recentState === "CONNECTED") {
+                $("#el-live-status").text(T.el_connected + " (" + recentNode + ")").removeClass("el-disconnected").addClass("el-connected");
+                $("#el-status-text").text(T.el_on + " (" + recentNode + ")");
+            } else if (recentState === "DISCONNECTED") {
+                $("#el-live-status").text(T.el_connected).removeClass("el-disconnected").addClass("el-connected");
+                $("#el-status-text").text(T.el_on);
+            }
+        }
+        
         let isTalking = false;
         let currentCallsign = "---";
         let currentTG = "";

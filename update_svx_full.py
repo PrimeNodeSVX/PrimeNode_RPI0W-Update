@@ -16,6 +16,7 @@ INPUT_JSON = "/tmp/svx_new_settings.json"
 RADIO_JSON = "/var/www/html/radio_config.json"
 NODE_INFO_FILE = "/etc/svxlink/node_info.json"
 LOG_FILE_RAM = "/dev/shm/svxlink.log"
+DTMF_JSON = "/var/www/html/dtmf_custom.json"
 
 def format_coords(val, is_lat=True):
     if not val: return None
@@ -42,7 +43,6 @@ def format_coords(val, is_lat=True):
             direction = 'E' if decimal >= 0 else 'W'
             return f"{degrees:03d}.{minutes:02d}.{seconds:02d}{direction}"
     except Exception as e:
-
         return None
 
 def load_lines(path):
@@ -461,7 +461,8 @@ def main():
             "MODULES": modules_clean if data.get('Modules') is not None else None, 
             "SHORT_IDENT_INTERVAL": ident_int,
             "LONG_IDENT_INTERVAL": ident_int, "DEFAULT_LANG": data.get('AudioLang'),
-            "DTMF_CTRL_PTY": "/dev/shm/dtmf_ctrl"
+            "DTMF_CTRL_PTY": "/dev/shm/dtmf_ctrl",
+            "MACROS": "Macros"
         },
         "ModuleEchoLink": {
             "CALLSIGN": data.get('EL_Callsign'), "PASSWORD": data.get('EL_Password'),
@@ -572,6 +573,42 @@ def main():
             os.chmod(TARGET_FILE, 0o666)
     except Exception as e:
         pass
+
+
+    macros_lines = []
+    if os.path.exists(DTMF_JSON):
+        try:
+            with open(DTMF_JSON, 'r') as df:
+                dtmf_data = json.load(df)
+                for tab in dtmf_data:
+                    tab_type = tab.get('type', 'reflector')
+                    for btn in tab.get('buttons', []):
+                        macro = btn.get('macro')
+                        tg = btn.get('tg')
+                        if macro and tg:
+                            if tab_type == 'echolink':
+                                macros_lines.append(f"{macro}=EchoLink:{tg}#\n")
+                            else:
+                                macros_lines.append(f"{macro}=:91{tg}#\n")
+        except Exception as e:
+            pass
+
+    clean_lines = []
+    in_macros = False
+    for line in lines:
+        stripped = line.strip()
+        if stripped.startswith("[") and stripped.endswith("]"):
+            if stripped == "[Macros]":
+                in_macros = True
+            else:
+                in_macros = False
+        if not in_macros:
+            clean_lines.append(line)
+    lines = clean_lines
+
+    if macros_lines:
+        lines.append("\n[Macros]\n")
+        lines.extend(macros_lines)
 
     save_lines(CONFIG_FILE, lines)
 

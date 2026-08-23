@@ -192,6 +192,24 @@
         $stats['el_enabled'] = (strpos($mods, 'ModuleEchoLink') !== false || strpos($mods, 'EchoLink') !== false);
         $stats['el_error'] = file_exists('/var/www/html/ram/el_error.flag');
         $stats['el_online'] = file_exists('/var/www/html/ram/el_online.flag');
+        
+        $el_qso_lines = shell_exec('grep "EchoLink QSO state changed to" /dev/shm/svxlink.log 2>/dev/null');
+        $active_el_nodes = [];
+        if ($el_qso_lines) {
+            $lines = explode("\n", trim($el_qso_lines));
+            foreach ($lines as $line) {
+                if (preg_match('/:\s+([A-Z0-9\-a-z_]+):\s+EchoLink QSO state changed to (CONNECTED|DISCONNECTED)/i', $line, $m)) {
+                    $node = strtoupper($m[1]);
+                    if (strtoupper($m[2]) === 'CONNECTED') {
+                        $active_el_nodes[$node] = true;
+                    } else {
+                        unset($active_el_nodes[$node]);
+                    }
+                }
+            }
+        }
+        $stats['el_nodes'] = array_keys($active_el_nodes);
+
         $net_file = '/etc/svxlink/networks.json';
         if (file_exists($net_file)) {
             $networks_data = json_decode(@file_get_contents($net_file), true);
@@ -747,18 +765,19 @@
 <body>
 
 <div id="changelog-overlay" style="display: none;">
-    <div id="changelog-modal" data-version="1.7">
-        <h2 style="margin-top:0; color:#4CAF50; border-bottom: 1px solid #333; padding-bottom: 10px;">🚀 PrimeNode V1.7 - Aktualizacja Silnika</h2>
+    <div id="changelog-modal" data-version="1.8">
+        <h2 style="margin-top:0; color:#4CAF50; border-bottom: 1px solid #333; padding-bottom: 10px;">🚀 PrimeNode V1.8 - System Makr i Usprawnienia EchoLink</h2>
         
         <div style="text-align: left; font-size: 14px; color: #ccc; line-height: 1.6; max-height: 50vh; overflow-y: auto; padding-right: 10px;">
             <p style="margin-top: 0; color: #eee; font-size: 14px;">
-                Najnowsza aktualizacja wprowadza krytyczne poprawki bezpieczeństwa i stabilności samego rdzenia SvxLink (przejście na w pełni stabilną wersję <b>26.05.1</b>). Ponieważ jest to głęboka modyfikacja systemu, wymaga ona jednorazowej kompilacji ze źródeł na Twoim urządzeniu.
+                Najnowsza aktualizacja wprowadza długo wyczekiwany system inteligentnych makr radiowych oraz poprawki wizualne dla modułu EchoLink.
             </p>
             
             <ul style="padding-left: 20px; margin-top: 15px;">
-                <li style="margin-bottom: 10px;">🛠️ <b>Jak zaktualizować?</b> Przejdź do zakładki <b>Zasilanie</b> i na samym dole kliknij nowy, czerwony przycisk <b>⚙️ Aktualizuj Core SvxLink</b>.</li>
-                <li style="margin-bottom: 10px;">⏳ <b>Ile to trwa?</b> Kompilacja zajmie około <b>20 do 30 minut</b> w zależności od modelu Twojego Raspberry Pi. W tym czasie hotspot nie będzie nadawał.</li>
-                <li style="margin-bottom: 10px;">⚠️ <b>Środki ostrożności:</b> Po kliknięciu pojawi się terminal z podglądem na żywo. <b style="color: #F44336;">Pod żadnym pozorem nie odłączaj zasilania, nie zamykaj okna przeglądarki ani nie odświeżaj strony!</b> System sam powiadomi Cię o sukcesie i uruchomi się ponownie.</li>
+                <li style="margin-bottom: 10px;">⚡ <b>Kreator Makr (Zakładka DTMF):</b> Przypisuj 2-cyfrowe skróty do ulubionych grup Reflektora oraz węzłów EchoLink. System sam dba o brak duplikatów i odpowiednie przełączanie logik.</li>
+                <li style="margin-bottom: 10px;">📻 <b>Obsługa z poziomu radia:</b> Aby wywołać zapisane makro (np. pod numerem 4), wystarczy nacisnąć PTT i wpisać na klawiaturze radia: <b>D4#</b>. Koniec z ręcznym wpisywaniem długich numerów!</li>
+                <li style="margin-bottom: 10px;">🟢 <b>Dynamiczny Status EchoLink:</b> Górny pasek statusu na żywo wyświetla teraz znak i ID węzła, z którym jesteś aktualnie połączony, pozwalając na szybki podgląd bez wchodzenia w logi.</li>
+                <li style="margin-bottom: 10px;">🖥️ <b>Odświeżony Interfejs:</b> Zmodernizowany widok zakładki DTMF z kaskadowym menu, własnymi suwakami i okienkami typu modal blokującymi ekran centralnie.</li>
             </ul>
             
             <div style="text-align: right; margin-top: 25px; font-size: 15px; color: #2196F3; font-weight: bold; font-style: italic;">
@@ -766,7 +785,7 @@
             </div>
         </div>
         
-        <button class="btn btn-green" style="margin-top: 20px; width: 100%; font-size: 16px; padding: 12px;" onclick="closeChangelog()">Super, rozumiem. Biorę się za kompilację!</button>
+        <button class="btn btn-green" style="margin-top: 20px; width: 100%; font-size: 16px; padding: 12px;" onclick="closeChangelog()">Super, rozumiem. Zamykam okno!</button>
     </div>
 </div>
 
@@ -874,7 +893,7 @@
     $svx_ver = str_ireplace(['SvxLink', 'v', ' '], '', $svx_ver);
     ?>
     SvxLink v<?php echo htmlspecialchars($svx_ver); ?> Copyright (C) 2003-<?php echo date("Y"); ?> Tobias Blomberg / <span class="callsign-blue">SM0SVX</span><br>
-    PrimeNode System • By SQ7UTP <span style="color: #aaa;">| Version: <strong style="color: #4CAF50;">V1.7</strong></span><br>
+    PrimeNode System • By SQ7UTP <span style="color: #aaa;">| Version: <strong style="color: #4CAF50;">V1.8</strong></span><br>
     Copyright © 2025-<?php echo date("Y"); ?>
 </div>
 
