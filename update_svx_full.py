@@ -212,11 +212,28 @@ def main():
     
     current_default_tg = data.get('DefaultTG') or backup_info.get('DefaultTG', '0')
 
+    board_model = "Unknown"
+    if os.path.exists('/sys/firmware/devicetree/base/model'):
+        try:
+            with open('/sys/firmware/devicetree/base/model', 'r') as mf:
+                m_str = mf.read().replace('\x00', '').strip()
+                if "Orange Pi" in m_str: 
+                    board_model = "OPi"
+                elif "Raspberry Pi" in m_str: 
+                    board_model = "RPi"
+                else: 
+                    board_model = "Linux"
+        except:
+            pass
+
+    primenode_version = "V1.7"
+    linked_to_str = f"PrimeNode {primenode_version} ({board_model})"
+
     node_info_data = {
         "Location": qth_city, "Locator": qth_loc, "Sysop": qth_name,
         "LAT": "0.0", "LONG": "0.0", "TXFREQ": tx_freq, "RXFREQ": rx_freq, "CTCSS": ctcss,
         "DefaultTG": current_default_tg, "Mode": "FM", "Type": "1",
-        "Echolink": is_echolink, "Website": "https://github.com/ArduUTP", "LinkedTo": "PrimeNode"
+        "Echolink": is_echolink, "Website": "https://github.com/ArduUTP", "LinkedTo": linked_to_str
     }
     try:
         with open(NODE_INFO_FILE, 'w') as nf:
