@@ -653,25 +653,29 @@ function qthToLatLon(qth) {
     overlay.style.display = 'flex'; 
     
     var style = localStorage.getItem('mapStyle') || 'dark';
-    var tileUrl = '';
+    var tileUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
     var tileOptions = {
         maxZoom: 19,
         minZoom: 2,
         noWrap: true,
+        subdomains: 'abc',
         attribution: '&copy; OpenStreetMap contributors'
     };
     
+    if (!document.getElementById('map-filter-styles')) {
+        let styleTag = document.createElement('style');
+        styleTag.id = 'map-filter-styles';
+        styleTag.innerHTML = `
+            .map-dark-mode { filter: invert(100%) hue-rotate(180deg) saturate(20%) brightness(70%) contrast(90%); }
+            .map-light-mode { filter: grayscale(100%) opacity(0.7) brightness(120%); }
+        `;
+        document.head.appendChild(styleTag);
+    }
+    
     if(style === 'light') {
-        tileUrl = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
-        tileOptions.subdomains = 'abcd';
-        tileOptions.attribution += ' &copy; CARTO';
-    } else if(style === 'osm') {
-        tileUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-        tileOptions.subdomains = 'abc';
-    } else {
-        tileUrl = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
-        tileOptions.subdomains = 'abcd';
-        tileOptions.attribution += ' &copy; CARTO';
+        tileOptions.className = 'map-light-mode';
+    } else if(style === 'dark') {
+        tileOptions.className = 'map-dark-mode';
     }
     
     if (mapInstance) {
